@@ -1,0 +1,6 @@
+vendor/
+node_modules/
+uploads/
+*.log
+.env
+.vscode/
