@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Student Dashboard - ProfHunt</title>
+
+<link rel="stylesheet" href="../css/studentDashBoard.css">
+
+</head>
+
+<body>
+
+<div class="sidebar">
+
+    <div>
+
+        <div class="profile">
+
+            <img src="../media/studentprofile.jpg">
+
+            <h3>Cassandra M. Magistrado</h3>
+
+            <p>202403311</p>
+            <p>BSCS 2 - 5</p>
+
+        </div>
+
+        <div class="section-title">GENERAL</div>
+
+        <div class="nav">
+
+            <a class="active" href="studentdashboard.html">
+                🏠 Dashboard
+            </a>
+
+            <a href="#">
+                📅 My Schedule
+            </a>
+
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="section-title">ACADEMIC</div>
+
+        <div class="nav">
+
+            <a href="facultyschedule.html">
+                👨‍🏫 Faculty List
+            </a>
+
+            <a href="#">
+                📊 Faculty Schedule
+            </a>
+
+        </div>
+
+    </div>
+
+    <div class="sidebar-footer">
+
+        <img src="../media/cvsulogo.png">
+
+        <p>Cavite State University</p>
+
+    </div>
+
+</div>
+
+<div class="header">
+
+    <h2>Student Dashboard</h2>
+
+    <div class="search-bar">
+
+        <input
+            type="text"
+            placeholder="Search professor, subject..."
+        >
+
+    </div>
+
+    <div class="user-box">
+        Welcome, Cassandra
+    </div>
+
+</div>
+
+<div class="main">
+
+    <div class="dashboard-container">
+
+        <div class="section-title-main">
+            📅 My Schedule
+        </div>
+
+        <div class="card-container">
+
+            <div class="card">
+
+                <h4>CS101 - Programming</h4>
+
+                <p>Monday | 7:00 - 9:00 AM</p>
+
+                <p>Room 101</p>
+
+            </div>
+
+            <div class="card">
+
+                <h4>CS102 - Data Structures</h4>
+
+                <p>Tuesday | 10:00 - 12:00 PM</p>
+
+                <p>Room 203</p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+const links = document.querySelectorAll(".nav a");
+
+links.forEach(link => {
+
+    link.addEventListener("click", function(e){
+
+        const target = this.getAttribute("href");
+
+        if(!target || target === "#") return;
+
+        e.preventDefault();
+
+        document.querySelector(".main")
+        .classList.add("page-transition");
+
+        setTimeout(() => {
+            window.location.href = target;
+        }, 180);
+    });
+
+});
+
+</script>
+
+</body>
+</html>
