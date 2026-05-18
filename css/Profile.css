@@ -1,0 +1,123 @@
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family: Arial, sans-serif;
+}
+
+body{
+  height:100vh;
+  display:flex;
+
+  background:
+  linear-gradient(rgba(0,0,0,0.65), rgba(0,0,0,0.65)),
+  url('cvsuhd.jpg');
+
+  background-size:cover;
+  background-position:center;
+  overflow:hidden;
+}
+
+.sidebar{
+  width:300px;
+  height:100vh;
+
+  background: rgba(0, 50, 20, 0.60);
+  backdrop-filter: blur(12px);
+
+  border-right:1px solid rgba(255,255,255,0.08);
+
+  padding:25px 20px;
+  color:white;
+
+  display:flex;
+  flex-direction:column;
+}
+
+.profile{
+  text-align:center;
+  margin-bottom:25px;
+}
+
+.profile img{
+  width:140px;
+  height:140px;
+  border-radius:50%;
+  border:3px solid rgba(255,255,255,0.9);
+  object-fit:cover;
+  margin-bottom:15px;
+}
+
+.profile h1{
+  font-size:26px;
+  margin-bottom:5px;
+}
+
+.profile p{
+  font-size:16px;
+  color:#cfcfcf;
+}
+
+hr{
+  border:none;
+  border-top:1px solid rgba(255,255,255,0.15);
+  margin:20px 0;
+}
+
+.menu{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  flex:1;
+}
+
+.menu a{
+  text-decoration:none;
+  color:white;
+
+  display:flex;
+  align-items:center;
+  gap:14px;
+
+  padding:14px 16px;
+  border-radius:12px;
+
+  font-size:16px;
+
+  transition:0.25s;
+}
+
+.menu a:hover{
+  background:rgba(0, 255, 100, 0.18);
+  transform:translateX(4px);
+}
+
+.menu i{
+  width:22px;
+  font-size:18px;
+}
+
+.logout{
+  flex:0;
+}
+
+.bottom-logo{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  justify-content:center;
+
+  padding-top:15px;
+  border-top:1px solid rgba(255,255,255,0.15);
+}
+
+.bottom-logo img{
+  width:40px;
+  height:40px;
+  object-fit:contain;
+}
+
+.bottom-logo h2{
+  font-size:18px;
+  letter-spacing:1px;
+}
