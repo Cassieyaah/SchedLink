@@ -1,3 +1,62 @@
+<?php
+session_start();
+
+include 'db.php';
+
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+
+    $fullname = trim($_POST['fullname']);
+    $email = trim($_POST['email']);
+    $role = $_POST['role'];
+    $password = $_POST['password'];
+    $confirmPassword = $_POST['confirm-password'];
+
+    if ($password !== $confirmPassword) {
+        $_SESSION['error'] = "Passwords do not match.";
+        header("Location: signUp.php");
+        exit();
+    }
+
+    elseif (!str_ends_with($email, '@cvsu.edu.ph')) {
+        $_SESSION['error'] = "Please use your official school email.";
+        header("Location: signUp.php");
+        exit();
+    }
+
+    else {
+        $stmt = $conn->prepare("SELECT id FROM users WHERE email = ?");
+        $stmt->bind_param("s", $email);
+        $stmt->execute();
+        $stmt->store_result();
+
+        if ($stmt->num_rows > 0) {
+            $_SESSION['error'] = "An account with this email already exists.";
+            header("Location: signUp.php");
+            exit();
+        }
+
+        else {
+            $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+
+            $insertStmt = $conn->prepare("INSERT INTO users (fullname, email, role, password) VALUES (?, ?, ?, ?)");
+            $insertStmt->bind_param("ssss", $fullname, $email, $role, $hashedPassword);
+
+            if ($insertStmt->execute()) {
+                $_SESSION['success'] = "Account created successfully. Please log in.";
+                header("Location: loginSYSTEM.html");
+                exit();
+            }
+
+            else {
+                $_SESSION['error'] = "Error creating account. Please try again.";
+                header("Location: signUp.php");
+                exit();
+            }
+        }
+    }
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -91,7 +150,19 @@
             Register using your official university credentials
         </p>
 
-        <form action="register.php" method="POST">
+        <?php
+            if (isset($_SESSION['error'])) {
+                echo '<div class="error-message">' . $_SESSION['error'] . '</div>';
+                unset($_SESSION['error']);
+            } 
+
+            if (isset($_SESSION['success'])) {
+                echo '<div class="success-message">' . $_SESSION['success'] . '</div>';
+                unset($_SESSION['success']);
+            }
+
+        ?>
+        <form action="signUp.php" method="POST">
 
             <label for="fullname">FULL NAME</label>
 
@@ -119,7 +190,7 @@
 
                 <option value="">Select Role</option>
                 <option value="student">Student</option>
-                <option value="professor">Faculty</option>
+                <option value="instructor">Instructor</option>
 
             </select>
 
