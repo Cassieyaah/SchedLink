@@ -38,6 +38,8 @@ body{
     justify-content:space-between;
 
     box-shadow:5px 0 20px rgba(0,0,0,0.25);
+    z-index:1000;
+    position:relative;
 }
 
 .profile{
@@ -139,7 +141,7 @@ body{
 
 .header{
     position:fixed;
-
+    z-index:1000;
     top:0;
     left:260px;
     right:0;
@@ -193,6 +195,8 @@ body{
     animation:fadeIn 0.35s ease-out;
 
     will-change:transform, opacity;
+    margin-left:260px;
+    padding:90px 30px 30px;
 }
 
 @keyframes fadeIn{
@@ -261,8 +265,10 @@ body{
     border:1px solid rgba(255,255,255,0.12);
 
     transition:0.3s;
-
     color:#eaf5ef;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
 }
 
 .card:hover{
@@ -272,12 +278,44 @@ body{
 
 .card h4{
     margin-bottom:10px;
+    font-size:15px;
+    font-weight:600;
+    color:#ffffff;
 }
 
 .card p{
     font-size:14px;
     opacity:0.9;
     line-height:1.4;
+    margin:0;
+}
+.card p:first-of-type{
+    font-weight:500;
+    color:#d7f5e3;
+}
+
+.empty-state{
+    text-align:center;
+    padding:30px;
+    opacity:0.8;
+    font-style:italic;
+}
+
+.upload-btn{
+    display:inline-block;
+    background:#0b6b3a;
+    color:white;
+    padding:10px 15px;
+    border-radius:10px;
+    text-decoration:none;
+    font-size:14px;
+    margin-bottom:15px;
+    transition:0.2s;
+}
+
+.upload-btn:hover{
+    background:#09522c;
+    transform:translateY(-2px);
 }
 
 @media(max-width:900px){
@@ -288,9 +326,18 @@ body{
 
     .sidebar{
         width:100%;
+        min-width:100%;
+        flex-direction:row;
+        overflow-x:auto;
     }
 
     .header{
         left:0;
+        width:100%;
+    }
+
+    .main{
+        margin-left:0;
+        padding:100px 15px 20px;
     }
 }
