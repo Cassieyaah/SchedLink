@@ -2,54 +2,27 @@
 session_start();
 include("db.php");
 
-$data = [
-    'full_name' => '',
-    'email' => '',
-    'student_number' => '',
-    'program' => '',
-    'role' => ''
-];
+$user_id = 1;
 
-if (isset($_SESSION['user_id'])) {
+$query = "
+    SELECT 
+        users.email,
+        users.role,
+        students.full_name,
+        students.student_number,
+        students.program
+    FROM users
+    INNER JOIN students 
+    ON users.user_id = students.user_id
+    WHERE users.user_id = ?
+";
 
-    $user_id = $_SESSION['user_id'];
+$stmt = mysqli_prepare($conn, $query);
+mysqli_stmt_bind_param($stmt, "i", $user_id);
+mysqli_stmt_execute($stmt);
+$result = mysqli_stmt_get_result($stmt);
 
-    $query = "
-        SELECT 
-            users.email,
-            users.role,
-            students.full_name,
-            students.student_number,
-            students.program
-        FROM users
-        INNER JOIN students 
-        ON users.user_id = students.user_id
-        WHERE users.user_id = ?
-    ";
-
-    $stmt = mysqli_prepare($conn, $query);
-
-    mysqli_stmt_bind_param($stmt, "i", $user_id);
-
-    mysqli_stmt_execute($stmt);
-
-    $result = mysqli_stmt_get_result($stmt);
-
-    if ($result && mysqli_num_rows($result) > 0) {
-
-        $data = mysqli_fetch_assoc($result);
-
-    } else {
-
-        exit("No student data found.");
-
-    }
-
-} else {
-
-    exit("User not logged in.");
-
-}
+$data = mysqli_fetch_assoc($result);
 
 mysqli_close($conn);
 ?>
@@ -57,64 +30,73 @@ mysqli_close($conn);
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <meta charset="UTF-8">
     <title>Student Profile</title>
-    <link rel="stylesheet" href="profile-style.css">
+    <link rel="stylesheet" href="Profile.css">
 </head>
+
 <body>
 
 <div class="web">
 
-    <div class="prfl">
+    <!-- SIDEBAR -->
+    <div class="sidebar">
 
-        <div class="header">
-            <div class="pic"></div>
-
-            <h2>
-                Welcome,
-                <?php echo htmlspecialchars($data['full_name']); ?>!
-            </h2>
+        <div class="profile">
+            <img src="images.jpg" alt="Profile">
+            <h1><?php echo htmlspecialchars($data['full_name']); ?></h1>
+            <p><?php echo htmlspecialchars($data['role']); ?></p>
         </div>
 
-        <div class="detail">
+        <hr>
 
-            <div class="dtl">
-                <h5>Full Name:</h5>
+        <div class="menu">
 
-                <h3>
-                    <?php echo htmlspecialchars($data['full_name']); ?>
-                </h3>
-            </div>
+            <a href="dashboard.php">Dashboard</a>
+            <a href="settings.php">Edit</a>
 
-            <div class="dtl">
-                <h5>Email:</h5>
+        </div>
 
-                <h3>
-                    <?php echo htmlspecialchars($data['email']); ?>
-                </h3>
-            </div>
+        <div class="logout menu">
+            <a href="logout.php">Logout</a>
+        </div>
 
-            <div class="dtl">
-                <h5>Student Number:</h5>
+        <div class="bottom-logo">
+            <img src="cvsulogo.png" alt="Logo">
 
-                <h3>
-                    <?php echo htmlspecialchars($data['student_number']); ?>
-                </h3>
-            </div>
+        </div>
 
-            <div class="dtl">
-                <h5>Program:</h5>
+    </div>
 
-                <h3>
-                    <?php echo htmlspecialchars($data['program']); ?>
-                </h3>
-            </div>
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
 
-            <div class="dtl">
-                <h5>Role:</h5>
+        <div class="content-card">
 
-                <h3>
-                    <?php echo htmlspecialchars($data['role']); ?>
-                </h3>
+            <h1>Student Profile</h1>
+
+            <div class="info">
+
+                <div class="box">
+                    <h3>Full Name</h3>
+                    <p><?php echo htmlspecialchars($data['full_name']); ?></p>
+                </div>
+
+                <div class="box">
+                    <h3>Email</h3>
+                    <p><?php echo htmlspecialchars($data['email']); ?></p>
+                </div>
+
+                <div class="box">
+                    <h3>Student Number</h3>
+                    <p><?php echo htmlspecialchars($data['student_number']); ?></p>
+                </div>
+
+                <div class="box">
+                    <h3>Program</h3>
+                    <p><?php echo htmlspecialchars($data['program']); ?></p>
+                </div>
+
             </div>
 
         </div>
