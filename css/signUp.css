@@ -6,7 +6,8 @@
 }
 
 body{
-    height:100vh;
+    min-height:100vh;
+    overflow: hidden;
 
     background:
     linear-gradient(rgba(0,0,0,0.65),
@@ -18,19 +19,19 @@ body{
     align-items:center;
 
     padding:20px;
-    min-height:100vh;
 
-    background-size:110%;
+    background-size:cover;
     background-position:center;
     background-repeat:no-repeat;
 
-    animation:bgMove 20s ease-in-out infinite alternate;
-    animation:pageIn 0.6s ease;
+    animation: pageIn 0.6s ease;
 }
 
 .container{
     width:100%;
-    max-width:1000px;
+    max-width:950px;
+
+    max-height: calc(100vh - 40px);
     display:flex;
     border-radius:20px;
     overflow:hidden;
@@ -39,13 +40,12 @@ body{
     backdrop-filter:blur(10px);
     box-shadow:0 8px 30px rgba(0,0,0,0.4);
 
-    animation:floatCard 6s ease-in-out infinite;
 }
 
 .left-panel{
     flex:1;
 
-    padding:60px;
+    padding: 25px;
     color:white;
 
     display:flex;
@@ -63,27 +63,28 @@ body{
 }
 
 .left-panel h1{
-    font-size:42px;
-    margin-bottom:15px;
+    font-size:28px;
+    margin-bottom:12px;
 }
 
 .left-panel p{
-    line-height:1.8;
+    line-height:1.4;
+    font-size: 13px;
     color:#e0e0e0;
-    margin-bottom:35px;
+    margin-bottom:18px;
 }
 
 .features{
     display:flex;
     flex-direction:column;
-    gap:18px;
+    gap:8px;
 }
 
 .feature-item{
     display:flex;
     align-items:center;
-    gap:12px;
-    font-size:15px;
+    gap:10px;
+    font-size:13px;
 }
 
 .feature-icon{
@@ -100,18 +101,19 @@ body{
 }
 
 .right-panel{
-    width:450px;
+    width:400px;
 
     background:white;
-    padding:50px 40px;
+    padding:22px;
 
     display:flex;
     flex-direction:column;
     justify-content:center;
+
 }
 
 .right-panel h2{
-    font-size:32px;
+    font-size:28px;
     color:#2c3e50;
     margin-bottom:10px;
 }
@@ -125,11 +127,11 @@ body{
 form label{
     display:block;
 
-    margin-top:10px;
-    margin-bottom:6px;
+    margin-top:4px;
+    margin-bottom:3px;
 
     font-weight:bold;
-    font-size:14px;
+    font-size:13px;
     color:#333;
 }
 
@@ -137,13 +139,13 @@ form input,
 form select{
     width:100%;
 
-    padding:11px;
-    margin-bottom:14px;
+    padding:8px;
+    margin-bottom:8px;
 
     border:1px solid #dcdcdc;
     border-radius:10px;
 
-    font-size:14px;
+    font-size:13px;
     transition:0.3s;
 }
 
@@ -195,8 +197,8 @@ form select:focus{
 .register-btn{
     width:100%;
 
-    margin-top:25px;
-    padding:14px;
+    margin-top:12px;
+    padding:11px;
 
     border:none;
     border-radius:10px;
@@ -217,10 +219,10 @@ form select:focus{
 }
 
 .footer-text{
-    margin-top:20px;
+    margin-top:12px;
     text-align:center;
 
-    font-size:14px;
+    font-size:13px;
     color:#555;
 }
 
@@ -316,38 +318,6 @@ form select:focus{
     }
 }
 
-@keyframes bgMove{
-
-    0%{
-        background-position:center;
-        background-size:110%;
-    }
-
-    50%{
-        background-position:45% 50%;
-        background-size:115%;
-    }
-
-    100%{
-        background-position:55% 45%;
-        background-size:110%;
-    }
-}
-
-@keyframes floatCard{
-
-    0%{
-        transform:translateY(0px);
-    }
-
-    50%{
-        transform:translateY(-8px);
-    }
-
-    100%{
-        transform:translateY(0px);
-    }
-}
 
 @keyframes pageIn{
 
