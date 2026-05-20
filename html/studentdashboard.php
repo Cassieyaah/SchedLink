@@ -17,7 +17,6 @@ $user = $stmt->get_result()->fetch_assoc();
 $role = $user['role'];
 $username = $user['username'];
 
-
 if ($role == "student") {
 
     $scheduleQuery = "SELECT * FROM student_schedules WHERE student_id = ?";
@@ -26,8 +25,8 @@ if ($role == "student") {
     $stmt2->execute();
     $scheduleResult = $stmt2->get_result();
 
-/* FACULTY VIEW (change table if needed later) */
 } elseif ($role == "professor") {
+
 
     $scheduleQuery = "SELECT * FROM professor_schedules WHERE professor_id = ?";
     $stmt2 = $conn->prepare($scheduleQuery);
@@ -54,6 +53,7 @@ $hasProfile = ($role != "student") || (!empty($user['student_number']) && !empty
 <title><?php echo ucfirst($role); ?> Dashboard</title>
 
 <link rel="stylesheet" href="../css/studentDashBoard.css">
+<link rel="stylesheet" href="../fonts/css/all.min.css">
 
 </head>
 
@@ -88,20 +88,29 @@ $hasProfile = ($role != "student") || (!empty($user['student_number']) && !empty
 
         <div class="section-title">GENERAL</div>
 
-        <div class="nav">
+<div class="nav">
 
-            <a class="active" href="studentdashboard.php">
-                Dashboard
-            </a>
+    <a class="active" href="studentdashboard.php">
+        <i class="fa-solid fa-chart-line"></i> Dashboard
+    </a>
 
-            <a href="#">
-                My Schedule
-            </a>
-            <a href="logout.php" class="logout-btn">
-                Logout
-            </a>
+    <a href="#">
+        <i class="fa-regular fa-calendar"></i> My Schedule
+    </a>
 
-        </div>
+    <a href="upload_schedule.php">
+        <i class="fa-solid fa-upload"></i> Upload Schedule
+    </a>
+
+    <a href="profile.php">
+        <i class="fa-solid fa-user"></i> Profile
+    </a>
+
+    <a href="logout.php" class="logout-btn">
+        <i class="fa-solid fa-right-from-bracket"></i> Logout
+    </a>
+
+</div>
 
         <div class="divider"></div>
 
@@ -153,11 +162,35 @@ $hasProfile = ($role != "student") || (!empty($user['student_number']) && !empty
     <?php endif; ?>
 
     <div class="dashboard-container">
+
+
         <a href="upload_schedule.php" class="upload-btn">
-            Upload Schedule (PDF / Image)
+            <i class="fa-solid fa-upload"></i>
+            Upload Schedule
         </a>
+
+        <div class="stats">
+
+            <div class="stat-card">
+                <h4>Total Subjects</h4>
+                <p>5</p>
+            </div>
+
+            <div class="stat-card">
+                <h4>Upcoming Classes</h4>
+                <p>3</p>
+            </div>
+
+            <div class="stat-card">
+                <h4>Matched Schedules</h4>
+                <p>2</p>
+            </div>
+
+        </div>
+
         <div class="section-title-main">
-            My Schedule
+            <h3>My Schedule</h3>
+            <div class="line"></div>
         </div>
 
         <div class="card-container">
