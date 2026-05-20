@@ -39,62 +39,62 @@ mysqli_close($conn);
 
 <div class="web">
 
-    <!-- SIDEBAR -->
-    <div class="sidebar">
-
-        <div class="profile">
-            <img src="images.jpg" alt="Profile">
-            <h1><?php echo htmlspecialchars($data['full_name']); ?></h1>
-            <p><?php echo htmlspecialchars($data['role']); ?></p>
-        </div>
-
-        <hr>
-
-        <div class="menu">
-
-            <a href="dashboard.php">Dashboard</a>
-            <a href="settings.php">Edit</a>
-
-        </div>
-
-        <div class="logout menu">
-            <a href="logout.php">Logout</a>
-        </div>
-
-        <div class="bottom-logo">
-            <img src="cvsulogo.png" alt="Logo">
-
-        </div>
-
-    </div>
-
-    <!-- MAIN CONTENT -->
     <div class="main-content">
 
         <div class="content-card">
 
-            <h1>Student Profile</h1>
+            <div class="left-side">
 
-            <div class="info">
+                <img src="images.jpg" class="profile-image">
 
-                <div class="box">
-                    <h3>Full Name</h3>
-                    <p><?php echo htmlspecialchars($data['full_name']); ?></p>
-                </div>
+                <h2 class="student-name">
+                    <?php echo htmlspecialchars($data['full_name']); ?>
+                </h2>
 
-                <div class="box">
-                    <h3>Email</h3>
-                    <p><?php echo htmlspecialchars($data['email']); ?></p>
-                </div>
+                <p class="student-role">
+                    <?php echo htmlspecialchars($data['role']); ?>
+                </p>
 
-                <div class="box">
-                    <h3>Student Number</h3>
-                    <p><?php echo htmlspecialchars($data['student_number']); ?></p>
-                </div>
+                <img src="cvsulogo.png" class="school-logo">
 
-                <div class="box">
-                    <h3>Program</h3>
-                    <p><?php echo htmlspecialchars($data['program']); ?></p>
+            </div>
+
+            <div class="right-side">
+
+                <div class="profile-list">
+
+                    <div class="list-item">
+                        <span class="label">Full Name</span>
+                        <span class="colon">:</span>
+                        <span class="value">
+                            <?php echo htmlspecialchars($data['full_name']); ?>
+                        </span>
+                    </div>
+
+                    <div class="list-item">
+                        <span class="label">Email</span>
+                        <span class="colon">:</span>
+                        <span class="value">
+                            <?php echo htmlspecialchars($data['email']); ?>
+                        </span>
+                    </div>
+
+                    <div class="list-item">
+                        <span class="label">Student Number</span>
+                        <span class="colon">:</span>
+                        <span class="value">
+                            <?php echo htmlspecialchars($data['student_number']); ?>
+                        </span>
+                    </div>
+
+                    <div class="list-item">
+                        <span class="label">Program</span>
+                        <span class="colon">:</span>
+                        <span class="value">
+                            <?php echo htmlspecialchars($data['program']); ?>
+                        </span>
+                    </div>
+
                 </div>
 
             </div>
