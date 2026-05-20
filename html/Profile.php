@@ -2,8 +2,12 @@
 session_start();
 include("db.php");
 
-/* SAMPLE USER */
-$user_id = 1;
+if (!isset($_SESSION['user_id'])) {
+    header("Location: loginSYSTEM.php");
+    exit();
+}
+
+$user_id = $_SESSION['user_id'];
 
 /* FETCH USER DATA */
 $query = "
