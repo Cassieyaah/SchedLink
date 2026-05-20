@@ -1,21 +1,45 @@
 <?php
+session_start();
 include 'db.php';
 
-$student_id = 1; // temporary session
+if (!isset($_SESSION['user_id'])) {
+    header("Location: loginSYSTEM.php");
+    exit();
+}
 
-$studentQuery = "SELECT * FROM students WHERE student_id = '$student_id'";
-$studentResult = mysqli_query($conn, $studentQuery);
-$student = mysqli_fetch_assoc($studentResult);
+$user_id = $_SESSION['user_id'];
 
-/* schedule */
-$scheduleQuery = "SELECT * FROM student_schedules WHERE student_id = '$student_id'";
-$scheduleResult = mysqli_query($conn, $scheduleQuery);
+$stmt = $conn->prepare("SELECT * FROM users WHERE user_id = ?");
+$stmt->bind_param("i", $user_id);
+$stmt->execute();
+$user = $stmt->get_result()->fetch_assoc();
 
-/* check profile completeness */
-$hasProfile =
-    $student &&
-    !empty($student['student_number']) &&
-    !empty($student['program']);
+$role = $user['role'];
+$username = $user['username'];
+
+
+if ($role == "student") {
+
+    $scheduleQuery = "SELECT * FROM student_schedules WHERE student_id = ?";
+    $stmt2 = $conn->prepare($scheduleQuery);
+    $stmt2->bind_param("i", $user_id);
+    $stmt2->execute();
+    $scheduleResult = $stmt2->get_result();
+
+/* FACULTY VIEW (change table if needed later) */
+} elseif ($role == "professor") {
+
+    $scheduleQuery = "SELECT * FROM professor_schedules WHERE professor_id = ?";
+    $stmt2 = $conn->prepare($scheduleQuery);
+    $stmt2->bind_param("i", $user_id);
+    $stmt2->execute();
+    $scheduleResult = $stmt2->get_result();
+
+} else {
+    $scheduleResult = null;
+}
+
+$hasProfile = ($role != "student") || (!empty($user['student_number']) && !empty($user['program']));
 ?>
 
 
@@ -27,7 +51,7 @@ $hasProfile =
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Student Dashboard - ProfHunt</title>
+<title><?php echo ucfirst($role); ?> Dashboard</title>
 
 <link rel="stylesheet" href="../css/studentDashBoard.css">
 
@@ -43,16 +67,14 @@ $hasProfile =
 
             <img src="../media/studentprofile.jpg">
 
-            <?php if ($student): ?>
+            <?php if ($user): ?>
 
-                <h3><?php echo $student['full_name']; ?></h3>
+                <h3><?php echo $user['username']; ?></h3>
 
-                <?php if ($hasProfile): ?>
-                    <p><?php echo $student['student_number']; ?></p>
-                    <p><?php echo $student['program']; ?></p>
-                <?php else: ?>
-                    <p style="color:#ffd966;">Add Student Number</p>
-                    <p>Add Student Program</p>
+                <?php if ($role == "student"): ?>
+                    <p>Student Account</p>
+                <?php elseif ($role == "professor"): ?>
+                    <p>Faculty Account</p>
                 <?php endif; ?>
 
             <?php else: ?>
@@ -75,6 +97,9 @@ $hasProfile =
             <a href="#">
                 My Schedule
             </a>
+            <a href="logout.php" class="logout-btn">
+                Logout
+            </a>
 
         </div>
 
@@ -94,16 +119,16 @@ $hasProfile =
 
 <div class="header">
 
-    <h2>Student Dashboard</h2>
+    <h2><?php echo ucfirst($role); ?> Dashboard</h2>
         <div class="user-box">
-            Welcome, <?php echo $student ? $student['full_name'] : 'Guest'; ?>
+            Welcome, <?php echo $user['username']; ?>
         </div>
 
 </div>
 
 <div class="main">
 
-    <?php if ($student && !$hasProfile): ?>
+    <?php if ($role == "student" && (empty($user['student_number']) || empty($user['program']))): ?>
         <div style="
             background:#fff3cd;
             color:#856404;
