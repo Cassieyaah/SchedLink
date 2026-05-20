@@ -317,6 +317,13 @@ body{
     background:#09522c;
     transform:translateY(-2px);
 }
+.logout-btn {
+    color: #ff4d4d;
+    font-weight: bold;
+}
+.logout-btn:hover {
+    text-decoration: underline;
+}
 
 @media(max-width:900px){
 
