@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: May 17, 2026 at 08:45 PM
+-- Generation Time: May 21, 2026 at 12:48 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -24,27 +24,12 @@ SET time_zone = "+00:00";
 -- --------------------------------------------------------
 
 --
--- Table structure for table `matched_schedules`
+-- Table structure for table `faculties`
 --
 
-CREATE TABLE `matched_schedules` (
-  `matched_id` int(11) NOT NULL,
-  `student_schedule_id` int(11) NOT NULL,
-  `professor_schedule_id` int(11) DEFAULT NULL,
-  `match_status` enum('matched','no_match','pending','conflict') NOT NULL,
-  `matched_at` datetime DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `professors`
---
-
-CREATE TABLE `professors` (
+CREATE TABLE `faculties` (
   `professor_id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
-  `full_name` varchar(255) NOT NULL,
   `department` varchar(255) DEFAULT NULL,
   `fb_link` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -52,10 +37,10 @@ CREATE TABLE `professors` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `professor_schedules`
+-- Table structure for table `faculty_schedules`
 --
 
-CREATE TABLE `professor_schedules` (
+CREATE TABLE `faculty_schedules` (
   `professor_schedule_id` int(11) NOT NULL,
   `professor_id` int(11) NOT NULL,
   `schedule_code` int(11) NOT NULL,
@@ -70,6 +55,20 @@ CREATE TABLE `professor_schedules` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `matched_schedules`
+--
+
+CREATE TABLE `matched_schedules` (
+  `matched_id` int(11) NOT NULL,
+  `student_schedule_id` int(11) NOT NULL,
+  `professor_schedule_id` int(11) DEFAULT NULL,
+  `match_status` enum('matched','no_match','pending','conflict') NOT NULL,
+  `matched_at` datetime DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `students`
 --
 
@@ -77,7 +76,6 @@ CREATE TABLE `students` (
   `student_id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
   `student_number` int(11) NOT NULL,
-  `full_name` varchar(255) NOT NULL,
   `program` varchar(255) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -107,15 +105,30 @@ CREATE TABLE `student_schedules` (
 
 CREATE TABLE `users` (
   `user_id` int(11) NOT NULL,
-  `username` varchar(50) NOT NULL,
+  `fullname` varchar(255) NOT NULL,
   `email` varchar(255) NOT NULL,
   `password` varchar(255) NOT NULL,
-  `role` enum('student','professor','admin') NOT NULL
+  `role` enum('student','professor','admin') NOT NULL,
+  `profile_picture` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Indexes for dumped tables
 --
+
+--
+-- Indexes for table `faculties`
+--
+ALTER TABLE `faculties`
+  ADD PRIMARY KEY (`professor_id`),
+  ADD KEY `user_id` (`user_id`);
+
+--
+-- Indexes for table `faculty_schedules`
+--
+ALTER TABLE `faculty_schedules`
+  ADD PRIMARY KEY (`professor_schedule_id`),
+  ADD KEY `professor_id` (`professor_id`);
 
 --
 -- Indexes for table `matched_schedules`
@@ -126,24 +139,11 @@ ALTER TABLE `matched_schedules`
   ADD KEY `professor_schedule_id` (`professor_schedule_id`);
 
 --
--- Indexes for table `professors`
---
-ALTER TABLE `professors`
-  ADD PRIMARY KEY (`professor_id`),
-  ADD KEY `user_id` (`user_id`);
-
---
--- Indexes for table `professor_schedules`
---
-ALTER TABLE `professor_schedules`
-  ADD PRIMARY KEY (`professor_schedule_id`),
-  ADD KEY `professor_id` (`professor_id`);
-
---
 -- Indexes for table `students`
 --
 ALTER TABLE `students`
   ADD PRIMARY KEY (`student_id`),
+  ADD UNIQUE KEY `student_number` (`student_number`),
   ADD KEY `user_id` (`user_id`);
 
 --
@@ -157,29 +157,35 @@ ALTER TABLE `student_schedules`
 -- Indexes for table `users`
 --
 ALTER TABLE `users`
-  ADD PRIMARY KEY (`user_id`);
+  ADD PRIMARY KEY (`user_id`),
+  ADD UNIQUE KEY `email` (`email`),
+  ADD UNIQUE KEY `email_2` (`email`),
+  ADD UNIQUE KEY `email_5` (`email`),
+  ADD UNIQUE KEY `email_6` (`email`),
+  ADD KEY `email_3` (`email`),
+  ADD KEY `email_4` (`email`);
 
 --
 -- AUTO_INCREMENT for dumped tables
 --
 
 --
+-- AUTO_INCREMENT for table `faculties`
+--
+ALTER TABLE `faculties`
+  MODIFY `professor_id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `faculty_schedules`
+--
+ALTER TABLE `faculty_schedules`
+  MODIFY `professor_schedule_id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `matched_schedules`
 --
 ALTER TABLE `matched_schedules`
   MODIFY `matched_id` int(11) NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `professors`
---
-ALTER TABLE `professors`
-  MODIFY `professor_id` int(11) NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `professor_schedules`
---
-ALTER TABLE `professor_schedules`
-  MODIFY `professor_schedule_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `students`
@@ -204,23 +210,23 @@ ALTER TABLE `users`
 --
 
 --
+-- Constraints for table `faculties`
+--
+ALTER TABLE `faculties`
+  ADD CONSTRAINT `faculties_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Constraints for table `faculty_schedules`
+--
+ALTER TABLE `faculty_schedules`
+  ADD CONSTRAINT `faculty_schedules_ibfk_1` FOREIGN KEY (`professor_id`) REFERENCES `faculties` (`professor_id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
 -- Constraints for table `matched_schedules`
 --
 ALTER TABLE `matched_schedules`
   ADD CONSTRAINT `matched_schedules_ibfk_1` FOREIGN KEY (`student_schedule_id`) REFERENCES `student_schedules` (`student_schedule_id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  ADD CONSTRAINT `matched_schedules_ibfk_2` FOREIGN KEY (`professor_schedule_id`) REFERENCES `professor_schedules` (`professor_schedule_id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
---
--- Constraints for table `professors`
---
-ALTER TABLE `professors`
-  ADD CONSTRAINT `professors_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
---
--- Constraints for table `professor_schedules`
---
-ALTER TABLE `professor_schedules`
-  ADD CONSTRAINT `professor_schedules_ibfk_1` FOREIGN KEY (`professor_id`) REFERENCES `professors` (`professor_id`) ON DELETE CASCADE ON UPDATE CASCADE;
+  ADD CONSTRAINT `matched_schedules_ibfk_2` FOREIGN KEY (`professor_schedule_id`) REFERENCES `faculty_schedules` (`professor_schedule_id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Constraints for table `students`
