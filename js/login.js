@@ -1,33 +1,36 @@
-document.getElementById('loginForm').addEventListener('submit', function(event) {
-    const emailInput = document.getElementById('email').value.trim();
-    const roleInput = document.getElementById('role').value;
-    const passwordInput = document.getElementById('password').value;
-    const errorBanner = document.getElementById('js-error-banner');
+document.addEventListener("DOMContentLoaded", function() {
+    const loginForm = document.getElementById("loginForm");
+    const emailInput = document.getElementById("email");
+    const passwordInput = document.getElementById("password");
+    const togglePassword = document.getElementById("togglePassword");
 
-    errorBanner.style.display = 'none';
-    errorBanner.textContent = '';
-
-    if (roleInput === "") {
-        event.preventDefault();
-        showJsError("Please choose a role to proceed.");
-        return;
+    if (togglePassword) {
+        togglePassword.addEventListener("change", function() {
+            if (this.checked) {
+                passwordInput.type = "text";
+            } else {
+                passwordInput.type = "password";
+            }
+        });
     }
 
-    if (!emailInput.endsWith('@cvsu.edu.ph')) {
-        event.preventDefault();
-        showJsError("Notice: The email used must be an official CvSU account (@cvsu.edu.ph).");
-        return;
-    }
+    if (loginForm) {
+        loginForm.addEventListener("submit", function(event) {
+            const emailValue = emailInput.value.trim().toLowerCase();
 
-    if (passwordInput.length < 4) {
-        event.preventDefault();
-        showJsError("Short Password, it must be more than 4 input.");
-        return;
+            if (!emailValue.endsWith("@cvsu.edu.ph")) {
+                event.preventDefault(); 
+                alert("Error: Please use your official CvSU institutional email (@cvsu.edu.ph).");
+                emailInput.focus();
+                return false;
+            }
+
+            if (passwordInput.value.trim() === "") {
+                event.preventDefault();
+                alert("Error: Password cannot be empty.");
+                passwordInput.focus();
+                return false;
+            }
+        });
     }
 });
-
-function showJsError(message) {
-    const errorBanner = document.getElementById('js-error-banner');
-    errorBanner.textContent = message;
-    errorBanner.style.display = 'block';
-}
