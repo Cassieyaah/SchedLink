@@ -1,13 +1,13 @@
 <?php
 session_start();
 
-include 'db.php';
+include '../php/db.php';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     $fullname = trim($_POST['fullname']);
     $email = trim($_POST['email']);
-    $role = $_POST['role'];
+    $role = "student";
     $password = $_POST['password'];
     $confirmPassword = $_POST['confirm-password'];
 
@@ -184,16 +184,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 placeholder="example@cvsu.edu.ph"
                 required
             >
-
-            <label for="role">REGISTER AS</label>
-
-            <select id="role" name="role" required>
-
-                <option value="">Select Role</option>
-                <option value="student">Student</option>
-                <option value="faculty">Faculty</option>
-
-            </select>
 
             <label for="password">PASSWORD</label>
 

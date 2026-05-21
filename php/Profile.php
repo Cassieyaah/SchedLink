@@ -1,6 +1,6 @@
 <?php
 session_start();
-include("db.php");
+include("../php/db.php");
 
 if (!isset($_SESSION['user_id'])) {
     header("Location: loginSYSTEM.php");
