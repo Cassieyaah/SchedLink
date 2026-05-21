@@ -11,7 +11,7 @@ $sql_create_table = "CREATE TABLE IF NOT EXISTS users (
     fullname VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
-    role ENUM('student','professor','admin') NOT NULL,
+    role ENUM('student','faculty','admin') NOT NULL,
     profile_picture VARCHAR(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
 $conn->query($sql_create_table);
@@ -44,8 +44,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
             if ($role === 'admin') {
                 $redirect_page = 'admindashboard.php';
-            } elseif ($role === 'professor') {
-                $redirect_page = 'facultydashboard.php';
+            } elseif ($role === 'faculty') {
+                $redirect_page = 'studentdashboard.php';
             } else {
                 $redirect_page = 'studentdashboard.php';
             }
@@ -119,7 +119,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         </form>
 
         <div class="footer-text">
-            Don’t have an account yet? <a href="signupSYSTEM.html">Register</a>
+            Don’t have an account yet? <a href="signUp.php">Register</a>
         </div>
     </div>
 </div>

@@ -250,7 +250,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <div class="footer-text">
 
             Already have an account?
-            <a href="loginSYSTEM.html">Login</a>
+            <a href="loginSYSTEM.php">Login</a>
 
         </div>
 

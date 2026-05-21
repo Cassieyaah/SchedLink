@@ -15,7 +15,7 @@ $stmt->execute();
 $user = $stmt->get_result()->fetch_assoc();
 
 $role = $user['role'];
-$username = $user['username'];
+$fullname = $user['fullname'];
 
 if ($role == "student") {
 
@@ -69,7 +69,7 @@ $hasProfile = ($role != "student") || (!empty($user['student_number']) && !empty
 
             <?php if ($user): ?>
 
-                <h3><?php echo $user['username']; ?></h3>
+                <h3><?php echo $user['fullname']; ?></h3>
 
                 <?php if ($role == "student"): ?>
                     <p>Student Account</p>
@@ -130,7 +130,7 @@ $hasProfile = ($role != "student") || (!empty($user['student_number']) && !empty
 
     <h2><?php echo ucfirst($role); ?> Dashboard</h2>
         <div class="user-box">
-            Welcome, <?php echo $user['username']; ?>
+            Welcome, <?php echo $user['fullname']; ?>
         </div>
 
 </div>
