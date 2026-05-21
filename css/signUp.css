@@ -45,7 +45,8 @@ body{
 .left-panel{
     flex:1;
 
-    padding: 25px;
+    padding: 40px;
+    padding-top: 0px;
     color:white;
 
     display:flex;
@@ -63,15 +64,15 @@ body{
 }
 
 .left-panel h1{
-    font-size:28px;
-    margin-bottom:12px;
+    font-size:36px;
+    margin-bottom:15px;
 }
 
 .left-panel p{
-    line-height:1.4;
+    line-height:1.6;
     font-size: 13px;
     color:#e0e0e0;
-    margin-bottom:18px;
+    margin-bottom:22px;
 }
 
 .features{
@@ -113,7 +114,7 @@ body{
 }
 
 .right-panel h2{
-    font-size:28px;
+    font-size:29px;
     color:#2c3e50;
     margin-bottom:10px;
 }
@@ -206,7 +207,7 @@ form select:focus{
     background:#0B6B3A;
     color:white;
 
-    font-size:16px;
+    font-size:14px;
     font-weight:bold;
 
     cursor:pointer;
@@ -349,4 +350,44 @@ form select:focus{
     .left-panel h1{
         font-size:34px;
     }
+}
+
+.error-message,
+.success-message{
+    position:fixed;
+
+    top:25px;
+    left:50%;
+
+    transform:translateX(-50%);
+
+    padding:14px 22px;
+
+    min-width:280px;
+    max-width:420px;
+
+    border-radius:14px;
+
+    font-size:13px;
+    font-weight:500;
+
+    text-align:center;
+
+    box-shadow:0 8px 25px rgba(0,0,0,0.25);
+
+    z-index:9999;
+
+    animation:toastSlide 0.4s ease;
+}
+
+.error-message{
+    background:rgb(238, 52, 52);
+    color:#ffffff;
+    border:1px solid rgba(255,255,255,0.15);
+}
+
+.success-message{
+    background:rgba(11, 107, 58, 0.85);
+    color:#ffffff;
+    border:1px solid rgba(255,255,255,0.15);
 }

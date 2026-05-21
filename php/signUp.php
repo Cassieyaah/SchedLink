@@ -70,6 +70,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
 </head>
 
+<?php
+            if (isset($_SESSION['error'])) {
+                echo '<div class="error-message">' . $_SESSION['error'] . '</div>';
+                unset($_SESSION['error']);
+            } 
+
+            if (isset($_SESSION['success'])) {
+                echo '<div class="success-message">' . $_SESSION['success'] . '</div>';
+                unset($_SESSION['success']);
+            }
+
+        ?>
+
 <body>
 
 <!-- PRIVACY MODAL -->
@@ -150,18 +163,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             Register using your official university credentials
         </p>
 
-        <?php
-            if (isset($_SESSION['error'])) {
-                echo '<div class="error-message">' . $_SESSION['error'] . '</div>';
-                unset($_SESSION['error']);
-            } 
-
-            if (isset($_SESSION['success'])) {
-                echo '<div class="success-message">' . $_SESSION['success'] . '</div>';
-                unset($_SESSION['success']);
-            }
-
-        ?>
         <form action="signUp.php" method="POST">
 
             <label for="fullname">FULL NAME</label>
@@ -190,7 +191,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
                 <option value="">Select Role</option>
                 <option value="student">Student</option>
-                <option value="instructor">Instructor</option>
+                <option value="faculty">Faculty</option>
 
             </select>
 
