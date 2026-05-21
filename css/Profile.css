@@ -1,4 +1,3 @@
-
 *{
     margin:0;
     padding:0;
@@ -10,19 +9,9 @@ body{
     display:flex;
     min-height:100vh;
 
-    background:
-    linear-gradient(
-        rgb(255, 255, 255),
-        rgb(255, 255, 255)
-    ),
-    url('../media/cvsuhd.jpg');
+    background:white;
 
-    background-size:cover;
-    background-position:center;
-    background-repeat:no-repeat;
-    background-attachment:fixed;
-
-    color:#eaf5ef;
+    color:#222;
 }
 
 /* =========================
@@ -34,6 +23,7 @@ body{
     min-width:260px;
 
     background:rgba(11,107,58,0.88);
+
     backdrop-filter:blur(14px);
 
     color:white;
@@ -54,21 +44,24 @@ body{
 
     z-index:1000;
 }
- .divider{
+
+/* DIVIDER */
+
+.divider{
     height:1px;
+
     background:rgba(255,255,255,0.15);
 
-    margin:8px 0;
-
-    border-bottom: #ffffff;
+    margin:10px 0;
 }
-/* PROFILE */
 
+/* PROFILE */
 
 .profile{
     background:rgba(255,255,255,0.12);
 
     padding:15px;
+
     border-radius:14px;
 
     text-align:center;
@@ -87,6 +80,8 @@ body{
     margin-bottom:10px;
 
     border:2px solid rgba(255,255,255,0.4);
+
+    object-fit:cover;
 }
 
 .profile h3{
@@ -95,16 +90,20 @@ body{
 
 .profile p{
     font-size:12px;
+
     opacity:0.85;
 }
 
 .section-title{
     font-size:11px;
+
     letter-spacing:1px;
 
     opacity:0.75;
 
     margin:14px 0 6px;
+
+    color:white;
 }
 
 /* NAVIGATION */
@@ -118,6 +117,7 @@ body{
 
 .nav a{
     color:white;
+
     text-decoration:none;
 
     padding:10px 12px;
@@ -139,9 +139,7 @@ body{
     background:rgba(255,255,255,0.20);
 }
 
-/* LOGOUT */
 .logout-btn{
-    color:#ffffff;
     font-weight:bold;
 }
 
@@ -186,7 +184,7 @@ body{
     justify-content:center;
     align-items:center;
 
-    padding:40px;
+    padding:30px;
 }
 
 /* =========================
@@ -195,46 +193,54 @@ body{
 
 .profile-card{
     width:100%;
-    max-width:900px;
 
-    background:rgba(28,63,43,0.92);
+    min-height:90vh;
 
-    border-radius:28px;
+    background:white;
 
-    padding:50px 55px;
+    border-radius:20px;
+
+    padding:50px;
 
     display:flex;
-    justify-content:space-between;
-    align-items:flex-start;
+    justify-content:center;
+    align-items:center;
 
-    gap:40px;
+    gap:70px;
 
-    backdrop-filter:blur(12px);
+    border:1px solid #e5e5e5;
 
-    border:1px solid rgba(255,255,255,0.08);
-
-    box-shadow:0 12px 35px rgba(0,0,0,0.25);
+    box-shadow:0 8px 25px rgba(0,0,0,0.08);
 }
 
-/* LEFT SIDE */
+/* =========================
+   PROFILE DETAILS
+========================= */
 
-.left-side{
-    width:58%;
+.profile-details{
+    width:65%;
+
+    display:flex;
+    flex-direction:column;
+
+    justify-content:center;
 }
 
 .title{
-    font-size:60px;
+    font-size:55px;
 
-    margin-bottom:40px;
+    color:#111;
 
-    font-weight:bold;
+    margin-bottom:35px;
 }
+
+/* PROFILE LIST */
 
 .profile-list{
     display:flex;
     flex-direction:column;
 
-    gap:28px;
+    gap:25px;
 }
 
 .list-item{
@@ -251,80 +257,25 @@ body{
 
     text-transform:uppercase;
 
-    color:#9fffc0;
+    color:#0b6b3a;
 
     font-weight:bold;
 }
 
 .list-item input{
-    background:transparent;
-
     border:none;
 
-    border-bottom:1px solid rgba(255,255,255,0.15);
+    border-bottom:1px solid #dcdcdc;
 
-    padding:10px 0;
+    padding:12px 0;
 
-    color:white;
+    background:transparent;
 
     font-size:16px;
 
+    color:#222;
+
     outline:none;
-}
-
-/* RIGHT SIDE */
-
-.right-side{
-    width:35%;
-
-    min-height:500px;
-
-    display:flex;
-    flex-direction:column;
-    justify-content:space-between;
-    align-items:center;
-}
-
-/* IMAGE */
-
-.image-container{
-    position:relative;
-}
-
-.profile-image{
-    width:190px;
-    height:190px;
-
-    border-radius:50%;
-
-    object-fit:cover;
-
-    border:5px solid rgba(255,255,255,0.9);
-
-    box-shadow:0 10px 25px rgba(0,0,0,0.3);
-}
-
-.camera-btn{
-    position:absolute;
-
-    bottom:5px;
-    right:5px;
-
-    width:40px;
-    height:40px;
-
-    border:none;
-    border-radius:50%;
-
-    background:white;
-
-    cursor:pointer;
-
-    transition:0.25s;
-}
-
-.camera-btn:hover{
-    transform:scale(1.08);
 }
 
 /* EDIT BUTTON */
@@ -332,30 +283,104 @@ body{
 .edit-btn{
     width:180px;
 
-    padding:12px 20px;
+    padding:14px;
 
-    border:1px solid rgba(255,255,255,0.2);
+    margin-top:35px;
+
+    border:none;
 
     border-radius:10px;
 
-    background:transparent;
+    background:#0b6b3a;
 
     color:white;
 
     font-size:14px;
-    font-weight:500;
 
     cursor:pointer;
 
-    transition:0.25s;
+    transition:0.2s;
 }
 
 .edit-btn:hover{
-    background:rgba(255,255,255,0.08);
+    opacity:0.9;
+}
 
-    border-color:rgba(255,255,255,0.4);
+/* =========================
+   PROFILE ASIDE (WIDENED IMAGE +10%)
+========================= */
 
-    transform:translateY(-2px);
+.profile-aside{
+    width:320px;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+
+.image-container{
+    position:relative;
+
+    width:100%;
+
+    max-width:340px;
+}
+
+.profile-image{
+    width:100%;
+    height:650px;
+
+    object-fit:cover;
+
+    border-radius:24px;
+
+    display:block;
+}
+
+/* GRADIENT OVERLAY */
+
+.image-container::after{
+    content:"";
+
+    position:absolute;
+
+    left:0;
+    right:0;
+    bottom:0;
+
+    height:50%;
+
+    border-radius:0 0 24px 24px;
+
+    background:linear-gradient(
+        to top,
+        rgba(0,0,0,0.65),
+        rgba(0,0,0,0)
+    );
+}
+
+/* CAMERA BUTTON */
+
+.camera-btn{
+    position:absolute;
+
+    bottom:15px;
+    right:15px;
+
+    width:42px;
+    height:42px;
+
+    border:none;
+
+    border-radius:50%;
+
+    background:white;
+
+    font-size:20px;
+
+    cursor:pointer;
+
+    z-index:2;
 }
 
 /* =========================
@@ -370,44 +395,32 @@ body{
 
     .sidebar{
         width:100%;
-        min-width:100%;
 
         position:relative;
     }
 
     .main{
         margin-left:0;
-
-        padding:40px 20px;
     }
 
     .profile-card{
-        width:100%;
-
         flex-direction:column;
 
-        gap:40px;
-
-        align-items:center;
-
-        padding:35px;
+        padding:30px;
     }
 
-    .left-side,
-    .right-side{
+    .profile-details,
+    .profile-aside{
         width:100%;
     }
 
-    .right-side{
-        min-height:auto;
-
-        gap:50px;
+    .profile-image{
+        height:500px;
     }
 
     .title{
-        text-align:center;
-
         font-size:42px;
+
+        text-align:center;
     }
-   
 }

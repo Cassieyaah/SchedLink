@@ -2,7 +2,12 @@
 session_start();
 include("../includes/db.php");
 
-$user_id = 1;
+if (!isset($_SESSION['user_id'])) {
+    header("Location: loginSYSTEM.php");
+    exit();
+}
+
+$user_id = $_SESSION['user_id'];
 
 /* FETCH USER DATA */
 $query = "
@@ -135,8 +140,8 @@ mysqli_close($conn);
     <!-- PROFILE CARD -->
     <div class="profile-card">
 
-        <!-- LEFT SIDE -->
-        <div class="left-side">
+        <!-- PROFILE DETAILS -->
+        <div class="profile-details">
 
             <h1 class="title">
                 Profile
@@ -154,34 +159,6 @@ mysqli_close($conn);
                     <input
                     type="text"
                     value="<?php echo htmlspecialchars($data['full_name']); ?>"
-                    readonly>
-
-                </div>
-
-                <!-- EMAIL -->
-                <div class="list-item">
-
-                    <span class="label">
-                        Email
-                    </span>
-
-                    <input
-                    type="text"
-                    value="<?php echo htmlspecialchars($data['email']); ?>"
-                    readonly>
-
-                </div>
-
-                <!-- ROLE -->
-                <div class="list-item">
-
-                    <span class="label">
-                        Role
-                    </span>
-
-                    <input
-                    type="text"
-                    value="<?php echo ucfirst(htmlspecialchars($data['role'])); ?>"
                     readonly>
 
                 </div>
@@ -214,12 +191,45 @@ mysqli_close($conn);
 
                 </div>
 
+                <!-- ROLE -->
+                <div class="list-item">
+
+                    <span class="label">
+                        Role
+                    </span>
+
+                    <input
+                    type="text"
+                    value="<?php echo ucfirst(htmlspecialchars($data['role'])); ?>"
+                    readonly>
+
+                </div>
+
+                <!-- EMAIL -->
+                <div class="list-item">
+
+                    <span class="label">
+                        Email
+                    </span>
+
+                    <input
+                    type="text"
+                    value="<?php echo htmlspecialchars($data['email']); ?>"
+                    readonly>
+
+                </div>
+
             </div>
+
+            <!-- EDIT BUTTON -->
+            <button class="edit-btn">
+                Edit Profile
+            </button>
 
         </div>
 
-        <!-- RIGHT SIDE -->
-        <div class="right-side">
+        <!-- PROFILE ASIDE -->
+        <div class="profile-aside">
 
             <div class="image-container">
 
@@ -233,11 +243,6 @@ mysqli_close($conn);
                 </button>
 
             </div>
-
-            <!-- EDIT BUTTON -->
-            <button class="edit-btn">
-                Edit Profile
-            </button>
 
         </div>
 
