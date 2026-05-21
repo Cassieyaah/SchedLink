@@ -2,12 +2,7 @@
 session_start();
 include("../includes/db.php");
 
-if (!isset($_SESSION['user_id'])) {
-    header("Location: loginSYSTEM.php");
-    exit();
-}
-
-$user_id = $_SESSION['user_id'];
+$user_id = 1;
 
 /* FETCH USER DATA */
 $query = "
@@ -51,7 +46,7 @@ mysqli_close($conn);
     <title>Profile</title>
 
     <!-- CSS -->
-    <link rel="stylesheet" href="profile.css">
+    <link rel="stylesheet" href="../css/profile.css">
 
 </head>
 
@@ -65,7 +60,7 @@ mysqli_close($conn);
         <!-- PROFILE -->
         <div class="profile">
 
-            <img src="images.jpg" alt="Profile">
+            <img src="../media/images.jpg" alt="Profile">
 
             <!-- FULL NAME -->
             <h3>
@@ -102,15 +97,15 @@ mysqli_close($conn);
 
         <div class="nav">
 
-            <a href="studentdashboard.php">
+            <a href="../php/studentdashboard.php">
                 Dashboard
             </a>
 
-            <a href="schedule.php">
+            <a href="../php/schedule.php">
                 My Schedule
             </a>
 
-            <a href="logout.php" class="logout-btn">
+            <a href="../php/logout.php" class="logout-btn">
                 Logout
             </a>
 
@@ -124,7 +119,7 @@ mysqli_close($conn);
     <!-- FOOTER -->
     <div class="sidebar-footer">
 
-        <img src="cvsulogo.png" alt="CvSU Logo">
+        <img src="../media/cvsulogo.png" alt="CvSU Logo">
 
         <p>
             Cavite State University
@@ -229,7 +224,7 @@ mysqli_close($conn);
             <div class="image-container">
 
                 <img
-                src="images.jpg"
+                src="../media/images.jpg"
                 class="profile-image"
                 alt="Profile Image">
 
