@@ -1,6 +1,6 @@
 <?php
 session_start();
-include 'db.php'; 
+include '../includes/db.php'; 
 
 $sql_create_db = "CREATE DATABASE IF NOT EXISTS $database";
 $conn->query($sql_create_db);
@@ -81,7 +81,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     
-    <link rel="stylesheet" href="logIn.css">
+    <link rel="stylesheet" href="../css/logIn.css">
 </head>
 <body>
 

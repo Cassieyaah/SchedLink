@@ -18,7 +18,7 @@ body{
     justify-content:center;
     align-items:center;
 
-    padding:20px;
+    padding:12px;
 
     background-size:cover;
     background-position:center;
@@ -31,7 +31,9 @@ body{
     width:100%;
     max-width:950px;
 
-    max-height: calc(100vh - 40px);
+    height: 96vh;
+    max-height: calc(100vh - 24px);
+
     display:flex;
     border-radius:20px;
     overflow:hidden;
@@ -45,8 +47,7 @@ body{
 .left-panel{
     flex:1;
 
-    padding: 40px;
-    padding-top: 0px;
+    padding: 55px;
     color:white;
 
     display:flex;
@@ -78,14 +79,14 @@ body{
 .features{
     display:flex;
     flex-direction:column;
-    gap:8px;
+    gap:16px;
 }
 
 .feature-item{
     display:flex;
     align-items:center;
     gap:10px;
-    font-size:13px;
+    font-size:14px;
 }
 
 .feature-icon{
@@ -102,10 +103,10 @@ body{
 }
 
 .right-panel{
-    width:400px;
+    width:460px;
 
     background:white;
-    padding:22px;
+    padding:50px 42px;
 
     display:flex;
     flex-direction:column;
@@ -116,7 +117,7 @@ body{
 .right-panel h2{
     font-size:29px;
     color:#2c3e50;
-    margin-bottom:10px;
+    margin-bottom-top:10px;
 }
 
 .subtitle{
@@ -128,11 +129,11 @@ body{
 form label{
     display:block;
 
-    margin-top:4px;
-    margin-bottom:3px;
+    margin-top:10px;
+    margin-bottom:6px;
 
     font-weight:bold;
-    font-size:13px;
+    font-size:14px;
     color:#333;
 }
 
@@ -140,8 +141,8 @@ form input,
 form select{
     width:100%;
 
-    padding:8px;
-    margin-bottom:8px;
+    padding:11px 12px;
+    margin-bottom: 14px;
 
     border:1px solid #dcdcdc;
     border-radius:10px;
@@ -199,7 +200,7 @@ form select:focus{
     width:100%;
 
     margin-top:12px;
-    padding:11px;
+    padding:14px;
 
     border:none;
     border-radius:10px;
@@ -207,7 +208,7 @@ form select:focus{
     background:#0B6B3A;
     color:white;
 
-    font-size:14px;
+    font-size:15px;
     font-weight:bold;
 
     cursor:pointer;
@@ -330,6 +331,13 @@ form select:focus{
     to{
         opacity:1;
         transform:translateY(0);
+    }
+}
+
+@media(max-height:750px){
+
+    .container{
+        transform:scale(0.96);
     }
 }
 
