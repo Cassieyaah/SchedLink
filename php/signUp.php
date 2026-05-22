@@ -1,13 +1,13 @@
 <?php
 session_start();
 
-include 'db.php';
+include '../includes/db.php';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     $fullname = trim($_POST['fullname']);
     $email = trim($_POST['email']);
-    $role = $_POST['role'];
+    $role = "student";
     $password = $_POST['password'];
     $confirmPassword = $_POST['confirm-password'];
 
@@ -69,6 +69,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <link rel="stylesheet" href="../css/signUp.css">
 
 </head>
+
+<?php
+            if (isset($_SESSION['error'])) {
+                echo '<div class="error-message">' . $_SESSION['error'] . '</div>';
+                unset($_SESSION['error']);
+            } 
+
+            if (isset($_SESSION['success'])) {
+                echo '<div class="success-message">' . $_SESSION['success'] . '</div>';
+                unset($_SESSION['success']);
+            }
+
+        ?>
 
 <body>
 
@@ -150,18 +163,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             Register using your official university credentials
         </p>
 
-        <?php
-            if (isset($_SESSION['error'])) {
-                echo '<div class="error-message">' . $_SESSION['error'] . '</div>';
-                unset($_SESSION['error']);
-            } 
-
-            if (isset($_SESSION['success'])) {
-                echo '<div class="success-message">' . $_SESSION['success'] . '</div>';
-                unset($_SESSION['success']);
-            }
-
-        ?>
         <form action="signUp.php" method="POST">
 
             <label for="fullname">FULL NAME</label>
@@ -183,16 +184,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 placeholder="example@cvsu.edu.ph"
                 required
             >
-
-            <label for="role">REGISTER AS</label>
-
-            <select id="role" name="role" required>
-
-                <option value="">Select Role</option>
-                <option value="student">Student</option>
-                <option value="instructor">Instructor</option>
-
-            </select>
 
             <label for="password">PASSWORD</label>
 
@@ -249,7 +240,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <div class="footer-text">
 
             Already have an account?
-            <a href="loginSYSTEM.html">Login</a>
+            <a href="loginSYSTEM.php">Login</a>
 
         </div>
 
