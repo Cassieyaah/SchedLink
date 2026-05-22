@@ -2,7 +2,6 @@
 session_start();
 include("../includes/db.php");
 
-/* CHECK IF USER IS LOGGED IN */
 if (!isset($_SESSION['user_id'])) {
     header("Location: ../php/login.php");
     exit();
@@ -10,36 +9,54 @@ if (!isset($_SESSION['user_id'])) {
 
 $user_id = $_SESSION['user_id'];
 
-/* UPLOAD PROFILE PICTURE */
-if (isset($_POST['upload_picture'])) {
+/* =========================
+   UPDATE PROFILE
+========================= */
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
 
-    if (isset($_FILES['profile_picture']) && $_FILES['profile_picture']['error'] == 0) {
+    $fullname = $_POST['fullname'];
+    $email = $_POST['email'];
+    $student_number = $_POST['student_number'];
+    $program = $_POST['program'];
+
+    $sql1 = "UPDATE users SET fullname = ?, email = ? WHERE user_id = ?";
+    $stmt1 = mysqli_prepare($conn, $sql1);
+    mysqli_stmt_bind_param($stmt1, "ssi", $fullname, $email, $user_id);
+    mysqli_stmt_execute($stmt1);
+    mysqli_stmt_close($stmt1);
+
+    $sql2 = "UPDATE students SET student_number = ?, program = ? WHERE user_id = ?";
+    $stmt2 = mysqli_prepare($conn, $sql2);
+    mysqli_stmt_bind_param($stmt2, "ssi", $student_number, $program, $user_id);
+    mysqli_stmt_execute($stmt2);
+    mysqli_stmt_close($stmt2);
+
+    header("Location: ../php/profile.php");
+    exit();
+}
+
+/* =========================
+   PROFILE PICTURE UPLOAD
+========================= */
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['profile_picture'])) {
+
+    if ($_FILES['profile_picture']['error'] === 0) {
 
         $file_name = time() . "_" . basename($_FILES['profile_picture']['name']);
-
         $target_path = "../uploads/" . $file_name;
 
-        $image_type = strtolower(pathinfo($target_path, PATHINFO_EXTENSION));
+        $ext = strtolower(pathinfo($target_path, PATHINFO_EXTENSION));
+        $allowed = ["jpg", "jpeg", "png", "gif"];
 
-        $allowed_types = ["jpg", "jpeg", "png", "gif"];
-
-        if (in_array($image_type, $allowed_types)) {
+        if (in_array($ext, $allowed)) {
 
             if (move_uploaded_file($_FILES['profile_picture']['tmp_name'], $target_path)) {
 
-                $update_query = "
-                    UPDATE users
-                    SET profile_picture = ?
-                    WHERE user_id = ?
-                ";
-
-                $update_stmt = mysqli_prepare($conn, $update_query);
-
-                mysqli_stmt_bind_param($update_stmt, "si", $file_name, $user_id);
-
-                mysqli_stmt_execute($update_stmt);
-
-                mysqli_stmt_close($update_stmt);
+                $update = "UPDATE users SET profile_picture = ? WHERE user_id = ?";
+                $stmt = mysqli_prepare($conn, $update);
+                mysqli_stmt_bind_param($stmt, "si", $file_name, $user_id);
+                mysqli_stmt_execute($stmt);
+                mysqli_stmt_close($stmt);
 
                 header("Location: profile.php");
                 exit();
@@ -48,100 +65,36 @@ if (isset($_POST['upload_picture'])) {
     }
 }
 
-/* FETCH BASIC USER DATA */
+/* =========================
+   FETCH DATA
+========================= */
 $query = "
     SELECT 
-        user_id,
-        fullname,
-        email,
-        role,
-        profile_picture
+        users.fullname,
+        users.email,
+        users.profile_picture,
+        students.student_number,
+        students.program
     FROM users
-    WHERE user_id = ?
+    LEFT JOIN students 
+        ON users.user_id = students.user_id
+    WHERE users.user_id = ?
 ";
 
 $stmt = mysqli_prepare($conn, $query);
-
 mysqli_stmt_bind_param($stmt, "i", $user_id);
-
 mysqli_stmt_execute($stmt);
-
 $result = mysqli_stmt_get_result($stmt);
 
 $data = mysqli_fetch_assoc($result);
 
 mysqli_stmt_close($stmt);
-
-/* CHECK USER ROLE */
-$role = $data['role'];
-
-/* DEFAULT VALUES */
-$student_number = "";
-$program = "";
-$department = "";
-$fb_link = "";
-
-/* STUDENT ACCOUNT */
-if ($role == "student") {
-
-    $student_query = "
-        SELECT 
-            student_number,
-            program
-        FROM students
-        WHERE user_id = ?
-    ";
-
-    $student_stmt = mysqli_prepare($conn, $student_query);
-
-    mysqli_stmt_bind_param($student_stmt, "i", $user_id);
-
-    mysqli_stmt_execute($student_stmt);
-
-    $student_result = mysqli_stmt_get_result($student_stmt);
-
-    $student_data = mysqli_fetch_assoc($student_result);
-
-    mysqli_stmt_close($student_stmt);
-
-    if ($student_data) {
-        $student_number = $student_data['student_number'];
-        $program = $student_data['program'];
-    }
-}
-
-/* FACULTY ACCOUNT */
-elseif ($role == "faculty") {
-
-    $faculty_query = "
-        SELECT 
-            department,
-            fb_link
-        FROM faculties
-        WHERE user_id = ?
-    ";
-
-    $faculty_stmt = mysqli_prepare($conn, $faculty_query);
-
-    mysqli_stmt_bind_param($faculty_stmt, "i", $user_id);
-
-    mysqli_stmt_execute($faculty_stmt);
-
-    $faculty_result = mysqli_stmt_get_result($faculty_stmt);
-
-    $faculty_data = mysqli_fetch_assoc($faculty_result);
-
-    mysqli_stmt_close($faculty_stmt);
-
-    if ($faculty_data) {
-        $department = $faculty_data['department'];
-        $fb_link = $faculty_data['fb_link'];
-    }
-}
-
 mysqli_close($conn);
 
-/* DEFAULT PROFILE PICTURE */
+if (!$data) {
+    die("User not found.");
+}
+
 $profile_picture = (!empty($data['profile_picture']) && file_exists("../uploads/" . $data['profile_picture']))
     ? "../uploads/" . $data['profile_picture']
     : "../media/images.jpg";
@@ -151,16 +104,11 @@ $profile_picture = (!empty($data['profile_picture']) && file_exists("../uploads/
 <html lang="en">
 
 <head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student Profile</title>
 
-    <meta charset="UTF-8">
-
-    <meta name="viewport"
-    content="width=device-width, initial-scale=1.0">
-
-    <title>Profile</title>
-
-    <link rel="stylesheet" href="../css/profile.css">
-
+<link rel="stylesheet" href="../css/profile.css">
 </head>
 
 <body>
@@ -170,71 +118,26 @@ $profile_picture = (!empty($data['profile_picture']) && file_exists("../uploads/
 
     <div>
 
-        <!-- PROFILE -->
         <div class="profile">
-
             <img src="<?php echo $profile_picture; ?>" alt="Profile">
-
-            <h3>
-                <?php echo htmlspecialchars($data['fullname']); ?>
-            </h3>
-
-            <?php if ($role == "student"): ?>
-
-                <p class="profile-role">
-                    Student Account
-                </p>
-
-            <?php elseif ($role == "faculty"): ?>
-
-                <p class="profile-role">
-                    Faculty Account
-                </p>
-
-            <?php else: ?>
-
-                <p class="profile-role">
-                    Admin Account
-                </p>
-
-            <?php endif; ?>
-
+            <h3><?php echo htmlspecialchars($data['fullname']); ?></h3>
         </div>
 
-        <!-- MENU -->
-        <p class="section-title">
-            GENERAL
-        </p>
+        <p class="section-title">GENERAL</p>
 
         <div class="nav">
-
-            <a href="../php/studentdashboard.php">
-                Dashboard
-            </a>
-
-            <a href="../php/schedule.php">
-                My Schedule
-            </a>
-
-            <a href="../php/logout.php" class="logout-btn">
-                Logout
-            </a>
-
+            <a href="../php/studentdashboard.php">Dashboard</a>
+            <a href="../php/schedule.php">My Schedule</a>
+            <a href="../php/logout.php" class="logout-btn">Logout</a>
         </div>
 
         <div class="divider"></div>
 
     </div>
 
-    <!-- FOOTER -->
     <div class="sidebar-footer">
-
         <img src="../media/cvsulogo.png" alt="CvSU Logo">
-
-        <p>
-            Cavite State University
-        </p>
-
+        <p>Cavite State University</p>
     </div>
 
 </div>
@@ -242,169 +145,154 @@ $profile_picture = (!empty($data['profile_picture']) && file_exists("../uploads/
 <!-- MAIN -->
 <div class="main">
 
-    <!-- PROFILE CARD -->
     <div class="profile-card">
 
-        <!-- PROFILE DETAILS -->
         <div class="profile-details">
 
-            <h1 class="title">
-                Profile
-            </h1>
+            <h1 class="title">Profile</h1>
 
             <div class="profile-list">
 
-                <!-- FULL NAME -->
                 <div class="list-item">
-
-                    <span class="label">
-                        Full Name
-                    </span>
-
-                    <input
-                    type="text"
-                    value="<?php echo htmlspecialchars($data['fullname']); ?>"
-                    readonly>
-
+                    <span class="label">Full Name</span>
+                    <input type="text" value="<?php echo htmlspecialchars($data['fullname']); ?>" readonly>
                 </div>
 
-                <!-- ROLE -->
                 <div class="list-item">
-
-                    <span class="label">
-                        Role
-                    </span>
-
-                    <input
-                    type="text"
-                    value="<?php echo ucfirst(htmlspecialchars($role)); ?>"
-                    readonly>
-
+                    <span class="label">Student Number</span>
+                    <input type="text" value="<?php echo htmlspecialchars($data['student_number'] ?? 'Not Assigned'); ?>" readonly>
                 </div>
 
-                <!-- EMAIL -->
                 <div class="list-item">
-
-                    <span class="label">
-                        Email
-                    </span>
-
-                    <input
-                    type="text"
-                    value="<?php echo htmlspecialchars($data['email']); ?>"
-                    readonly>
-
+                    <span class="label">Program</span>
+                    <input type="text" value="<?php echo htmlspecialchars($data['program'] ?? 'Not Assigned'); ?>" readonly>
                 </div>
 
-                <!-- STUDENT DETAILS -->
-                <?php if ($role == "student"): ?>
-
-                    <div class="list-item">
-
-                        <span class="label">
-                            Student Number
-                        </span>
-
-                        <input
-                        type="text"
-                        value="<?php echo htmlspecialchars($student_number); ?>"
-                        readonly>
-
-                    </div>
-
-                    <div class="list-item">
-
-                        <span class="label">
-                            Program
-                        </span>
-
-                        <input
-                        type="text"
-                        value="<?php echo htmlspecialchars($program); ?>"
-                        readonly>
-
-                    </div>
-
-                <?php endif; ?>
-
-                <!-- FACULTY DETAILS -->
-                <?php if ($role == "faculty"): ?>
-
-                    <div class="list-item">
-
-                        <span class="label">
-                            Department
-                        </span>
-
-                        <input
-                        type="text"
-                        value="<?php echo htmlspecialchars($department); ?>"
-                        readonly>
-
-                    </div>
-
-                    <div class="list-item">
-
-                        <span class="label">
-                            Facebook Link
-                        </span>
-
-                        <input
-                        type="text"
-                        value="<?php echo htmlspecialchars($fb_link); ?>"
-                        readonly>
-
-                    </div>
-
-                <?php endif; ?>
+                <div class="list-item">
+                    <span class="label">Email</span>
+                    <input type="text" value="<?php echo htmlspecialchars($data['email']); ?>" readonly>
+                </div>
 
             </div>
 
-            <button class="edit-btn">
-                Edit Profile
-            </button>
+            <button class="edit-btn" onclick="openModal()">Edit Profile</button>
 
         </div>
 
-        <!-- PROFILE ASIDE -->
         <div class="profile-aside">
 
-            <div class="image-container">
+    <div class="image-container">
 
-                <img
-                src="<?php echo $profile_picture; ?>"
-                class="profile-image"
-                alt="Profile Image">
+        <img src="<?php echo $profile_picture; ?>" class="profile-image" alt="Profile">
 
-                <!-- UPLOAD FORM -->
-                <form method="POST" enctype="multipart/form-data">
+        <div class="profile-role">STUDENT</div>
 
-                    <label class="camera-btn">
+    </div>
 
-                        +
+    <!-- CHANGE PROFILE BUTTON (OUTSIDE IMAGE) -->
+    <form method="POST" enctype="multipart/form-data">
 
-                        <input
-                        type="file"
-                        name="profile_picture"
-                        accept="image/*"
-                        onchange="this.form.submit()"
-                        hidden>
+        <label class="change-profile-btn">
+            +
+            <input type="file" name="profile_picture" accept="image/*"
+                   onchange="this.form.submit()" hidden>
+        </label>
 
-                    </label>
+    </form>
 
-                    <input
-                    type="hidden"
-                    name="upload_picture">
-
-                </form>
-
-            </div>
+</div>
 
         </div>
 
     </div>
 
 </div>
+
+<!-- =========================
+     MODAL (AJAX FIXED)
+========================= -->
+<div id="editModal" class="modal">
+
+    <div class="modal-content">
+
+        <span class="close" onclick="closeModal()">&times;</span>
+
+        <h2>Edit Profile</h2>
+
+        <form id="profileForm">
+
+            <label>Full Name</label>
+            <input type="text" name="fullname"
+                   value="<?php echo htmlspecialchars($data['fullname']); ?>">
+
+            <label>Email</label>
+            <input type="email" name="email"
+                   value="<?php echo htmlspecialchars($data['email']); ?>">
+
+            <label>Student Number</label>
+            <input type="text" name="student_number"
+                   value="<?php echo htmlspecialchars($data['student_number'] ?? ''); ?>">
+
+            <label>Program</label>
+            <input type="text" name="program"
+                   value="<?php echo htmlspecialchars($data['program'] ?? ''); ?>">
+
+            <button type="button" class="save-btn" onclick="saveProfile()">
+                Save Changes
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+
+<!-- =========================
+     JS (AJAX)
+========================= -->
+<script>
+function openModal(){
+    document.getElementById("editModal").classList.add("show");
+}
+
+function closeModal(){
+    document.getElementById("editModal").classList.remove("show");
+}
+
+function saveProfile() {
+
+    let form = document.getElementById("profileForm");
+    let formData = new FormData(form);
+
+    fetch("update_profile.php", {
+        method: "POST",
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+
+        if (data.status === "success") {
+
+            closeModal();
+
+            // refresh updated data
+            location.reload();
+        }
+
+    })
+    .catch(err => {
+        console.error(err);
+    });
+}
+
+window.onclick = function(event){
+    let modal = document.getElementById("editModal");
+
+    if(event.target === modal){
+        closeModal();
+    }
+}
+</script>
 
 </body>
 </html>

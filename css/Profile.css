@@ -8,9 +8,7 @@
 body{
     display:flex;
     min-height:100vh;
-
     background:white;
-
     color:#fff;
 }
 
@@ -23,7 +21,6 @@ body{
     min-width:260px;
 
     background:rgba(11,107,58,0.88);
-
     backdrop-filter:blur(14px);
 
     color:white;
@@ -37,7 +34,6 @@ body{
     box-shadow:5px 0 20px rgba(0,0,0,0.25);
 
     position:fixed;
-
     top:0;
     left:0;
     bottom:0;
@@ -45,42 +41,27 @@ body{
     z-index:1000;
 }
 
-/* DIVIDER */
-
 .divider{
     height:1px;
-
     background:rgba(255,255,255,0.15);
-
     margin:10px 0;
 }
 
-/* PROFILE */
-
 .profile{
     background:rgba(255,255,255,0.12);
-
     padding:15px;
-
     border-radius:14px;
-
     text-align:center;
-
     margin-bottom:14px;
-
     border:1px solid rgba(255,255,255,0.15);
 }
 
 .profile img{
     width:70px;
     height:70px;
-
     border-radius:50%;
-
     margin-bottom:10px;
-
     border:2px solid rgba(255,255,255,0.4);
-
     object-fit:cover;
 }
 
@@ -90,48 +71,34 @@ body{
 
 .profile p{
     font-size:12px;
-
     opacity:0.85;
 }
 
 .section-title{
     font-size:11px;
-
     letter-spacing:1px;
-
     opacity:0.75;
-
     margin:14px 0 6px;
-
     color:white;
 }
-
-/* NAVIGATION */
 
 .nav{
     display:flex;
     flex-direction:column;
-
     gap:4px;
 }
 
 .nav a{
     color:white;
-
     text-decoration:none;
-
     padding:10px 12px;
-
     border-radius:10px;
-
     font-size:14px;
-
     transition:0.25s;
 }
 
 .nav a:hover{
     background:rgba(255,255,255,0.18);
-
     transform:translateX(4px);
 }
 
@@ -147,11 +114,8 @@ body{
     text-decoration:underline;
 }
 
-/* FOOTER */
-
 .sidebar-footer{
     text-align:center;
-
     padding-top:10px;
 }
 
@@ -161,11 +125,8 @@ body{
 
 .sidebar-footer p{
     font-size:11px;
-
     opacity:0.65;
-
     margin-top:6px;
-
     color:white;
 }
 
@@ -175,9 +136,7 @@ body{
 
 .main{
     flex:1;
-
     margin-left:260px;
-
     min-height:100vh;
 
     display:flex;
@@ -188,27 +147,25 @@ body{
 }
 
 /* =========================
-   PROFILE CARD (DARKER GREEN)
+   PROFILE CARD
 ========================= */
 
 .profile-card{
     width:100%;
+    height:100%;
+    min-height:calc(100vh - 60px);
 
-    min-height:90vh;
+    background:rgba(6,80,42,0.92);
 
-    background:rgba(6,80,42,0.92); /* darker green */
+    border-radius:25px;
 
-    border-radius:20px;
-
-    padding:50px;
+    padding:60px;
 
     display:flex;
     justify-content:center;
     align-items:center;
 
-    gap:70px;
-
-    border:1px solid rgba(255,255,255,0.12);
+    gap:90px;
 
     box-shadow:0 10px 30px rgba(0,0,0,0.28);
 
@@ -221,84 +178,58 @@ body{
 
 .profile-details{
     width:65%;
-
     display:flex;
     flex-direction:column;
-
     justify-content:center;
 }
 
 .title{
-    font-size:55px;
-
-    margin-bottom:35px;
+    font-size:65px;
+    margin-bottom:45px;
+    line-height:1.1;
 }
-
-/* PROFILE LIST */
 
 .profile-list{
     display:flex;
     flex-direction:column;
-
-    gap:25px;
+    gap:31px;
 }
 
 .list-item{
     display:flex;
     flex-direction:column;
-
-    gap:10px;
+    gap:12px;
 }
 
 .label{
-    font-size:11px;
-
-    letter-spacing:2px;
-
+    font-size:14px;
+    letter-spacing:3px;
     text-transform:uppercase;
-
     color:#c9f7cf;
-
     font-weight:bold;
 }
 
 .list-item input{
     border:none;
-
-    border-bottom:1px solid rgba(255,255,255,0.35);
-
-    padding:12px 0;
-
+    border-bottom:2px solid rgba(255,255,255,0.35);
+    padding:16px 0;
     background:transparent;
-
-    font-size:16px;
-
+    font-size:20px;
     color:white;
-
     outline:none;
 }
 
-/* EDIT BUTTON */
-
 .edit-btn{
-    width:180px;
-
-    padding:14px;
-
-    margin-top:35px;
-
+    width:205px;
+    padding:16px;
+    margin-top:40px;
     border:none;
-
-    border-radius:10px;
-
+    border-radius:13px;
     background:white;
-
     color:#06502a;
-
-    font-size:14px;
-
+    font-size:16px;
+    font-weight:bold;
     cursor:pointer;
-
     transition:0.2s;
 }
 
@@ -307,80 +238,110 @@ body{
 }
 
 /* =========================
-   PROFILE IMAGE
+   PROFILE IMAGE AREA
 ========================= */
 
 .profile-aside{
-    width:320px;
-
+    width:440px;
     display:flex;
+    flex-direction:column;
     justify-content:center;
     align-items:center;
 }
 
+/* IMAGE CONTAINER */
 .image-container{
     position:relative;
-
     width:100%;
-
-    max-width:340px;
+    max-width:440px;
+    aspect-ratio:1 / 1;
 }
 
+/* PROFILE IMAGE */
 .profile-image{
     width:100%;
-    height:650px;
-
+    aspect-ratio:1 / 1;
     object-fit:cover;
-
-    border-radius:24px;
-
+    border-radius:28px;
     display:block;
+
+    border:9px solid rgba(255,255,255,0.95);
 }
 
-/* GRADIENT OVERLAY */
+/* =========================
+   GRADIENT OVER IMAGE ONLY
+   (NOT AFFECTING BORDER)
+========================= */
 
 .image-container::after{
     content:"";
-
     position:absolute;
 
-    left:0;
-    right:0;
-    bottom:0;
+    left:9px;
+    right:9px;
+    bottom:9px;
 
-    height:50%;
+    height:45%;
 
-    border-radius:0 0 24px 24px;
+    border-radius:0 0 20px 20px;
 
     background:linear-gradient(
         to top,
         rgba(0,0,0,0.65),
         rgba(0,0,0,0)
     );
+
+    pointer-events:none;
 }
 
-/* CAMERA BUTTON */
-
-.camera-btn{
+/* STUDENT LABEL */
+.profile-role{
     position:absolute;
 
-    bottom:15px;
-    right:15px;
+    left:50%;
+    bottom:14px;
+    transform:translateX(-50%);
 
-    width:42px;
-    height:42px;
+    font-size:40px;
+    font-weight:bold;
+    letter-spacing:2px;
+    text-transform:capitalize;
+
+    color:white;
+    z-index:3;
+    text-align:center;
+}
+
+/* CHANGE PROFILE BUTTON */
+.change-profile-btn{
+    margin-top:15px;
+
+    width:58px;
+    height:58px;
 
     border:none;
-
     border-radius:50%;
 
     background:white;
+    color:#06502a;
 
-    font-size:20px;
+    font-size:30px;
+    font-weight:bold;
 
     cursor:pointer;
 
-    z-index:2;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    line-height:1;
+
+    transition:0.2s;
+}
+
+.change-profile-btn:hover{
+    transform:scale(1.08);
+    opacity:0.85;
 }
 
 /* =========================
@@ -395,7 +356,6 @@ body{
 
     .sidebar{
         width:100%;
-
         position:relative;
     }
 
@@ -405,8 +365,8 @@ body{
 
     .profile-card{
         flex-direction:column;
-
-        padding:30px;
+        padding:40px;
+        gap:45px;
     }
 
     .profile-details,
@@ -414,13 +374,78 @@ body{
         width:100%;
     }
 
-    .profile-image{
-        height:500px;
+    .image-container{
+        max-width:320px;
     }
 
     .title{
-        font-size:42px;
-
+        font-size:44px;
         text-align:center;
     }
+}
+
+/* =========================
+   MODAL
+========================= */
+
+.modal{
+    display:none;
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background:rgba(0,0,0,0.6);
+    justify-content:center;
+    align-items:center;
+    z-index:2000;
+}
+
+.modal.show{
+    display:flex;
+}
+
+.modal-content{
+    background:white;
+    color:#333;
+    width:450px;
+    padding:32px;
+    border-radius:16px;
+    position:relative;
+    box-shadow:0 10px 30px rgba(0,0,0,0.3);
+}
+
+.modal-content input{
+    width:100%;
+    padding:13px;
+    margin:8px 0 16px;
+    border:1px solid #ccc;
+    border-radius:10px;
+    outline:none;
+    font-size:15px;
+}
+
+.close{
+    position:absolute;
+    right:18px;
+    top:12px;
+    font-size:26px;
+    cursor:pointer;
+}
+
+.save-btn{
+    width:100%;
+    padding:15px;
+    background:#0b6b3a;
+    color:white;
+    border:none;
+    border-radius:10px;
+    cursor:pointer;
+    font-size:15px;
+    font-weight:bold;
+    transition:0.2s;
+}
+
+.save-btn:hover{
+    background:#095a31;
 }
