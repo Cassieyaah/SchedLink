@@ -91,10 +91,19 @@ body{
 .nav a{
     color:white;
     text-decoration:none;
+
     padding:10px 12px;
     border-radius:10px;
+
     font-size:14px;
+
+    display:flex;
+    gap:8px;
+    align-items:center;
+
     transition:0.25s;
+
+    margin:0;
 }
 
 .nav a:hover{
@@ -102,16 +111,15 @@ body{
     transform:translateX(4px);
 }
 
-.nav a.active{
-    background:rgba(255,255,255,0.20);
+.active{
+    background:rgba(255,255,255,0.22);
 }
 
-.logout-btn{
-    font-weight:bold;
-}
+.divider{
+    height:1px;
+    background:rgba(255,255,255,0.15);
 
-.logout-btn:hover{
-    text-decoration:underline;
+    margin:8px 0;
 }
 
 .sidebar-footer{
@@ -121,13 +129,12 @@ body{
 
 .sidebar-footer img{
     width:45px;
+    margin-bottom:5px;
 }
 
 .sidebar-footer p{
     font-size:11px;
-    opacity:0.65;
-    margin-top:6px;
-    color:white;
+    opacity:0.8;
 }
 
 /* =========================
@@ -299,10 +306,10 @@ body{
     position:absolute;
 
     left:50%;
-    bottom:14px;
+    bottom:17px;
     transform:translateX(-50%);
 
-    font-size:40px;
+    font-size:30px;
     font-weight:bold;
     letter-spacing:2px;
     text-transform:capitalize;
