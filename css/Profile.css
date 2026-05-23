@@ -347,7 +347,7 @@ body{
 }
 .nav a i {
     margin-right: 8px;
-    color: #d1d5db; /* light gray */
+    color: #d1d5db;
 }
 
 .nav a:hover i {
@@ -437,7 +437,7 @@ body{
 
     border-radius:25px;
 
-    padding:60px;
+    padding:76px;
 
     display:flex;
     justify-content:center;
@@ -643,7 +643,7 @@ body{
 
     .profile-card{
         flex-direction:column;
-        padding:40px;
+        padding:51px;
         gap:45px;
     }
 
