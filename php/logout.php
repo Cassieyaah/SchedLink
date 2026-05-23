@@ -4,6 +4,6 @@ session_start();
 session_unset();
 session_destroy();
 
-header("Location: loginSYSTEM.php");
+header("Location:../php/login.php");
 exit();
 ?>
