@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: May 21, 2026 at 01:26 PM
+-- Generation Time: May 23, 2026 at 05:49 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -49,7 +49,10 @@ CREATE TABLE `faculty_schedules` (
   `day` varchar(50) NOT NULL,
   `time_start` time NOT NULL,
   `time_end` time NOT NULL,
-  `room` varchar(50) DEFAULT NULL
+  `room` varchar(50) DEFAULT NULL,
+  `semester` enum('1st Semester','2nd Semester') NOT NULL,
+  `school_year` varchar(9) NOT NULL,
+  `status` enum('active','archived') NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -94,7 +97,10 @@ CREATE TABLE `student_schedules` (
   `time_start` time NOT NULL,
   `time_end` time NOT NULL,
   `day` varchar(50) NOT NULL,
-  `room` varchar(50) DEFAULT NULL
+  `room` varchar(50) DEFAULT NULL,
+  `semester` enum('1st Semester','2nd Semester') NOT NULL,
+  `school_year` varchar(9) NOT NULL,
+  `status` enum('active','archived') NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -111,6 +117,13 @@ CREATE TABLE `users` (
   `role` enum('student','faculty','admin') NOT NULL,
   `profile_picture` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `users`
+--
+
+INSERT INTO `users` (`user_id`, `fullname`, `email`, `password`, `role`, `profile_picture`) VALUES
+(1, 'System Administrator', 'admin@cvsu.edu.ph', '$2y$10$5rlbf6N5cfdOw8KKJFj/uezX68stLOEnaGwSLpKlsUulybOcEz5ry', 'admin', NULL);
 
 --
 -- Indexes for dumped tables
@@ -203,7 +216,7 @@ ALTER TABLE `student_schedules`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- Constraints for dumped tables
