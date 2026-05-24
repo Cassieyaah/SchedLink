@@ -40,12 +40,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $_SESSION['email'] = $user['email'];
             $_SESSION['role'] = $user['role']; 
 
-            $role = $user['role'];
+            $role = strtolower(trim($user['role']));
 
             if ($role === 'admin') {
                 $redirect_page = 'admindashboard.php';
             } elseif ($role === 'faculty') {
-                $redirect_page = 'studentdashboard.php';
+                $redirect_page = 'facultydashboard.php';
             } else {
                 $redirect_page = 'studentdashboard.php';
             }

@@ -237,7 +237,7 @@ function e(string $value): string {
                 Upload Schedule
             </a>
 
-            <a class="active" href="faculty_profile.php">
+            <a class="active" href="facultyprofile.php">
                 <i class="fa-solid fa-user"></i>
                 Profile
             </a>
@@ -365,7 +365,7 @@ function saveProfile() {
         if (el) data.append(name, el.value.trim());
     });
 
-    fetch("faculty_profile.php", {
+    fetch("facultyprofile.php", {
         method: "POST",
         body: data
     })
@@ -395,7 +395,7 @@ document.getElementById("profile_picture").addEventListener("change", function (
     const formData = new FormData();
     formData.append("profile_picture", file);
 
-    fetch("faculty_profile.php", {
+    fetch("facultyprofile.php", {
         method: "POST",
         body: formData
     })
