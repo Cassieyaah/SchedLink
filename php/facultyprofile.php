@@ -200,9 +200,9 @@ function e(string $value): string {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Faculty Profile</title>
-
+    <link rel="stylesheet" href="../fonts/css/all.min.css">
+    <link rel="stylesheet" href="../css/studentDashBoard.css">
     <link rel="stylesheet" href="../css/profile.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 
 <body>
@@ -237,7 +237,7 @@ function e(string $value): string {
                 Upload Schedule
             </a>
 
-            <a class="active" href="faculty_profile.php">
+            <a class="active" href="facultyprofile.php">
                 <i class="fa-solid fa-user"></i>
                 Profile
             </a>
@@ -365,7 +365,7 @@ function saveProfile() {
         if (el) data.append(name, el.value.trim());
     });
 
-    fetch("faculty_profile.php", {
+    fetch("facultyprofile.php", {
         method: "POST",
         body: data
     })
@@ -395,7 +395,7 @@ document.getElementById("profile_picture").addEventListener("change", function (
     const formData = new FormData();
     formData.append("profile_picture", file);
 
-    fetch("faculty_profile.php", {
+    fetch("facultyprofile.php", {
         method: "POST",
         body: formData
     })

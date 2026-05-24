@@ -187,12 +187,8 @@ body{
 .main{
     flex:1;
     padding:90px 30px 30px;
-
     animation:fadeIn 0.35s ease-out;
-
     will-change:transform, opacity;
-    margin-left:260px;
-    padding:90px 30px 30px;
 }
 
 @keyframes fadeIn{
@@ -341,6 +337,7 @@ body{
 
     background: linear-gradient(135deg, #0e8a4a, #0b6b3a);
 }
+
 .logout-btn {
     color: #ff4d4d;
     font-weight: bold;
@@ -410,4 +407,5 @@ body{
         margin-left:0;
         padding:100px 15px 20px;
     }
+
 }

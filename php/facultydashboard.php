@@ -12,11 +12,10 @@ $user_id = (int) $_SESSION['user_id'];
 $stmt = $conn->prepare("
     SELECT
         users.*,
-        students.student_id,
-        students.student_number,
-        students.program
+        faculties.professor_id,
+        faculties.department
     FROM users
-    LEFT JOIN students ON users.user_id = students.user_id
+    LEFT JOIN faculties ON users.user_id = faculties.user_id
     WHERE users.user_id = ?
 ");
 $stmt->bind_param("i", $user_id);
@@ -32,9 +31,9 @@ if (!$user) {
 $role     = strtolower(trim($user['role']));
 $fullname = $user['fullname'];
 
-if ($role !== "student") {
-    if ($role === "faculty") {
-        header("Location: facultydashboard.php");
+if ($role !== "faculty") {
+    if ($role === "student") {
+        header("Location: studentdashboard.php");
         exit();
     }
 
@@ -61,10 +60,8 @@ if ($stored_picture !== '') {
     if (file_exists($uploaded_path)) {
         $profile_picture = $uploaded_path;
     }
-    // If uploaded file no longer exists on disk, fall back to default
 }
 
-// Verify the default image itself exists; if not, use a generated avatar
 if ($profile_picture === $default_image && !file_exists($default_image)) {
     $profile_picture = "https://ui-avatars.com/api/?name=" . urlencode($fullname) . "&size=200&background=4a90d9&color=fff";
 }
@@ -72,10 +69,10 @@ if ($profile_picture === $default_image && !file_exists($default_image)) {
 /* =========================
    SCHEDULE QUERY
 ========================= */
-if (!empty($user['student_id'])) {
-    $scheduleQuery = "SELECT * FROM student_schedules WHERE student_id = ?";
+if (!empty($user['professor_id'])) {
+    $scheduleQuery = "SELECT * FROM faculty_schedules WHERE professor_id = ?";
     $stmt2 = $conn->prepare($scheduleQuery);
-    $stmt2->bind_param("i", $user['student_id']);
+    $stmt2->bind_param("i", $user['professor_id']);
     $stmt2->execute();
     $scheduleResult = $stmt2->get_result();
 } else {
@@ -93,7 +90,7 @@ unset($_SESSION['upload_success'], $_SESSION['upload_error']);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Dashboard</title>
+    <title>Faculty Dashboard</title>
     <link rel="stylesheet" href="../css/studentDashBoard.css">
     <link rel="stylesheet" href="../css/uploadSchedule.css">
     <link rel="stylesheet" href="../fonts/css/all.min.css">
@@ -110,19 +107,8 @@ unset($_SESSION['upload_success'], $_SESSION['upload_error']);
 
             <img src="<?php echo htmlspecialchars($profile_picture, ENT_QUOTES, 'UTF-8'); ?>" alt="Profile Picture">
 
-            <?php if ($user): ?>
-
-                <h3><?php echo htmlspecialchars($user['fullname']); ?></h3>
-
-                <p>Student Account</p>
-
-            <?php else: ?>
-
-                <h3>Guest User</h3>
-                <p>No account found</p>
-                <p>Please sign up</p>
-
-            <?php endif; ?>
+            <h3><?php echo htmlspecialchars($user['fullname']); ?></h3>
+            <p>Faculty Account</p>
 
         </div>
 
@@ -130,7 +116,7 @@ unset($_SESSION['upload_success'], $_SESSION['upload_error']);
 
         <div class="nav">
 
-            <a class="active" href="studentdashboard.php">
+            <a class="active" href="facultydashboard.php">
                 <i class="fa-solid fa-chart-line"></i> Dashboard
             </a>
 
@@ -142,7 +128,7 @@ unset($_SESSION['upload_success'], $_SESSION['upload_error']);
                 <i class="fa-solid fa-upload"></i> Upload Schedule
             </a>
 
-            <a href="profile.php">
+            <a href="facultyprofile.php">
                 <i class="fa-solid fa-user"></i> Profile
             </a>
 
@@ -166,7 +152,7 @@ unset($_SESSION['upload_success'], $_SESSION['upload_error']);
 <!-- HEADER -->
 <div class="header">
 
-    <h2>Student Dashboard</h2>
+    <h2>Faculty Dashboard</h2>
 
     <div class="user-box">
         Welcome, <?php echo htmlspecialchars($user['fullname']); ?>
@@ -189,7 +175,7 @@ unset($_SESSION['upload_success'], $_SESSION['upload_error']);
         </div>
     <?php endif; ?>
 
-    <?php if ($role == "student" && (empty($user['student_number']) || empty($user['program']))): ?>
+    <?php if (empty($user['professor_id']) || empty($user['department'])): ?>
         <div style="
             background:#fff3cd;
             color:#856404;
@@ -198,8 +184,8 @@ unset($_SESSION['upload_success'], $_SESSION['upload_error']);
             margin-bottom:20px;
             border:1px solid #ffeeba;
         ">
-            Your profile is incomplete.
-            <a href="profile.php" style="
+            Your faculty profile is incomplete.
+            <a href="facultyprofile.php" style="
                 display:inline-block;
                 margin-left:10px;
                 color:#0b6b3a;
@@ -222,17 +208,17 @@ unset($_SESSION['upload_success'], $_SESSION['upload_error']);
 
             <div class="stat-card">
                 <h4>Total Subjects</h4>
-                <p>5</p>
+                <p><?php echo $scheduleResult ? $scheduleResult->num_rows : 0; ?></p>
             </div>
 
             <div class="stat-card">
                 <h4>Upcoming Classes</h4>
-                <p>3</p>
+                <p>0</p>
             </div>
 
             <div class="stat-card">
                 <h4>Matched Schedules</h4>
-                <p>2</p>
+                <p>0</p>
             </div>
 
         </div>
@@ -291,7 +277,7 @@ unset($_SESSION['upload_success'], $_SESSION['upload_error']);
             </div>
             <div>
                 <h3 id="uploadModalTitle">Upload Schedule</h3>
-                <p>Upload a clear screenshot or file of your class schedule.</p>
+                <p>Upload a clear screenshot or file of your faculty schedule.</p>
             </div>
         </div>
 
