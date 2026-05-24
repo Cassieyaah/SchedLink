@@ -4,7 +4,7 @@ session_start();
 include("../includes/db.php");
 
 if (!isset($_SESSION['user_id'])) {
-    header("Location: ../php/login.php");
+    header("Location: ../php/logIn.php");
     exit();
 }
 
@@ -19,7 +19,7 @@ $role_row    = mysqli_fetch_assoc($role_result);
 mysqli_stmt_close($role_check);
 
 if (!$role_row || $role_row['role'] !== 'admin') {
-    header("Location: ../php/login.php");
+    header("Location: ../php/logIn.php");
     exit();
 }
 
@@ -131,7 +131,7 @@ mysqli_stmt_close($stmt);
 
 if (!$data) {
     session_destroy();
-    header("Location: ../php/login.php");
+    header("Location: ../php/logIn.php");
     exit();
 }
 
@@ -192,19 +192,24 @@ function e(string $value): string {
                 Dashboard
             </a>
 
-            <a href="manage_users.php">
-                <i class="fa-solid fa-users"></i>
-                Manage Users
-            </a>
-
-            <a href="manage_schedules.php">
-                <i class="fa-regular fa-calendar"></i>
-                Manage Schedules
-            </a>
-
-            <a class="active" href="admin_profile.php">
+            <a class="active" href="adminprofile.php">
                 <i class="fa-solid fa-user"></i>
                 Profile
+            </a>
+
+            <a href="create_account.php">
+                <i class="fa-solid fa-user-plus"></i>
+                Create Account
+            </a>
+
+            <a href="user_list.php">
+                <i class="fa-solid fa-users"></i>
+                User List
+            </a>
+
+            <a href="schedule_conflicts.php">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                Schedule Conflict Management
             </a>
 
             <a href="logout.php">
@@ -315,7 +320,7 @@ function saveProfile() {
     data.append("fullname", document.getElementById("edit_fullname").value.trim());
     data.append("email",    document.getElementById("edit_email").value.trim());
 
-    fetch("admin_profile.php", { method: "POST", body: data })
+    fetch("adminprofile.php", { method: "POST", body: data })
         .then(r => r.json())
         .then(res => {
             if (res.status === "success") {
@@ -342,7 +347,7 @@ document.getElementById("profile_picture").addEventListener("change", function (
     const formData = new FormData();
     formData.append("profile_picture", file);
 
-    fetch("admin_profile.php", { method: "POST", body: formData })
+    fetch("adminprofile.php", { method: "POST", body: formData })
         .then(r => r.json())
         .then(res => {
             if (res.status === "success") {
