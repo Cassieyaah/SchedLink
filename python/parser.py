@@ -1,6 +1,4 @@
 import re
-from datetime import datetime
-
 
 def parse_schedule(line):
 
@@ -21,11 +19,6 @@ def parse_schedule(line):
     return None
 
 def extract_meetings(line):
-
-    pattern = r"(\d{1,2}:\d{2}-\d{1,2}:\d{2})\s+(MON|TUE|WED|THU|TH|FRI|SAT|SUN|M|T|W|F|S)"
-
-    matches = re.findall(pattern, line)
-
     meetings = []
 
     for time, day in matches:
