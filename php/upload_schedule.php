@@ -72,6 +72,36 @@ if (!move_uploaded_file($file['tmp_name'], $target)) {
     exit();
 }
 
-$_SESSION['upload_success'] = "Schedule uploaded successfully. OCR processing will be added soon.";
+$python = realpath("../python/venv/Scripts/python.exe");
+
+$script = realpath("../python/test_ocr.py");
+
+$uploaded_file = realpath($target);
+
+$command = "\"$python\" \"$script\" \"$uploaded_file\"";
+
+$output = shell_exec($command);
+
+if (!$output) {
+
+    $_SESSION['upload_error'] = "OCR processing failed.";
+
+    header("Location: " . $redirect_page);
+
+    exit();
+}
+
+$parsed_data = json_decode($output, true);
+
+if ($parsed_data === null) {
+
+    $_SESSION['upload_error'] = "Failed to parse OCR output.";
+
+    header("Location: " . $redirect_page);
+
+    exit();
+}
+
+$_SESSION['parsed_schedule'] = $parsed_data;
 header("Location: " . $redirect_page);
 exit();
