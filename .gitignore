@@ -5,3 +5,4 @@ uploads/
 .env
 .vscode/
 python/venv/
+__pycache__/
