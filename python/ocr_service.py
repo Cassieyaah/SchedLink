@@ -2,45 +2,59 @@ import cv2
 import pytesseract
 import json
 import sys
-from PIL import Image
-from cleanUp import clean_ocr_text, merge_multiline_schedules
+import os
+
+from cleanUp import clean_ocr_text, split_schedules
 from parser import parse_schedule
 
-# Tesseract path
+# Tesseract installation path
 pytesseract.pytesseract.tesseract_cmd = (
     r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 )
 
-# Load image
-image_path = sys.argv[1]
+def run_ocr():
+    if len(sys.argv) < 2:
+        print(json.dumps({"error": "No image path provided"}, indent=4))
+        return
 
-img = cv2.imread(image_path)
+    image_path = sys.argv[1]
+    if not os.path.exists(image_path):
+        print(json.dumps({"error": "Image file not found"}, indent=4))
+        return
 
-# Convert to grayscale
-gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    img = cv2.imread(image_path)
 
+    # Grayscale conversion
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    
+    # Double the resolution scale to dramatically help Tesseract recognize small letters
+    gray = cv2.resize(gray, None, fx=2.0, fy=2.0, interpolation=cv2.INTER_CUBIC)
+    
+    # Target black text pixels cleanly using Gaussian Adaptive Thresholding
+    thresh = cv2.adaptiveThreshold(
+        gray,
+        255,
+        cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+        cv2.THRESH_BINARY,
+        13,
+        5
+    )
 
-# Enlarge image
-gray = cv2.resize(gray, None, fx=2, fy=2)
+    # PSM 4 looks across columns sequentially (essential for handling tables gracefully)
+    custom_config = r'--oem 3 --psm 4'
+    text = pytesseract.image_to_string(thresh, config=custom_config)
 
-# Thresholding
-_, thresh = cv2.threshold(gray, 150, 255, cv2.THRESH_BINARY)
+    cleaned_text = clean_ocr_text(text)
+    schedules = split_schedules(cleaned_text)
 
-# OCR config
-custom_config = r'--oem 3 --psm 6'
+    parsed_schedules = []
+    for sched in schedules:
+        parsed = parse_schedule(sched)
+        if parsed:
+            parsed_schedules.append(parsed)
 
-# Extract text
-text = pytesseract.image_to_string(thresh, config=custom_config)
+    # Output valid JSON string payload to standard stream
+    print(json.dumps(parsed_schedules, indent=4))
 
-cleaned_text = clean_ocr_text(text)
-merged_schedules = merge_multiline_schedules(cleaned_text)
-parsed_schedules = []
-
-for sched in merged_schedules:
-
-    parsed = parse_schedule(sched)
-
-    if parsed:
-        parsed_schedules.append(parsed)
-
-print(json.dumps(parsed_schedules, indent=4))
+if __name__ == "__main__":
+    run_ocr()
