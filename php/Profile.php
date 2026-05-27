@@ -10,9 +10,7 @@ if (!isset($_SESSION['user_id'])) {
 
 $user_id = (int) $_SESSION['user_id']; // Cast to int for safety
 
-/* =========================
-   UPDATE PROFILE (AJAX)
-========================= */
+/* update profile ajax*/
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['fullname'])) {
 
     ob_clean();
@@ -25,14 +23,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['fullname'])) {
         $student_number = trim($_POST['student_number']);
         $program        = trim($_POST['program']);
 
-        /* USERS TABLE */
+        /* users table */
         $sql1 = "UPDATE users SET fullname = ?, email = ? WHERE user_id = ?";
         $stmt1 = mysqli_prepare($conn, $sql1);
         mysqli_stmt_bind_param($stmt1, "ssi", $fullname, $email, $user_id);
         mysqli_stmt_execute($stmt1);
         mysqli_stmt_close($stmt1);
 
-        /* CHECK STUDENT — use prepared statement to prevent SQL injection */
+        /* check student */
         $check_sql  = "SELECT user_id FROM students WHERE user_id = ?";
         $check_stmt = mysqli_prepare($conn, $check_sql);
         mysqli_stmt_bind_param($check_stmt, "i", $user_id);
@@ -64,9 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['fullname'])) {
     exit();
 }
 
-/* =========================
-   PROFILE PICTURE UPLOAD
-========================= */
+/* upload profile pic*/
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['profile_picture'])) {
 
     ob_clean();
@@ -139,9 +135,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['profile_picture'])) 
     exit();
 }
 
-/* =========================
-   FETCH USER DATA
-========================= */
+/* user data*/
 $query = "
 SELECT 
     users.fullname,
@@ -169,9 +163,7 @@ if (!$data) {
     exit();
 }
 
-/* =========================
-   PROFILE IMAGE RESOLUTION
-========================= */
+/* profile image resolution */
 $default_image   = "../media/images.jpg";
 $profile_picture = $default_image;
 
@@ -319,7 +311,7 @@ function e(string $value): string {
 
 </div>
 
-<!-- EDIT MODAL -->
+<!-- edit modal -->
 <div id="editModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
 
     <div class="modal-content">
