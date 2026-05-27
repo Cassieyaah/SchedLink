@@ -1,8 +1,9 @@
 import re
 
 def parse_schedule(line):
-    # Normalize noise right away
-    line = re.sub(r'[-—_=+]+', ' ', line)
+    # Standardize casing and clear tricky layout punctuation symbols
+    line = line.upper()
+    line = re.sub(r'[-—_=+:]+', ' ', line)
     line = re.sub(r'\s+', ' ', line).strip()
     
     # 1. Isolate Schedule Code
@@ -10,112 +11,117 @@ def parse_schedule(line):
     if not sched_match:
         return None
     schedule_code = sched_match.group(1)
-    
     working_line = line.replace(schedule_code, '').strip()
 
-    # 2. Extract Valid Time Blocks (e.g., "13:00-14:00")
-    time_pairs = re.findall(r'\b(\d{1,2}:\d{2})\s*[-]*\s*(\d{1,2}:\d{2})\b', working_line)
-    
-    # Strip times out of working line to avoid polluting description fields
-    for t_pair in re.findall(r'\b\d{1,2}:\d{2}\b', working_line):
-        working_line = working_line.replace(t_pair, '')
-
-    # 3. Smart Course Code Extraction Pass (Handles spaces like "GNED 08" or "COSC 6SA")
+    # 2. Extract Course Code
     course_code = "UNKNOWN"
-    # Match known prefixes followed by optional spaces, then numbers/letters
-    course_pattern = r'\b(GNED|COSC|DCIT|MATH|BEIT|FITT|BPSY|CHBH)\s*([0-9A-Z]{1,4})\b'
-    course_match = re.search(course_pattern, working_line)
+    known_prefixes = {"BIOL", "CHEM", "MATH", "SOIL", "GNED", "FITT", "BPSY", "CHBH", "COSC", "DCIT", "BEIT"}
     
+    course_match = re.search(r'\b(BIOL|CHEM|MATH|SOIL|GNED|FITT|BPSY|CHBH|COSC|DCIT|BEIT)\s*(\d{1,3}[A-Z]?)\b', working_line)
     if course_match:
-        prefix = course_match.group(1)
-        suffix = course_match.group(2)
-        course_code = f"{prefix}{suffix}"
-        # Remove the matched course code from the working line
-        working_line = working_line.replace(course_match.group(0), '')
+        course_code = f"{course_match.group(1)}{course_match.group(2)}"
+        working_line = working_line.replace(course_match.group(0), "")
     else:
-        # Fallback regex for any unknown 2-4 letter prefix separated by a space and a number
-        fallback_match = re.search(r'\b([A-Z]{2,4})\s+(\d{1,3})\b', working_line)
-        if fallback_match:
-            course_code = f"{fallback_match.group(1)}{fallback_match.group(2)}"
-            working_line = working_line.replace(fallback_match.group(0), '')
+        generic_match = re.search(r'\b([A-Z]{2,4})\s*(\d{1,3}[A-Z]?)\b', working_line)
+        if generic_match:
+            course_code = f"{generic_match.group(1)}{generic_match.group(2)}"
+            working_line = working_line.replace(generic_match.group(0), "")
 
-    # 4. Token Classification Engine for Units, Days, and Rooms
-    tokens = working_line.split()
+    # 3. Flexible Time Pair Extraction (Handles variable spacings like "15 00 17 00" or "7 00 13 00")
+    # Finds all numbers that look like hours or minutes
+    all_numbers = re.findall(r'\b\d{1,4}\b', working_line)
+    time_tokens = []
     
-    units = "3.00"  # Default standard fallback
+    idx = 0
+    while idx < len(all_numbers):
+        num = list(all_numbers)[idx]
+        # If it's a 3 or 4 digit compact timestamp like 0700 or 1300
+        if len(num) in [3, 4] and num.endswith("00"):
+            val = int(num[:-2])
+            if 7 <= val <= 22:
+                time_tokens.append(f"{val}:00")
+            working_line = re.sub(r'\b' + num + r'\b', '', working_line)
+        # If it's a split pair like "15" followed by "00"
+        elif idx + 1 < len(all_numbers) and all_numbers[idx+1] == "00":
+            val = int(num)
+            if 7 <= val <= 22:
+                time_tokens.append(f"{val}:00")
+                # Remove both values to protect description processing
+                working_line = re.sub(r'\b' + num + r'\s+00\b', '', working_line)
+            idx += 1
+        idx += 1
+
+    # Re-group individual times into clean Start-End Ranges
+    time_pairs = []
+    for t_idx in range(0, len(time_tokens) - 1, 2):
+        if t_idx + 1 < len(time_tokens):
+            time_pairs.append(f"{time_tokens[t_idx]}-{time_tokens[t_idx+1]}")
+
+    # 4. Extract Days Safely (Normalizes Tesseract's "WW" glitch down to "W")
     days_found = []
-    rooms_found = []
-    description_words = []
-
-    valid_days = {"M", "T", "W", "F", "S", "TH", "THU", "FRI", "SAT", "WED", "MON", "TUE", "WW"}
-
-    for token in tokens:
-        token_clean = token.strip().upper().replace(".", "").replace(",", "")
-        if not token_clean:
-            continue
-
-        # Check for Units Column
-        if re.match(r'^[1-5]00$', token_clean) or re.match(r'^[1-5][.,]00$', token):
-            units = f"{token_clean[0]}.00"
-            continue
-        elif token_clean in ['200', '300', '500']:
-            units = f"{token_clean[0]}.00"
-            continue
-
-        # Check for Day Labels
-        if token_clean in valid_days:
-            normalized_day = "W" if token_clean == "WW" else token_clean
-            days_found.append(normalized_day)
-            continue
-
-        # Check for Room Labels
-        if "LH" in token_clean or token_clean == "GYM" or (token_clean.isdigit() and len(token_clean) == 3):
-            rooms_found.append(token_clean)
-            continue
-
-        # Build description list
-        description_words.append(token)
-
-    # 5. Build and Deep-Clean Course Description
-    description = " ".join(description_words).strip()
-    description = re.sub(r'[^A-Z0-9\s/&,.]', '', description.upper())
+    # Temporarily normalize "WW" tokens to individual "W" letters
+    day_working = working_line.replace("WW", " W ")
+    day_tokens = re.findall(r'\b(M|T|W|TH|F|S|THU|FRI|SAT|WED|MON|TUE)\b', day_working)
     
-    # Strip annoying OCR artifact tails (e.g., loose ending numbers/letters like " 8", " 1")
-    description = re.sub(r'\s+[0-9A-Z]\b$', '', description)
-    description = re.sub(r'\s+[0-9A-Z]\b$', '', description) # Double pass to catch stacked artifacts
+    for day in day_tokens:
+        if day in ["M", "T", "W", "TH", "F", "S"]:
+            days_found.append(day)
+        elif day == "THU": days_found.append("TH")
+        elif day == "FRI": days_found.append("F")
+        elif day == "SAT": days_found.append("S")
+        elif day == "WED": days_found.append("W")
+        elif day == "MON": days_found.append("M")
+        elif day == "TUE": days_found.append("T")
+
+    # 5. Extract Room Identifiers
+    known_rooms = {"AGSC", "CAS", "DCS", "CSPEAR", "GYM", "LH", "T100"}
+    rooms_extracted = []
     
+    room_tokens = re.findall(r'\b(AGSC|CAS|DCS|CSPEAR|GYM|LH|T100|\d{3}[A-Z]?)\b', working_line)
+    for r_tok in room_tokens:
+        if r_tok not in rooms_extracted and r_tok not in ["300", "200", "500"]:
+            rooms_extracted.append(r_tok)
+
+    # 6. Extract Units Column
+    units = "3.00"
+    if "FITT" in course_code or "FITNESS" in working_line:
+        units = "2.00"
+    else:
+        unit_match = re.search(r'\b([1-5])[.,\s]*00\b', line)
+        if unit_match:
+            units = f"{unit_match.group(1)}.00"
+
+    # 7. Build Clean Course Description
+    description = working_line
+    # Clear out all layout metadata keys to leave a pristine course title
+    for scrap in list(known_rooms) + list(days_found) + ["300", "200", "500", "00", "WW"]:
+        description = re.sub(r'\b' + re.escape(scrap) + r'\b', '', description, flags=re.IGNORECASE)
+        
+    description = re.sub(r'\b\d+\b', '', description) # Scrub remaining loose single digits
+    description = re.sub(r'[^A-Z\s/&,]', '', description)
     description = re.sub(r'\s+', ' ', description).strip()
 
-    # Final backup check for units context
-    if units == "3.00" and ("FITNESS" in description or "FITT" in course_code):
-        units = "2.00"
+    if not description:
+        description = "GENERAL ACADEMIC COURSE"
 
-    # Assemble Meetings array dynamically
+    # 8. Coordinate Meetings Layer Array Symmetric Mapping
     meetings = []
     total_meetings_count = max(len(time_pairs), len(days_found))
-    
-    for i in range(total_meetings_count):
-        m_time = ""
-        if i < len(time_pairs):
-            m_time = f"{time_pairs[i][0]}-{time_pairs[i][1]}"
-        elif time_pairs:
-            m_time = f"{time_pairs[-1][0]}-{time_pairs[-1][1]}"
-
-        m_day = days_found[i] if i < len(days_found) else (days_found[-1] if days_found else "")
-        m_room = rooms_found[i] if i < len(rooms_found) else (rooms_found[-1] if rooms_found else "")
+    if total_meetings_count == 0 and rooms_extracted:
+        total_meetings_count = 1 # Fallback window for courses with rooms but missing schedules
         
-        if m_day in ["A", "I", "E", "O", "X"]:
-            m_day = ""
+    unified_room = " ".join(rooms_extracted).strip()
 
-        if m_time or m_day:
+    for i in range(total_meetings_count):
+        m_time = time_pairs[i] if i < len(time_pairs) else (time_pairs[-1] if time_pairs else "")
+        m_day = days_found[i] if i < len(days_found) else (days_found[-1] if days_found else "")
+        
+        if m_time or m_day or unified_room:
             meetings.append({
                 "time": m_time,
                 "day": m_day,
-                "room": m_room
+                "room": unified_room
             })
-
-    if not description:
-        description = "UNKNOWN COURSE DESCRIPTION"
 
     return {
         "schedule_code": schedule_code,
