@@ -4,16 +4,14 @@ session_start();
 include("../includes/db.php");
 
 if (!isset($_SESSION['user_id'])) {
-    header("Location: ../php/login.php");
+    header("Location: ../php/login.php"); //checks if user is logged in
     exit();
 }
 
 $admin_id = (int) $_SESSION['user_id'];
 
-/* =========================
-   VERIFY ADMIN ROLE
-========================= */
-$role_check = mysqli_prepare($conn, "SELECT role FROM users WHERE user_id = ?");
+/* if user is admin*/
+$role_check = mysqli_prepare($conn, "SELECT role FROM users WHERE user_id = ?"); //placeholder muna ng user, mamaya na
 if (!$role_check) die("Database error.");
 mysqli_stmt_bind_param($role_check, "i", $admin_id);
 mysqli_stmt_execute($role_check);
@@ -25,9 +23,7 @@ if (!$role_row || $role_row['role'] !== 'admin') {
     exit();
 }
 
-/* =========================
-   DELETE USER (AJAX)
-========================= */
+/* delete user (AJAX) */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_user_id'])) {
     ob_clean();
     header('Content-Type: application/json');
@@ -62,16 +58,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_user_id'])) {
     exit();
 }
 
-/* =========================
-   AUTO-DETECT FACULTY ROLE VALUE
-========================= */
+/*faculty*/
 $detect = mysqli_query($conn, "SELECT role FROM users WHERE role IN ('professor','faculty') LIMIT 1");
 $detected = mysqli_fetch_assoc($detect);
 $faculty_role = $detected['role'] ?? 'professor';
 
-/* =========================
-   FETCH USERS
-========================= */
+/* fetch users*/
 $filter_role  = $_GET['role'] ?? 'all';
 $search_query = trim($_GET['search'] ?? '');
 
@@ -108,18 +100,14 @@ $users = [];
 while ($row = mysqli_fetch_assoc($result)) $users[] = $row;
 mysqli_stmt_close($stmt);
 
-/* =========================
-   FETCH ADMIN INFO
-========================= */
+/* if admin*/
 $admin_stmt = mysqli_prepare($conn, "SELECT fullname, profile_picture FROM users WHERE user_id = ?");
 mysqli_stmt_bind_param($admin_stmt, "i", $admin_id);
 mysqli_stmt_execute($admin_stmt);
 $admin_data = mysqli_fetch_assoc(mysqli_stmt_get_result($admin_stmt));
 mysqli_stmt_close($admin_stmt);
 
-/* =========================
-   PROFILE IMAGE
-========================= */
+/*profile image*/
 $default_image   = "../media/images.jpg";
 $profile_picture = $default_image;
 $stored_picture  = trim($admin_data['profile_picture'] ?? '');
@@ -146,7 +134,7 @@ function e(string $v): string { return htmlspecialchars($v, ENT_QUOTES, 'UTF-8')
 </head>
 <body>
 
-<!-- SIDEBAR -->
+
 <div class="sidebar">
     <div>
         <div class="profile">
@@ -171,17 +159,17 @@ function e(string $v): string { return htmlspecialchars($v, ENT_QUOTES, 'UTF-8')
     </div>
 </div>
 
-<!-- HEADER -->
+
 <div class="header">
     <h2>User List</h2>
     <div class="user-box">Welcome, <?php echo e($admin_data['fullname']); ?></div>
 </div>
 
-<!-- MAIN -->
+
 <div class="main">
 <div class="dashboard-container admin-dashboard">
 
-    <!-- HEADING -->
+   
     <div class="admin-dashboard-heading">
         <div>
             <h3>Manage Users</h3>
@@ -193,7 +181,7 @@ function e(string $v): string { return htmlspecialchars($v, ENT_QUOTES, 'UTF-8')
         </a>
     </div>
 
-    <!-- FILTER BAR -->
+    <!-- filter button -->
     <form class="mu-filters" method="GET" action="user_list.php">
 
         <div class="mu-search">
@@ -219,7 +207,7 @@ function e(string $v): string { return htmlspecialchars($v, ENT_QUOTES, 'UTF-8')
 
     </form>
 
-    <!-- USER TABLE -->
+    <!-- user table -->
     <div class="admin-panel" style="padding: 0; overflow: hidden;">
 
         <div class="admin-panel-header" style="padding: 16px 18px 14px;">
@@ -301,7 +289,7 @@ function e(string $v): string { return htmlspecialchars($v, ENT_QUOTES, 'UTF-8')
 </div>
 </div>
 
-<!-- DELETE MODAL -->
+<!-- delete modal -->
 <div id="deleteModal" class="modal" aria-modal="true" role="dialog">
     <div class="modal-content">
 
