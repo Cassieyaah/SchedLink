@@ -382,5 +382,89 @@ links.forEach(link => {
 });
 </script>
 
+<?php if (!empty($_SESSION['ocr_preview_data'])): ?>
+<div class="upload-modal" id="previewScheduleModal" style="display: flex; z-index: 9999;">
+    <div class="upload-modal-backdrop"></div>
+    <div class="upload-modal-content" style="max-width: 850px; width: 90%; max-height: 85vh; overflow-y: auto;">
+        
+        <div class="upload-modal-header">
+            <div class="upload-modal-icon" style="background: #e6f4ea; color: #137333;">
+                <i class="fa-solid fa-list-check"></i>
+            </div>
+            <div>
+                <h3>Verify Extracted Schedule Data</h3>
+                <p>Tesseract has completed extraction processing. Review entries and correct any alignment errors before saving to your profile.</p>
+            </div>
+        </div>
+
+        <form action="save_verified_schedule.php" method="POST" class="schedule-upload-form">
+            <div class="preview-cards-container" style="margin: 20px 0; display: flex; flex-direction: column; gap: 15px;">
+                
+                <?php 
+                $course_index = 0;
+                foreach ($_SESSION['ocr_preview_data'] as $course): 
+                    $sched_code  = htmlspecialchars($course['schedule_code'] ?? '');
+                    $course_code = htmlspecialchars($course['course_code'] ?? '');
+                    $description = htmlspecialchars($course['description'] ?? '');
+                    
+                    if (!empty($course['meetings'])):
+                        foreach ($course['meetings'] as $meeting_index => $meeting):
+                            $day   = htmlspecialchars($meeting['day'] ?? '');
+                            $room  = htmlspecialchars($meeting['room'] ?? '');
+                            $time  = htmlspecialchars($meeting['time'] ?? '');
+                ?>
+                    <div class="preview-row-card" style="background: #f8f9fa; border: 1px solid #dadce0; padding: 15px; border-radius: 8px; display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; align-items: center;">
+                        
+                        <div>
+                            <label style="font-size: 11px; color: #5f6368; font-weight: bold; display: block; margin-bottom: 4px;">Sched Code</label>
+                            <input type="text" name="courses[<?php echo $course_index; ?>][sched_code]" value="<?php echo $sched_code; ?>" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px;" required>
+                        </div>
+
+                        <div>
+                            <label style="font-size: 11px; color: #5f6368; font-weight: bold; display: block; margin-bottom: 4px;">Course Code</label>
+                            <input type="text" name="courses[<?php echo $course_index; ?>][course_code]" value="<?php echo $course_code; ?>" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px;" required>
+                        </div>
+
+                        <div>
+                            <label style="font-size: 11px; color: #5f6368; font-weight: bold; display: block; margin-bottom: 4px;">Description</label>
+                            <input type="text" name="courses[<?php echo $course_index; ?>][description]" value="<?php echo $description; ?>" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px;" required>
+                        </div>
+
+                        <div>
+                            <label style="font-size: 11px; color: #5f6368; font-weight: bold; display: block; margin-bottom: 4px;">Day</label>
+                            <input type="text" name="courses[<?php echo $course_index; ?>][day]" value="<?php echo $day; ?>" placeholder="M/T/W/TH/F" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px;" required>
+                        </div>
+
+                        <div>
+                            <label style="font-size: 11px; color: #5f6368; font-weight: bold; display: block; margin-bottom: 4px;">Time Range</label>
+                            <input type="text" name="courses[<?php echo $course_index; ?>][time_range]" value="<?php echo $time; ?>" placeholder="13:00-15:00" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px;" required>
+                        </div>
+
+                        <div>
+                            <label style="font-size: 11px; color: #5f6368; font-weight: bold; display: block; margin-bottom: 4px;">Room</label>
+                            <input type="text" name="courses[<?php echo $course_index; ?>][room]" value="<?php echo $room; ?>" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px;">
+                        </div>
+
+                    </div>
+                <?php 
+                            $course_index++;
+                        endforeach;
+                    endif;
+                endforeach; 
+                ?>
+
+            </div>
+
+            <div class="upload-modal-actions">
+                <a href="clear_preview.php" class="secondary-upload-btn" style="text-decoration: none; text-align: center; line-height: 38px;">Discard Upload</a>
+                <button type="submit" class="primary-upload-btn" style="background: #137333;">
+                    <i class="fa-solid fa-square-check"></i> Confirm & Save Schedule
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+<?php endif; ?>
+
 </body>
 </html>

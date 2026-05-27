@@ -7,7 +7,7 @@ import os
 from cleanUp import clean_ocr_text, split_schedules
 from parser import parse_schedule
 
-# Tesseract installation path
+# Tesseract path configuration
 pytesseract.pytesseract.tesseract_cmd = (
     r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 )
@@ -24,13 +24,13 @@ def run_ocr():
 
     img = cv2.imread(image_path)
 
-    # Grayscale conversion
+    # Convert to grayscale
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     
-    # Double the resolution scale to dramatically help Tesseract recognize small letters
+    # Scale up text resolution
     gray = cv2.resize(gray, None, fx=2.0, fy=2.0, interpolation=cv2.INTER_CUBIC)
     
-    # Target black text pixels cleanly using Gaussian Adaptive Thresholding
+    # Apply binarization filtering
     thresh = cv2.adaptiveThreshold(
         gray,
         255,
@@ -40,7 +40,7 @@ def run_ocr():
         5
     )
 
-    # PSM 4 looks across columns sequentially (essential for handling tables gracefully)
+    # Process via sequential column layout mode
     custom_config = r'--oem 3 --psm 4'
     text = pytesseract.image_to_string(thresh, config=custom_config)
 
@@ -53,7 +53,7 @@ def run_ocr():
         if parsed:
             parsed_schedules.append(parsed)
 
-    # Output valid JSON string payload to standard stream
+    # Return pure JSON formatting to backend controller
     print(json.dumps(parsed_schedules, indent=4))
 
 if __name__ == "__main__":

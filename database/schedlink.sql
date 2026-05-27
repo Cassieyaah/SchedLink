@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: May 23, 2026 at 05:49 PM
+-- Generation Time: May 27, 2026 at 01:08 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -43,16 +43,16 @@ CREATE TABLE `faculties` (
 CREATE TABLE `faculty_schedules` (
   `professor_schedule_id` int(11) NOT NULL,
   `professor_id` int(11) NOT NULL,
-  `schedule_code` int(11) NOT NULL,
+  `schedule_code` varchar(50) NOT NULL,
   `course_code` varchar(50) NOT NULL,
   `course_description` varchar(255) NOT NULL,
   `day` varchar(50) NOT NULL,
   `time_start` time NOT NULL,
   `time_end` time NOT NULL,
   `room` varchar(50) DEFAULT NULL,
-  `semester` enum('1st Semester','2nd Semester') NOT NULL,
-  `school_year` varchar(9) NOT NULL,
-  `status` enum('active','archived') NOT NULL
+  `semester` enum('1st Semester','2nd Semester') NOT NULL DEFAULT '1st Semester',
+  `school_year` varchar(9) NOT NULL DEFAULT '2025-2026',
+  `status` enum('active','archived') NOT NULL DEFAULT 'active'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -91,17 +91,36 @@ CREATE TABLE `students` (
 CREATE TABLE `student_schedules` (
   `student_schedule_id` int(11) NOT NULL,
   `student_id` int(11) NOT NULL,
-  `schedule_code` int(11) NOT NULL,
+  `schedule_code` varchar(50) NOT NULL,
   `course_code` varchar(50) NOT NULL,
   `course_description` varchar(255) NOT NULL,
   `time_start` time NOT NULL,
   `time_end` time NOT NULL,
   `day` varchar(50) NOT NULL,
   `room` varchar(50) DEFAULT NULL,
-  `semester` enum('1st Semester','2nd Semester') NOT NULL,
-  `school_year` varchar(9) NOT NULL,
-  `status` enum('active','archived') NOT NULL
+  `semester` enum('1st Semester','2nd Semester') NOT NULL DEFAULT '1st Semester',
+  `school_year` varchar(9) NOT NULL DEFAULT '2025-2026',
+  `status` enum('active','archived') NOT NULL DEFAULT 'active'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `system_settings`
+--
+
+CREATE TABLE `system_settings` (
+  `id` int(11) NOT NULL DEFAULT 1,
+  `current_semester` enum('1st Semester','2nd Semester') NOT NULL DEFAULT '1st Semester',
+  `current_school_year` varchar(9) NOT NULL DEFAULT '2025-2026'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `system_settings`
+--
+
+INSERT INTO `system_settings` (`id`, `current_semester`, `current_school_year`) VALUES
+(1, '2nd Semester', '2025-2026');
 
 -- --------------------------------------------------------
 
@@ -123,7 +142,8 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`user_id`, `fullname`, `email`, `password`, `role`, `profile_picture`) VALUES
-(1, 'System Administrator', 'admin@cvsu.edu.ph', '$2y$10$5rlbf6N5cfdOw8KKJFj/uezX68stLOEnaGwSLpKlsUulybOcEz5ry', 'admin', NULL);
+(1, 'System Administrator', 'admin@cvsu.edu.ph', '$2y$10$5rlbf6N5cfdOw8KKJFj/uezX68stLOEnaGwSLpKlsUulybOcEz5ry', 'admin', NULL),
+(2, 'Bryron Gabriel Lim', 'bryrongabriel.lim@cvsu.edu.ph', '$2y$10$Q6m.EaHsmivr6mfSi6WJweBODmkOZNlBGTaIHAWwwjhWY/pRTleKK', 'student', NULL);
 
 --
 -- Indexes for dumped tables
@@ -165,6 +185,12 @@ ALTER TABLE `students`
 ALTER TABLE `student_schedules`
   ADD PRIMARY KEY (`student_schedule_id`),
   ADD KEY `student_id` (`student_id`);
+
+--
+-- Indexes for table `system_settings`
+--
+ALTER TABLE `system_settings`
+  ADD PRIMARY KEY (`id`);
 
 --
 -- Indexes for table `users`
@@ -216,7 +242,7 @@ ALTER TABLE `student_schedules`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- Constraints for dumped tables

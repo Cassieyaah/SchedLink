@@ -9,6 +9,7 @@ if (!isset($_SESSION['user_id'])) {
 
 $user_id = (int) $_SESSION['user_id'];
 
+// Resolve core authorization role profiles
 $stmt = $conn->prepare("SELECT role FROM users WHERE user_id = ?");
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
@@ -72,36 +73,45 @@ if (!move_uploaded_file($file['tmp_name'], $target)) {
     exit();
 }
 
+// ========================================================
+// REVISED PYTHON EXECUTION PIPELINE
+// ========================================================
+
+// 1. Locate Python binaries environment and renamed script execution
 $python = realpath("../python/venv/Scripts/python.exe");
-
-$script = realpath("../python/test_ocr.py");
-
+$script = realpath("../python/ocr_service.py"); // Updated script name here
 $uploaded_file = realpath($target);
 
-$command = "\"$python\" \"$script\" \"$uploaded_file\"";
+// Fail early if paths are broken to avoid executing a dead command
+if (!$python || !$script || !$uploaded_file) {
+    $_SESSION['upload_error'] = "System path configuration error. Verify file paths in your directory structure.";
+    header("Location: " . $redirect_page);
+    exit();
+}
 
+// 2. Build the execution string redirecting hidden terminal errors (2>&1)
+$command = "\"$python\" \"$script\" \"$uploaded_file\" 2>&1";
 $output = shell_exec($command);
 
 if (!$output) {
-
-    $_SESSION['upload_error'] = "OCR processing failed.";
-
+    $_SESSION['upload_error'] = "OCR processing failed. Terminal completely unresponsive.";
     header("Location: " . $redirect_page);
-
     exit();
 }
 
+// 3. Evaluate output stream data payload structure
 $parsed_data = json_decode($output, true);
 
 if ($parsed_data === null) {
-
-    $_SESSION['upload_error'] = "Failed to parse OCR output.";
-
+    // If it's not valid JSON, capture the raw error text string directly onto the dashboard view
+    $_SESSION['upload_error'] = "OCR Service Engine Error: <pre style='background:#fee; padding:10px; border-radius:4px;'>" . htmlspecialchars($output) . "</pre>";
     header("Location: " . $redirect_page);
-
     exit();
 }
 
-$_SESSION['parsed_schedule'] = $parsed_data;
+// CACHE PARSED DATA IN SESSION INSTEAD OF BLIND SAVING TO THE DATABASE
+$_SESSION['ocr_preview_data'] = $parsed_data;
+$_SESSION['upload_success'] = "OCR analysis complete! Please review and confirm your parsed schedule below.";
+
 header("Location: " . $redirect_page);
 exit();
