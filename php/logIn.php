@@ -2,28 +2,6 @@
 session_start();
 include '../includes/db.php'; 
 
-$sql_create_db = "CREATE DATABASE IF NOT EXISTS $database";
-$conn->query($sql_create_db);
-$conn->select_db($database);
-
-$sql_create_table = "CREATE TABLE IF NOT EXISTS users (
-    user_id INT AUTO_INCREMENT PRIMARY KEY,
-    fullname VARCHAR(255) NOT NULL,
-    email VARCHAR(255) NOT NULL UNIQUE,
-    password VARCHAR(255) NOT NULL,
-    role ENUM('student','faculty','admin') NOT NULL,
-    profile_picture VARCHAR(255) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
-$conn->query($sql_create_table);
-
-$admin_email = "admin@cvsu.edu.ph";
-$check_admin = $conn->query("SELECT * FROM users WHERE email = '$admin_email'");
-if ($check_admin->num_rows == 0) {
-    $hashed_password = password_hash("admin123", PASSWORD_DEFAULT);
-    $sql_insert_admin = "INSERT INTO users (fullname, email, password, role) VALUES ('System Administrator', '$admin_email', '$hashed_password', 'admin')";
-    $conn->query($sql_insert_admin);
-}
-
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $email = $conn->real_escape_string($_POST['email']);
     $password = $_POST['password'];
