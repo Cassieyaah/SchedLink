@@ -33,16 +33,21 @@ $total_users = countRows($conn, "SELECT COUNT(*) AS total FROM users");
 $total_students = countRows($conn, "SELECT COUNT(*) AS total FROM users WHERE role = 'student'");
 $total_faculty = countRows($conn, "SELECT COUNT(*) AS total FROM users WHERE role = 'faculty'");
 $total_admins = countRows($conn, "SELECT COUNT(*) AS total FROM users WHERE role = 'admin'");
-$student_schedules = countRows($conn, "SELECT COUNT(*) AS total FROM student_schedules");
-$faculty_schedules = countRows($conn, "SELECT COUNT(*) AS total FROM faculty_schedules");
-$pending_matches = countRows($conn, "SELECT COUNT(*) AS total FROM matched_schedules WHERE match_status = 'pending'");
-$conflicts = countRows($conn, "SELECT COUNT(*) AS total FROM matched_schedules WHERE match_status = 'conflict'");
+
+$total_uploads = countRows($conn, "SELECT COUNT(*) AS total FROM schedule_uploads");
+$student_uploads = countRows($conn, "SELECT COUNT(*) AS total FROM schedule_uploads WHERE role = 'student'");
+$faculty_uploads = countRows($conn, "SELECT COUNT(*) AS total FROM schedule_uploads WHERE role = 'faculty'");
+
+$total_matched = countRows($conn, "SELECT COUNT(*) AS total FROM matched_schedules WHERE match_status = 'matched'");
+$total_pending_matches = countRows($conn, "SELECT COUNT(*) AS total FROM matched_schedules WHERE match_status = 'pending'");
+$total_no_match = countRows($conn, "SELECT COUNT(*) AS total FROM matched_schedules WHERE match_status = 'no_match'");
 
 $recent_users = $conn->query("
     SELECT fullname, email, role
     FROM users
     ORDER BY user_id DESC
     LIMIT 5
+
 ");
 
 $default_image = "../media/images.jpg";
@@ -108,10 +113,6 @@ function e(string $value): string {
 
             <a href="user_list.php">
                 <i class="fa-solid fa-users"></i> User List
-            </a>
-
-            <a href="schedule_conflicts.php">
-                <i class="fa-solid fa-triangle-exclamation"></i> Schedule Conflict Management
             </a>
 
             <a href="logout.php" class="logout-btn">
@@ -184,53 +185,47 @@ function e(string $value): string {
         </div>
 
         <div class="admin-grid">
-
             <div class="admin-panel">
                 <div class="admin-panel-header">
-                    <h4>Schedule Records</h4>
-                    <i class="fa-regular fa-calendar"></i>
+                    <h4>Schedule Upload Summary</h4>
+                    <i class="fa-solid fa-upload"></i>
                 </div>
 
                 <div class="admin-metric-row">
-                    <span>Student schedules</span>
-                    <strong><?php echo $student_schedules; ?></strong>
+                    <span>Total uploads</span>
+                    <strong><?php echo $total_uploads; ?></strong>
                 </div>
 
                 <div class="admin-metric-row">
-                    <span>Faculty schedules</span>
-                    <strong><?php echo $faculty_schedules; ?></strong>
+                    <span>Student uploads</span>
+                    <strong><?php echo $student_uploads; ?></strong>
                 </div>
 
                 <div class="admin-metric-row">
-                    <span>Total schedule records</span>
-                    <strong><?php echo $student_schedules + $faculty_schedules; ?></strong>
+                    <span>Faculty uploads</span>
+                    <strong><?php echo $faculty_uploads; ?></strong>
                 </div>
             </div>
 
             <div class="admin-panel">
                 <div class="admin-panel-header">
-                    <h4>Conflict Management</h4>
-                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <h4>Schedule Matching Status</h4>
+                    <i class="fa-solid fa-code-branch"></i>
                 </div>
 
                 <div class="conflict-summary">
                     <div>
-                        <span>Pending Reviews</span>
-                        <strong><?php echo $pending_matches; ?></strong>
+                        <span>Matched Schedules</span>
+                        <strong><?php echo $total_matched; ?></strong>
                     </div>
 
                     <div>
-                        <span>Conflicts</span>
-                        <strong><?php echo $conflicts; ?></strong>
+                        <span>Pending Matches</span>
+                        <strong><?php echo $total_pending_matches; ?></strong>
                     </div>
                 </div>
 
-                <a href="schedule_conflicts.php" class="panel-link">
-                    Review schedule conflicts
-                    <i class="fa-solid fa-arrow-right"></i>
-                </a>
             </div>
-
             <div class="admin-panel recent-users-panel">
                 <div class="admin-panel-header">
                     <h4>Recent Users</h4>

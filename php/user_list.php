@@ -147,7 +147,6 @@ function e(string $v): string { return htmlspecialchars($v, ENT_QUOTES, 'UTF-8')
             <a href="adminprofile.php"><i class="fa-solid fa-user"></i> Profile</a>
             <a href="create_account.php"><i class="fa-solid fa-user-plus"></i> Create Account</a>
             <a class="active" href="user_list.php"><i class="fa-solid fa-users"></i> User List</a>
-            <a href="schedule_conflicts.php"><i class="fa-solid fa-triangle-exclamation"></i> Schedule Conflict Management</a>
             <a href="logout.php" class="logout-btn"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
         </div>
         <div class="divider"></div>

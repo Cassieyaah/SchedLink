@@ -162,7 +162,6 @@ CREATE TABLE `users` (
 
 INSERT INTO `users` (`user_id`, `fullname`, `email`, `password`, `role`, `profile_picture`) VALUES
 (1, 'System Administrator', 'admin@cvsu.edu.ph', '$2y$10$5rlbf6N5cfdOw8KKJFj/uezX68stLOEnaGwSLpKlsUulybOcEz5ry', 'admin', NULL),
-(2, 'Bryron Gabriel Lim', 'bryrongabriel.lim@cvsu.edu.ph', '$2y$10$Q6m.EaHsmivr6mfSi6WJweBODmkOZNlBGTaIHAWwwjhWY/pRTleKK', 'student', NULL);
 
 --
 -- Indexes for dumped tables

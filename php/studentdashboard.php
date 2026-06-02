@@ -541,9 +541,13 @@ links.forEach(link => {
 
             <div class="upload-modal-actions">
                 <a href="clear_preview.php" class="secondary-upload-btn" style="text-decoration: none; text-align: center; line-height: 38px;">Discard Upload</a>
-                <button type="submit" class="primary-upload-btn" style="background: #137333;">
-                    <i class="fa-solid fa-square-check"></i> Confirm & Save Schedule
-                </button>
+                    <button
+                        type="submit"
+                        id="confirmSaveBtn"
+                        class="primary-upload-btn"
+                        style="background: #137333;">
+                        <i class="fa-solid fa-square-check"></i> Confirm & Save Schedule
+                    </button>
             </div>
         </form>
     </div>
@@ -551,4 +555,24 @@ links.forEach(link => {
 <?php endif; ?>
 
 </body>
+<script>
+const confirmSaveBtn = document.getElementById("confirmSaveBtn");
+
+if (confirmSaveBtn) {
+    confirmSaveBtn.addEventListener("click", function (e) {
+
+        const confirmed = confirm(
+            "Important Notice\n\n" +
+            "The extracted schedule data was generated automatically using OCR and may contain errors.\n\n" +
+            "Please review the information carefully before saving.\n\n" +
+            "You can still edit your schedule later in the 'My Schedule' page.\n\n" +
+            "Do you want to continue saving?"
+        );
+
+        if (!confirmed) {
+            e.preventDefault();
+        }
+    });
+}
+</script>
 </html>
