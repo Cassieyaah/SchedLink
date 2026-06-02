@@ -1,130 +1,88 @@
-.collapsible-container {
-    display: block;
-    overflow: hidden;
-}
+/* --- PAGE LAYOUT --- */
+.myschedule-page { max-width: 1240px; margin: 0 auto; }
 
-/* ACCORDION CONTENT ANIMATION */
-.collapsible-container .accordion-content {
-    max-height: 0;
-    overflow: hidden;
-    background: #e5e7eb;
-    opacity: 0;
-    padding: 0 16px;
-
-    transition: 
-        max-height 0.8s cubic-bezier(0.4, 0, 0.2, 1),
-        opacity 0.6s ease-in-out,
-        padding 0.8s ease-in-out;
-}
-
-.collapsible-container.active-dropdown .accordion-content {
-    max-height: 4000px;
-    opacity: 1;
-    padding: 16px;
-}
-
-/* ARROW */
-.accordion-arrow {
-    transition: transform 0.4s ease-in-out;
-}
-
-.collapsible-container.active-dropdown .accordion-arrow {
-    transform: rotate(180deg);
-}
-
-/* PAGE LAYOUT */
-.myschedule-page {
-    max-width: 1240px;
-    margin: 0 auto;
-}
-
-/* CARD TITLE */
-.schedule-upload-group {
-    background: #0b6b3a !important;
-    border: none;
-    border-radius: 10px;
-    overflow: hidden;
-    margin-bottom: 16px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
-}
-
-.schedule-upload-summary {
-    width: 100%;
-    border: none;
-    background: #0b6b3a !important;
-    color: white;
-    padding: 18px 20px;
+.myschedule-title {
     display: flex;
     justify-content: space-between;
-    cursor: pointer;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
 }
 
-.schedule-upload-summary strong {
-    color: #fbbf24;
-    font-size: 18px;
+.myschedule-title h3 { margin: 0 0 4px; color: #111827; font-size: 24px; }
+.myschedule-title p { margin: 0; color: #74806b; font-size: 14px; }
+
+/* --- ACCORDION CONTAINER --- */
+.collapsible-container { display: block; overflow: hidden; margin-bottom: 16px; }
+.schedule-upload-group { background: #0b6b3a !important; border-radius: 10px; overflow: hidden; }
+
+.schedule-upload-summary {
+    width: 100%; border: none; background: #0b6b3a !important; color: white !important;
+    padding: 18px 20px; display: flex; align-items: center; justify-content: space-between; cursor: pointer;
 }
 
-.schedule-upload-summary small {
-    display: block;
-    margin-top: 6px;
-    font-size: 13px;
-    opacity: 0.9;
+.schedule-upload-summary strong { color: #fbbf24 !important; font-size: 18px; }
+
+.accordion-content {
+    max-height: 0; overflow: hidden; background: #ffffff; opacity: 0; padding: 0 16px;
+    transition: max-height 0.6s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease-in-out, padding 0.4s ease-in-out;
 }
 
-/* TABLE HEADER */
+.collapsible-container.active-dropdown .accordion-content { max-height: 1000px; opacity: 1; padding: 16px; }
+.accordion-arrow { transition: transform 0.4s ease-in-out; }
+.collapsible-container.active-dropdown .accordion-arrow { transform: rotate(180deg); }
+
+/* --- TABLE DESIGN (Eksakto sa screenshot) --- */
 .grid-table-header {
     display: grid;
-    grid-template-columns: 1fr 2fr 1.5fr 1fr;
-    background: #fbbf24;
-    color: #1f2937;
+    /* Inayos ang columns para maging 4 columns lang base sa screenshot */
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    background: #fbbf24 !important;
+    color: #1f2937 !important;
     font-weight: bold;
     text-align: center;
     padding: 12px 4px;
     border-radius: 8px 8px 0 0;
-    font-size: 13px;
+    font-size: 14px;
 }
 
-/* TABLE BODY */
-.grid-table-body {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    background: #cbd5e1;
-    padding: 4px;
-    border-radius: 0 0 8px 8px;
-}
+.grid-table-body { display: flex; flex-direction: column; background: #ffffff; padding: 0; }
 
-/* ROW */
 .grid-table-row {
     display: grid;
-    grid-template-columns: 1fr 2fr 1.5fr 1fr;
-    background: white;
-    padding: 10px;
-    gap: 6px;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    background: white !important;
+    padding: 12px 4px;
     align-items: center;
-    border-radius: 6px;
-}
-
-/* INPUTS */
-.grid-table-row input {
-    width: 100%;
-    border: 1px solid #d1d5db;
-    border-radius: 6px;
-    padding: 8px;
-    font-size: 12px;
     text-align: center;
+    border-bottom: 1px solid #e5e7eb;
 }
 
-/* RESPONSIVE */
+/* INPUTS: Walang border, parang text lang */
+.grid-table-row input {
+    width: 90%;
+    border: none !important;
+    background: transparent !important;
+    text-align: center;
+    font-size: 14px;
+    color: #374151;
+    outline: none;
+}
+
+/* --- ACTIONS --- */
+.schedule-edit-actions {
+    display: flex; justify-content: flex-end; align-items: center;
+    gap: 10px; margin-top: 15px; background: white;
+}
+
+.schedule-edit-actions button {
+    display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px;
+    font-weight: 600; border-radius: 6px; cursor: pointer; border: none;
+}
+
+/* --- RESPONSIVE --- */
 @media (max-width: 950px) {
-
-    .grid-table-header {
-        display: none;
-    }
-
-    .grid-table-row {
-        grid-template-columns: 1fr;
-        gap: 10px;
-        padding: 16px;
-    }
+    .grid-table-header { display: none; }
+    .grid-table-row { grid-template-columns: 1fr; padding: 16px; }
+    .grid-table-row input { border-bottom: 1px solid #eee !important; padding-bottom: 5px; }
 }
