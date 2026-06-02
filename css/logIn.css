@@ -10,9 +10,9 @@
             overflow: hidden;
 
             background:
-                linear-gradient(rgba(0, 0, 0, 0.65),
-                    rgba(0, 0, 0, 0.65)),
-                url('cvsuhd.jpg');
+                linear-gradient(rgba(0,0,0,0.65),
+                rgba(0,0,0,0.65)),
+                url('../media/cvsuhd.jpg');
 
             display: flex;
             justify-content: center;

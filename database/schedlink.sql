@@ -43,6 +43,7 @@ CREATE TABLE `faculties` (
 CREATE TABLE `faculty_schedules` (
   `professor_schedule_id` int(11) NOT NULL,
   `professor_id` int(11) NOT NULL,
+  `upload_id` int(11) DEFAULT NULL,
   `schedule_code` varchar(50) NOT NULL,
   `course_code` varchar(50) NOT NULL,
   `course_description` varchar(255) NOT NULL,
@@ -91,6 +92,7 @@ CREATE TABLE `students` (
 CREATE TABLE `student_schedules` (
   `student_schedule_id` int(11) NOT NULL,
   `student_id` int(11) NOT NULL,
+  `upload_id` int(11) DEFAULT NULL,
   `schedule_code` varchar(50) NOT NULL,
   `course_code` varchar(50) NOT NULL,
   `course_description` varchar(255) NOT NULL,
@@ -121,6 +123,23 @@ CREATE TABLE `system_settings` (
 
 INSERT INTO `system_settings` (`id`, `current_semester`, `current_school_year`) VALUES
 (1, '2nd Semester', '2025-2026');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `schedule_uploads`
+--
+
+CREATE TABLE `schedule_uploads` (
+  `upload_id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `role` enum('student','faculty') NOT NULL,
+  `original_filename` varchar(255) DEFAULT NULL,
+  `stored_file_path` varchar(255) DEFAULT NULL,
+  `semester` enum('1st Semester','2nd Semester') NOT NULL DEFAULT '1st Semester',
+  `school_year` varchar(9) NOT NULL DEFAULT '2025-2026',
+  `uploaded_at` datetime NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -161,7 +180,8 @@ ALTER TABLE `faculties`
 --
 ALTER TABLE `faculty_schedules`
   ADD PRIMARY KEY (`professor_schedule_id`),
-  ADD KEY `professor_id` (`professor_id`);
+  ADD KEY `professor_id` (`professor_id`),
+  ADD KEY `upload_id` (`upload_id`);
 
 --
 -- Indexes for table `matched_schedules`
@@ -184,7 +204,15 @@ ALTER TABLE `students`
 --
 ALTER TABLE `student_schedules`
   ADD PRIMARY KEY (`student_schedule_id`),
-  ADD KEY `student_id` (`student_id`);
+  ADD KEY `student_id` (`student_id`),
+  ADD KEY `upload_id` (`upload_id`);
+
+--
+-- Indexes for table `schedule_uploads`
+--
+ALTER TABLE `schedule_uploads`
+  ADD PRIMARY KEY (`upload_id`),
+  ADD KEY `user_id` (`user_id`);
 
 --
 -- Indexes for table `system_settings`
@@ -239,6 +267,12 @@ ALTER TABLE `student_schedules`
   MODIFY `student_schedule_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT for table `schedule_uploads`
+--
+ALTER TABLE `schedule_uploads`
+  MODIFY `upload_id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
@@ -258,7 +292,8 @@ ALTER TABLE `faculties`
 -- Constraints for table `faculty_schedules`
 --
 ALTER TABLE `faculty_schedules`
-  ADD CONSTRAINT `faculty_schedules_ibfk_1` FOREIGN KEY (`professor_id`) REFERENCES `faculties` (`professor_id`) ON DELETE CASCADE ON UPDATE CASCADE;
+  ADD CONSTRAINT `faculty_schedules_ibfk_1` FOREIGN KEY (`professor_id`) REFERENCES `faculties` (`professor_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `faculty_schedules_upload_fk` FOREIGN KEY (`upload_id`) REFERENCES `schedule_uploads` (`upload_id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Constraints for table `matched_schedules`
@@ -277,7 +312,14 @@ ALTER TABLE `students`
 -- Constraints for table `student_schedules`
 --
 ALTER TABLE `student_schedules`
-  ADD CONSTRAINT `student_schedules_ibfk_1` FOREIGN KEY (`student_id`) REFERENCES `students` (`student_id`) ON DELETE CASCADE ON UPDATE CASCADE;
+  ADD CONSTRAINT `student_schedules_ibfk_1` FOREIGN KEY (`student_id`) REFERENCES `students` (`student_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `student_schedules_upload_fk` FOREIGN KEY (`upload_id`) REFERENCES `schedule_uploads` (`upload_id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Constraints for table `schedule_uploads`
+--
+ALTER TABLE `schedule_uploads`
+  ADD CONSTRAINT `schedule_uploads_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

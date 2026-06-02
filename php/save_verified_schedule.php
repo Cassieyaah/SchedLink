@@ -21,12 +21,102 @@ $stmt->close();
 $role = $user ? strtolower(trim($user['role'])) : '';
 $redirect_page = ($role === "faculty") ? "facultydashboard.php" : "studentdashboard.php";
 
+function ensure_schedule_upload_schema(mysqli $conn): void {
+    $conn->query("
+        CREATE TABLE IF NOT EXISTS schedule_uploads (
+            upload_id INT(11) NOT NULL AUTO_INCREMENT,
+            user_id INT(11) NOT NULL,
+            role ENUM('student','faculty') NOT NULL,
+            original_filename VARCHAR(255) DEFAULT NULL,
+            stored_file_path VARCHAR(255) DEFAULT NULL,
+            semester ENUM('1st Semester','2nd Semester') NOT NULL DEFAULT '1st Semester',
+            school_year VARCHAR(9) NOT NULL DEFAULT '2025-2026',
+            uploaded_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (upload_id),
+            KEY user_id (user_id),
+            CONSTRAINT schedule_uploads_ibfk_1 FOREIGN KEY (user_id) REFERENCES users (user_id) ON DELETE CASCADE ON UPDATE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
+    ");
+
+    $studentColumn = $conn->query("SHOW COLUMNS FROM student_schedules LIKE 'upload_id'");
+    if ($studentColumn && $studentColumn->num_rows === 0) {
+        $conn->query("ALTER TABLE student_schedules ADD upload_id INT(11) DEFAULT NULL AFTER student_id");
+        $conn->query("ALTER TABLE student_schedules ADD KEY upload_id (upload_id)");
+        $conn->query("ALTER TABLE student_schedules ADD CONSTRAINT student_schedules_upload_fk FOREIGN KEY (upload_id) REFERENCES schedule_uploads (upload_id) ON DELETE CASCADE ON UPDATE CASCADE");
+    }
+
+    $facultyColumn = $conn->query("SHOW COLUMNS FROM faculty_schedules LIKE 'upload_id'");
+    if ($facultyColumn && $facultyColumn->num_rows === 0) {
+        $conn->query("ALTER TABLE faculty_schedules ADD upload_id INT(11) DEFAULT NULL AFTER professor_id");
+        $conn->query("ALTER TABLE faculty_schedules ADD KEY upload_id (upload_id)");
+        $conn->query("ALTER TABLE faculty_schedules ADD CONSTRAINT faculty_schedules_upload_fk FOREIGN KEY (upload_id) REFERENCES schedule_uploads (upload_id) ON DELETE CASCADE ON UPDATE CASCADE");
+    }
+}
+
+function get_or_create_student_id(mysqli $conn, int $user_id): int {
+    $profile_stmt = $conn->prepare("SELECT student_id FROM students WHERE user_id = ?");
+    $profile_stmt->bind_param("i", $user_id);
+    $profile_stmt->execute();
+    $profile_res = $profile_stmt->get_result()->fetch_assoc();
+    $profile_stmt->close();
+
+    if ($profile_res) {
+        return (int) $profile_res['student_id'];
+    }
+
+    $student_number = 900000000 + $user_id;
+    $program = 'not found in the uploaded image';
+    $insert_stmt = $conn->prepare("INSERT INTO students (user_id, student_number, program) VALUES (?, ?, ?)");
+    if (!$insert_stmt) {
+        throw new Exception("Could not prepare student profile creation: " . $conn->error);
+    }
+
+    $insert_stmt->bind_param("iis", $user_id, $student_number, $program);
+    if (!$insert_stmt->execute()) {
+        throw new Exception("Could not create student profile for schedule upload: " . $insert_stmt->error);
+    }
+
+    $student_id = (int) $conn->insert_id;
+    $insert_stmt->close();
+    return $student_id;
+}
+
+function get_or_create_professor_id(mysqli $conn, int $user_id): int {
+    $profile_stmt = $conn->prepare("SELECT professor_id FROM faculties WHERE user_id = ?");
+    $profile_stmt->bind_param("i", $user_id);
+    $profile_stmt->execute();
+    $profile_res = $profile_stmt->get_result()->fetch_assoc();
+    $profile_stmt->close();
+
+    if ($profile_res) {
+        return (int) $profile_res['professor_id'];
+    }
+
+    $department = 'not found in the uploaded image';
+    $fb_link = '';
+    $insert_stmt = $conn->prepare("INSERT INTO faculties (user_id, department, fb_link) VALUES (?, ?, ?)");
+    if (!$insert_stmt) {
+        throw new Exception("Could not prepare faculty profile creation: " . $conn->error);
+    }
+
+    $insert_stmt->bind_param("iss", $user_id, $department, $fb_link);
+    if (!$insert_stmt->execute()) {
+        throw new Exception("Could not create faculty profile for schedule upload: " . $insert_stmt->error);
+    }
+
+    $professor_id = (int) $conn->insert_id;
+    $insert_stmt->close();
+    return $professor_id;
+}
+
 // Catch empty or broken submissions early
 if ($_SERVER['REQUEST_METHOD'] !== 'POST' || empty($_POST['courses'])) {
     $_SESSION['upload_error'] = "No schedule data received for confirmation.";
     header("Location: " . $redirect_page);
     exit();
 }
+
+ensure_schedule_upload_schema($conn);
 
 $conn->begin_transaction();
 
@@ -41,44 +131,23 @@ try {
     $current_semester    = $system_config['current_semester'] ?? '1st Semester';
     $current_school_year = $system_config['current_school_year'] ?? '2025-2026';
 
+    $original_filename = $_SESSION['ocr_upload_original_name'] ?? 'Uploaded schedule';
+    $stored_file_path  = $_SESSION['ocr_upload_stored_path'] ?? null;
+    $upload_stmt = $conn->prepare("INSERT INTO schedule_uploads (user_id, role, original_filename, stored_file_path, semester, school_year) VALUES (?, ?, ?, ?, ?, ?)");
+    $upload_stmt->bind_param("isssss", $user_id, $role, $original_filename, $stored_file_path, $current_semester, $current_school_year);
+    if (!$upload_stmt->execute()) {
+        throw new Exception("Failed creating upload record: " . $upload_stmt->error);
+    }
+    $upload_id = $conn->insert_id;
+    $upload_stmt->close();
+
     if ($role === "student") {
-        $profile_stmt = $conn->prepare("SELECT student_id FROM students WHERE user_id = ?");
-        $profile_stmt->bind_param("i", $user_id);
-        $profile_stmt->execute();
-        $profile_res = $profile_stmt->get_result()->fetch_assoc();
-        $profile_stmt->close();
-
-        if (!$profile_res) {
-            throw new Exception("Student profile matching identity missing. Please complete your profile records details first.");
-        }
-        $student_id = $profile_res['student_id'];
-
-        // Drop current term tracking boundaries safely to prepare clean write
-        $delete_stmt = $conn->prepare("DELETE FROM student_schedules WHERE student_id = ? AND semester = ? AND school_year = ?");
-        $delete_stmt->bind_param("iss", $student_id, $current_semester, $current_school_year);
-        $delete_stmt->execute();
-        $delete_stmt->close();
-
-        $insert_stmt = $conn->prepare("INSERT INTO student_schedules (student_id, schedule_code, course_code, course_description, time_start, time_end, day, room, semester, school_year, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active')");
+        $student_id = get_or_create_student_id($conn, $user_id);
+        $insert_stmt = $conn->prepare("INSERT INTO student_schedules (student_id, upload_id, schedule_code, course_code, course_description, time_start, time_end, day, room, semester, school_year, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active')");
 
     } else if ($role === "faculty") {
-        $profile_stmt = $conn->prepare("SELECT professor_id FROM faculties WHERE user_id = ?");
-        $profile_stmt->bind_param("i", $user_id);
-        $profile_stmt->execute();
-        $profile_res = $profile_stmt->get_result()->fetch_assoc();
-        $profile_stmt->close();
-
-        if (!$profile_res) {
-            throw new Exception("Faculty profile matching identity missing. Please complete your profile records details first.");
-        }
-        $professor_id = $profile_res['professor_id'];
-
-        $delete_stmt = $conn->prepare("DELETE FROM faculty_schedules WHERE professor_id = ? AND semester = ? AND school_year = ?");
-        $delete_stmt->bind_param("iss", $professor_id, $current_semester, $current_school_year);
-        $delete_stmt->execute();
-        $delete_stmt->close();
-
-        $insert_stmt = $conn->prepare("INSERT INTO faculty_schedules (professor_id, schedule_code, course_code, course_description, day, time_start, time_end, room, semester, school_year, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active')");
+        $professor_id = get_or_create_professor_id($conn, $user_id);
+        $insert_stmt = $conn->prepare("INSERT INTO faculty_schedules (professor_id, upload_id, schedule_code, course_code, course_description, day, time_start, time_end, room, semester, school_year, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active')");
     } else {
         throw new Exception("Unauthorized role status action matching exception structural scope: Current user detected as role: '" . htmlspecialchars($role) . "'");
     }
@@ -108,15 +177,15 @@ try {
 
         if ($role === "student") {
             $insert_stmt->bind_param(
-                "isssssssss", 
-                $student_id, $sched_code, $course_code, $description, 
+                "iisssssssss", 
+                $student_id, $upload_id, $sched_code, $course_code, $description, 
                 $time_start, $time_end, $day, $room, 
                 $current_semester, $current_school_year
             );
         } else {
             $insert_stmt->bind_param(
-                "isssssssss", 
-                $professor_id, $sched_code, $course_code, $description, 
+                "iisssssssss", 
+                $professor_id, $upload_id, $sched_code, $course_code, $description, 
                 $day, $time_start, $time_end, $room, 
                 $current_semester, $current_school_year
             );
@@ -131,7 +200,7 @@ try {
     $conn->commit();
 
     // SUCCESS! Clear the preview cache so the modal closes automatically
-    unset($_SESSION['ocr_preview_data']);
+    unset($_SESSION['ocr_preview_data'], $_SESSION['ocr_upload_original_name'], $_SESSION['ocr_upload_stored_path']);
     $_SESSION['upload_success'] = "Verified class schedule entries saved successfully for $current_semester!";
 
 } catch (Exception $e) {

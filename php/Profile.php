@@ -221,12 +221,12 @@ function e(string $value): string {
                 Dashboard
             </a>
 
-            <a href="#">
+            <a href="myschedule.php">
                 <i class="fa-regular fa-calendar"></i>
                 My Schedule
             </a>
 
-            <a href="upload_schedule.php">
+            <a href="studentdashboard.php#upload">
                 <i class="fa-solid fa-upload"></i>
                 Upload Schedule
             </a>
