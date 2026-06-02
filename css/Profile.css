@@ -23,7 +23,7 @@ body{
     display:flex;
     justify-content:center;
     align-items:center;
-    padding:30px 30px 30px 30px;
+    padding:3vh 3vw;
 }
 
 /* =========================
@@ -34,14 +34,13 @@ body{
     width:100%;
     height:100%;
     background:rgba(6,80,42,0.92);
-    border-radius:25px;
-    padding:76px;
+    border-radius:2%;
+    padding:clamp(2rem, 6vw, 5rem);
     display:flex;
     justify-content:center;
     align-items:center;
-    gap:90px;
-    box-shadow:0 10px 30px rgba(0,0,0,0.28);
-
+    gap:clamp(2rem, 6vw, 5.625rem);
+    box-shadow:0 0.6vh 2vh rgba(0,0,0,0.28);
     color:white;
 }
 
@@ -57,26 +56,26 @@ body{
 }
 
 .title{
-    font-size:65px;
-    margin-bottom:45px;
+    font-size:clamp(1.75rem, 4.5vw, 4.0625rem);
+    margin-bottom:clamp(1.5rem, 3.5vw, 2.8125rem);
     line-height:1.1;
 }
 
 .profile-list{
     display:flex;
     flex-direction:column;
-    gap:31px;
+    gap:clamp(1rem, 2.5vw, 1.9375rem);
 }
 
 .list-item{
     display:flex;
     flex-direction:column;
-    gap:12px;
+    gap:clamp(0.5rem, 1vw, 0.75rem);
 }
 
 .label{
-    font-size:14px;
-    letter-spacing:3px;
+    font-size:clamp(0.65rem, 1vw, 0.875rem);
+    letter-spacing:0.2em;
     text-transform:uppercase;
     color:#c9f7cf;
     font-weight:bold;
@@ -85,9 +84,9 @@ body{
 .list-item input{
     border:none;
     border-bottom:2px solid rgba(255,255,255,0.35);
-    padding:16px 0;
+    padding:clamp(0.6rem, 1.5vh, 1rem) 0;
     background:transparent;
-    font-size:20px;
+    font-size:clamp(0.95rem, 1.5vw, 1.25rem);
     color:white;
     outline:none;
 }
@@ -97,14 +96,14 @@ body{
 }
 
 .edit-btn{
-    width:205px;
-    padding:16px;
-    margin-top:40px;
+    width:clamp(10rem, 16vw, 12.8125rem);
+    padding:clamp(0.6rem, 1.5vh, 1rem);
+    margin-top:clamp(1.5rem, 3vh, 2.5rem);
     border:none;
-    border-radius:13px;
+    border-radius:clamp(0.5rem, 1vw, 0.8125rem);
     background:white;
     color:#06502a;
-    font-size:16px;
+    font-size:clamp(0.85rem, 1.2vw, 1rem);
     font-weight:bold;
     cursor:pointer;
     transition:0.2s;
@@ -119,7 +118,7 @@ body{
 ========================= */
 
 .profile-aside{
-    width:440px;
+    width:clamp(14rem, 32vw, 27.5rem);
     display:flex;
     flex-direction:column;
     justify-content:center;
@@ -130,7 +129,7 @@ body{
 .image-container{
     position:relative;
     width:100%;
-    max-width:440px;
+    max-width:clamp(14rem, 32vw, 27.5rem);
     aspect-ratio:1 / 1;
 }
 
@@ -139,10 +138,9 @@ body{
     width:100%;
     aspect-ratio:1 / 1;
     object-fit:cover;
-    border-radius:28px;
+    border-radius:clamp(1rem, 2vw, 1.75rem);
     display:block;
-
-    border:9px solid rgba(255,255,255,0.95);
+    border:clamp(4px, 0.6vw, 9px) solid rgba(255,255,255,0.95);
 }
 
 /* =========================
@@ -154,13 +152,13 @@ body{
     content:"";
     position:absolute;
 
-    left:9px;
-    right:9px;
-    bottom:9px;
+    left:clamp(4px, 0.6vw, 9px);
+    right:clamp(4px, 0.6vw, 9px);
+    bottom:clamp(4px, 0.6vw, 9px);
 
     height:45%;
 
-    border-radius:0 0 20px 20px;
+    border-radius:0 0 clamp(0.8rem, 1.5vw, 1.25rem) clamp(0.8rem, 1.5vw, 1.25rem);
 
     background:linear-gradient(
         to top,
@@ -174,27 +172,25 @@ body{
 /* STUDENT LABEL */
 .profile-role{
     position:absolute;
-
     left:50%;
-    bottom:17px;
+    bottom:clamp(0.6rem, 1.5vh, 1.0625rem);
     transform:translateX(-50%);
-
-    font-size:30px;
+    font-size:clamp(1.1rem, 2.2vw, 1.875rem);
     font-weight:bold;
-    letter-spacing:2px;
+    letter-spacing:0.1em;
     text-transform:capitalize;
-
     color:white;
     z-index:3;
     text-align:center;
+    white-space:nowrap;
 }
 
 /* CHANGE PROFILE BUTTON */
 .change-profile-btn{
-    margin-top:15px;
+    margin-top:clamp(0.6rem, 1.5vh, 0.9375rem);
 
-    width:58px;
-    height:58px;
+    width:clamp(2.5rem, 4vw, 3.625rem);
+    height:clamp(2.5rem, 4vw, 3.625rem);
 
     border:none;
     border-radius:50%;
@@ -202,7 +198,7 @@ body{
     background:white;
     color:#06502a;
 
-    font-size:30px;
+    font-size:clamp(1.2rem, 2vw, 1.875rem);
     font-weight:bold;
 
     cursor:pointer;
@@ -227,14 +223,14 @@ body{
 
 @media(max-width:1200px){
     .profile-card{
-        padding:50px;
-        gap:50px;
+        padding:clamp(2rem, 4vw, 3.125rem);
+        gap:clamp(2rem, 4vw, 3.125rem);
     }
     .title{
-        font-size:50px;
+        font-size:clamp(1.75rem, 4vw, 3.125rem);
     }
     .profile-aside{
-        width:340px;
+        width:clamp(12rem, 28vw, 21.25rem);
     }
 }
 
@@ -248,22 +244,22 @@ body{
     }
     .main{
         margin-left:0;
-        padding:20px;
+        padding:3vw;
     }
     .profile-card{
         flex-direction:column;
-        padding:36px;
-        gap:32px;
+        padding:clamp(1.5rem, 4vw, 2.25rem);
+        gap:clamp(1.5rem, 3vw, 2rem);
     }
     .profile-details,
     .profile-aside{
         width:100%;
     }
     .image-container{
-        max-width:280px;
+        max-width:clamp(12rem, 40vw, 17.5rem);
     }
     .title{
-        font-size:38px;
+        font-size:clamp(1.5rem, 4.5vw, 2.375rem);
         text-align:center;
     }
     .edit-btn{
@@ -273,29 +269,29 @@ body{
 
 @media(max-width:480px){
     .profile-card{
-        padding:24px;
-        gap:24px;
-        border-radius:16px;
+        padding:clamp(1rem, 5vw, 1.5rem);
+        gap:clamp(1rem, 5vw, 1.5rem);
+        border-radius:4%;
     }
     .title{
-        font-size:30px;
-        margin-bottom:28px;
+        font-size:clamp(1.25rem, 6vw, 1.875rem);
+        margin-bottom:clamp(1rem, 4vw, 1.75rem);
     }
     .list-item input{
-        font-size:16px;
+        font-size:clamp(0.85rem, 3.5vw, 1rem);
     }
     .label{
-        font-size:12px;
+        font-size:clamp(0.6rem, 2.5vw, 0.75rem);
     }
     .image-container{
-        max-width:220px;
+        max-width:clamp(10rem, 55vw, 13.75rem);
     }
     .profile-role{
-        font-size:22px;
+        font-size:clamp(0.95rem, 4.5vw, 1.375rem);
     }
     .modal-content{
         width:92vw;
-        padding:24px;
+        padding:clamp(1rem, 5vw, 1.5rem);
     }
 }
 
@@ -323,40 +319,40 @@ body{
 .modal-content{
     background:white;
     color:#333;
-    width:450px;
-    padding:32px;
-    border-radius:16px;
+    width:clamp(18rem, 40vw, 28.125rem);
+    padding:clamp(1.25rem, 3vw, 2rem);
+    border-radius:clamp(0.6rem, 1.2vw, 1rem);
     position:relative;
-    box-shadow:0 10px 30px rgba(0,0,0,0.3);
+    box-shadow:0 0.6vh 2vh rgba(0,0,0,0.3);
 }
 
 .modal-content input{
     width:100%;
-    padding:13px;
-    margin:8px 0 16px;
+    padding:clamp(0.6rem, 1.2vh, 0.8125rem);
+    margin:clamp(0.3rem, 0.8vh, 0.5rem) 0 clamp(0.75rem, 1.5vh, 1rem);
     border:1px solid #ccc;
-    border-radius:10px;
+    border-radius:clamp(0.5rem, 1vw, 0.625rem);
     outline:none;
-    font-size:15px;
+    font-size:clamp(0.8rem, 1.2vw, 0.9375rem);
 }
 
 .close{
     position:absolute;
-    right:18px;
-    top:12px;
-    font-size:26px;
+    right:clamp(0.75rem, 1.5vw, 1.125rem);
+    top:clamp(0.5rem, 1vh, 0.75rem);
+    font-size:clamp(1.2rem, 2vw, 1.625rem);
     cursor:pointer;
 }
 
 .save-btn{
     width:100%;
-    padding:15px;
+    padding:clamp(0.7rem, 1.5vh, 0.9375rem);
     background:#0b6b3a;
     color:white;
     border:none;
-    border-radius:10px;
+    border-radius:clamp(0.5rem, 1vw, 0.625rem);
     cursor:pointer;
-    font-size:15px;
+    font-size:clamp(0.8rem, 1.2vw, 0.9375rem);
     font-weight:bold;
     transition:0.2s;
 }
