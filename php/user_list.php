@@ -85,9 +85,8 @@ if ($filter_role !== 'all' && in_array($filter_role, ['student', 'professor', 'f
     $params[] = $filter_role; $types .= "s";
 }
 if ($search_query !== '') {
-    $sql .= " AND (users.fullname LIKE ? OR users.email LIKE ?)";
-    $like = "%" . $search_query . "%";
-    $params[] = $like; $params[] = $like; $types .= "ss";
+    $sql .= " AND (users.fullname = ? OR users.email = ? OR students.student_number = ?)";
+    $params[] = $search_query; $params[] = $search_query; $params[] = $search_query; $types .= "sss";
 }
 $sql .= " ORDER BY users.role ASC, users.fullname ASC";
 
@@ -186,7 +185,7 @@ function e(string $v): string { return htmlspecialchars($v, ENT_QUOTES, 'UTF-8')
 
         <div class="mu-search">
             <i class="fa-solid fa-magnifying-glass"></i>
-            <input type="text" name="search" placeholder="Search by name or email..."
+            <input type="text" name="search" placeholder="Search by name, email, or student no..."
                    value="<?php echo e($search_query); ?>">
         </div>
 
