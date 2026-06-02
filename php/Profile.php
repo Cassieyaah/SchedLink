@@ -1,5 +1,5 @@
 <?php
-ob_start(); // Buffer output to allow ob_clean() safely in AJAX handlers
+ob_start();
 session_start();
 include("../includes/db.php");
 
@@ -8,37 +8,24 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
-$user_id = (int) $_SESSION['user_id']; // Cast to int for safety
+$user_id = (int) $_SESSION['user_id'];
 
-/* =========================
-   UPDATE PROFILE (AJAX)
-========================= */
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['fullname'])) {
+/* update profile ajax */
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['student_number'])) {
 
     ob_clean();
     header('Content-Type: application/json');
 
     try {
 
-        $fullname       = trim($_POST['fullname']);
-        $email          = trim($_POST['email']);
-        $student_number = trim($_POST['student_number']);
-        $program        = trim($_POST['program']);
+        $student_number = trim($_POST['student_number']) ?: null;
+        $program        = trim($_POST['program']) ?: null;
 
-        /* USERS TABLE */
-        $sql1 = "UPDATE users SET fullname = ?, email = ? WHERE user_id = ?";
-        $stmt1 = mysqli_prepare($conn, $sql1);
-        mysqli_stmt_bind_param($stmt1, "ssi", $fullname, $email, $user_id);
-        mysqli_stmt_execute($stmt1);
-        mysqli_stmt_close($stmt1);
-
-        /* CHECK STUDENT — use prepared statement to prevent SQL injection */
-        $check_sql  = "SELECT user_id FROM students WHERE user_id = ?";
-        $check_stmt = mysqli_prepare($conn, $check_sql);
+        /* check student */
+        $check_stmt = mysqli_prepare($conn, "SELECT user_id FROM students WHERE user_id = ?");
         mysqli_stmt_bind_param($check_stmt, "i", $user_id);
         mysqli_stmt_execute($check_stmt);
-        $check_result = mysqli_stmt_get_result($check_stmt);
-        $exists = mysqli_num_rows($check_result) > 0;
+        $exists = mysqli_num_rows(mysqli_stmt_get_result($check_stmt)) > 0;
         mysqli_stmt_close($check_stmt);
 
         if ($exists) {
@@ -55,18 +42,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['fullname'])) {
         echo json_encode(["status" => "success"]);
 
     } catch (Exception $e) {
-        echo json_encode([
-            "status"  => "error",
-            "message" => $e->getMessage()
-        ]);
+        echo json_encode(["status" => "error", "message" => $e->getMessage()]);
     }
 
     exit();
 }
 
-/* =========================
-   PROFILE PICTURE UPLOAD
-========================= */
+/* upload profile pic */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['profile_picture'])) {
 
     ob_clean();
@@ -85,15 +67,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['profile_picture'])) 
             throw new Exception("Invalid file type. Allowed: jpg, jpeg, png, gif.");
         }
 
-        // Limit file size to 5 MB
         if ($_FILES['profile_picture']['size'] > 5 * 1024 * 1024) {
             throw new Exception("File too large. Maximum size is 5 MB.");
         }
 
         $upload_dir = "../uploads/";
-        if (!is_dir($upload_dir)) {
-            mkdir($upload_dir, 0755, true); // 0755 is safer than 0777
-        }
+        if (!is_dir($upload_dir)) mkdir($upload_dir, 0755, true);
 
         $filename = time() . "_" . uniqid() . "." . $ext;
         $target   = $upload_dir . $filename;
@@ -102,48 +81,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['profile_picture'])) 
             throw new Exception("Failed to save file.");
         }
 
-        // Delete old profile picture if it exists (to avoid orphaned files)
-        $old_sql  = "SELECT profile_picture FROM users WHERE user_id = ?";
-        $old_stmt = mysqli_prepare($conn, $old_sql);
+        $old_stmt = mysqli_prepare($conn, "SELECT profile_picture FROM users WHERE user_id = ?");
         mysqli_stmt_bind_param($old_stmt, "i", $user_id);
         mysqli_stmt_execute($old_stmt);
-        $old_result = mysqli_stmt_get_result($old_stmt);
-        $old_data   = mysqli_fetch_assoc($old_result);
+        $old_data = mysqli_fetch_assoc(mysqli_stmt_get_result($old_stmt));
         mysqli_stmt_close($old_stmt);
 
         if (!empty($old_data['profile_picture'])) {
             $old_file = $upload_dir . $old_data['profile_picture'];
-            if (file_exists($old_file)) {
-                unlink($old_file);
-            }
+            if (file_exists($old_file)) unlink($old_file);
         }
 
-        $sql  = "UPDATE users SET profile_picture = ? WHERE user_id = ?";
-        $stmt = mysqli_prepare($conn, $sql);
+        $stmt = mysqli_prepare($conn, "UPDATE users SET profile_picture = ? WHERE user_id = ?");
         mysqli_stmt_bind_param($stmt, "si", $filename, $user_id);
         mysqli_stmt_execute($stmt);
         mysqli_stmt_close($stmt);
 
-        echo json_encode([
-            "status" => "success",
-            "file"   => $filename
-        ]);
+        echo json_encode(["status" => "success", "file" => $filename]);
 
     } catch (Exception $e) {
-        echo json_encode([
-            "status"  => "error",
-            "message" => $e->getMessage()
-        ]);
+        echo json_encode(["status" => "error", "message" => $e->getMessage()]);
     }
 
     exit();
 }
 
-/* =========================
-   FETCH USER DATA
-========================= */
+/* user data */
 $query = "
-SELECT 
+SELECT
     users.fullname,
     users.email,
     users.profile_picture,
@@ -154,45 +119,39 @@ LEFT JOIN students ON users.user_id = students.user_id
 WHERE users.user_id = ?
 ";
 
-$stmt   = mysqli_prepare($conn, $query);
+$stmt = mysqli_prepare($conn, $query);
 mysqli_stmt_bind_param($stmt, "i", $user_id);
 mysqli_stmt_execute($stmt);
-
-$result = mysqli_stmt_get_result($stmt);
-$data   = mysqli_fetch_assoc($result);
+$data = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
 mysqli_stmt_close($stmt);
 
-// Fallback if no user data found
 if (!$data) {
     session_destroy();
     header("Location: ../php/login.php");
     exit();
 }
 
-/* =========================
-   PROFILE IMAGE RESOLUTION
-========================= */
+/* profile image resolution */
 $default_image   = "../media/images.jpg";
 $profile_picture = $default_image;
-
-$stored_picture = trim($data['profile_picture'] ?? '');
+$stored_picture  = trim($data['profile_picture'] ?? '');
 
 if ($stored_picture !== '') {
     $uploaded_path = "../uploads/" . $stored_picture;
-    if (file_exists($uploaded_path)) {
-        $profile_picture = $uploaded_path;
-    }
-    // If uploaded file no longer exists on disk, fall back to default
+    if (file_exists($uploaded_path)) $profile_picture = $uploaded_path;
 }
 
-// Verify the default image itself exists; if not, use a reliable inline fallback
 if ($profile_picture === $default_image && !file_exists($default_image)) {
     $profile_picture = "https://ui-avatars.com/api/?name=" . urlencode($data['fullname']) . "&size=200&background=4a90d9&color=fff";
 }
 
-// Helper: safely escape for HTML output
 function e(string $value): string {
     return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
+}
+
+function na(mixed $value): string {
+    $v = trim((string)($value ?? ''));
+    return $v !== '' ? $v : 'N/A';
 }
 ?>
 
@@ -211,130 +170,78 @@ function e(string $value): string {
 
 <!-- SIDEBAR -->
 <div class="sidebar">
-
     <div>
-
         <div class="profile">
             <img src="<?php echo e($profile_picture); ?>" alt="Profile picture of <?php echo e($data['fullname']); ?>">
             <h3><?php echo e($data['fullname']); ?></h3>
             <p>Student Account</p>
         </div>
-
         <div class="section-title">GENERAL</div>
-
         <div class="nav">
-
-            <a href="studentdashboard.php">
-                <i class="fa-solid fa-chart-line"></i>
-                Dashboard
-            </a>
-
-            <a href="#">
-                <i class="fa-regular fa-calendar"></i>
-                My Schedule
-            </a>
-
-            <a href="upload_schedule.php">
-                <i class="fa-solid fa-upload"></i>
-                Upload Schedule
-            </a>
-
-            <a class="active" href="profile.php">
-                <i class="fa-solid fa-user"></i>
-                Profile
-            </a>
-
-            <a href="logout.php">
-                <i class="fa-solid fa-right-from-bracket"></i>
-                Logout
-            </a>
-
+            <a href="studentdashboard.php"><i class="fa-solid fa-chart-line"></i> Dashboard</a>
+            <a href="myschedule.php"><i class="fa-regular fa-calendar"></i> My Schedule</a>
+            <a href="studentdashboard.php#upload"><i class="fa-solid fa-upload"></i> Upload Schedule</a>
+            <a class="active" href="profile.php"><i class="fa-solid fa-user"></i> Profile</a>
+            <a href="logout.php"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
         </div>
-
         <div class="divider"></div>
-
     </div>
-
     <div class="sidebar-footer">
         <img src="../media/cvsulogo.png" alt="CvSU Logo">
         <p>Cavite State University</p>
     </div>
-
 </div>
 
 <!-- MAIN -->
 <div class="main">
-
     <div class="profile-card">
 
         <div class="profile-details">
-
             <h1 class="title">Profile</h1>
-
             <div class="profile-list">
-
                 <div class="list-item">
                     <span class="label">Full Name</span>
                     <input type="text" value="<?php echo e($data['fullname']); ?>" readonly aria-label="Full Name">
                 </div>
-
                 <div class="list-item">
                     <span class="label">Student Number</span>
-                    <input type="text" value="<?php echo e($data['student_number'] ?? 'Not Assigned'); ?>" readonly aria-label="Student Number">
+                    <input type="text" value="<?php echo e(na($data['student_number'])); ?>" readonly aria-label="Student Number">
                 </div>
-
                 <div class="list-item">
                     <span class="label">Program</span>
-                    <input type="text" value="<?php echo e($data['program'] ?? 'Not Assigned'); ?>" readonly aria-label="Program">
+                    <input type="text" value="<?php echo e(na($data['program'])); ?>" readonly aria-label="Program">
                 </div>
-
                 <div class="list-item">
                     <span class="label">Email</span>
                     <input type="text" value="<?php echo e($data['email']); ?>" readonly aria-label="Email">
                 </div>
-
             </div>
-
             <button class="edit-btn" onclick="openModal()">Edit Profile</button>
-
         </div>
 
         <!-- IMAGE SIDE -->
         <div class="profile-aside">
-
             <div class="image-container">
                 <img src="<?php echo e($profile_picture); ?>" class="profile-image" alt="Profile">
                 <div class="profile-role">STUDENT</div>
             </div>
-
-            <!-- No <form> wrapping needed; upload is triggered by JS -->
             <label class="change-profile-btn" title="Change profile picture">
                 +
                 <input type="file" id="profile_picture" name="profile_picture" accept="image/*" hidden>
             </label>
-
         </div>
 
     </div>
-
 </div>
 
 <!-- EDIT MODAL -->
 <div id="editModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-
     <div class="modal-content">
 
         <span class="close" onclick="closeModal()" aria-label="Close">&times;</span>
-
         <h2 id="modalTitle">Edit Profile</h2>
 
         <div id="profileForm">
-
-            <label for="edit_fullname">Full Name</label>
-            <input type="text" id="edit_fullname" name="fullname" value="<?php echo e($data['fullname']); ?>">
-
-            <label for="edit_email">Email</label>
-            <input type="email" id="edit_email" name="email" value="<?php echo e($data['email']); ?>">
 
             <label for="edit_student_number">Student Number</label>
             <input type="text" id="edit_student_number" name="student_number" value="<?php echo e($data['student_number'] ?? ''); ?>">
@@ -347,7 +254,6 @@ function e(string $value): string {
         </div>
 
     </div>
-
 </div>
 
 <script>
@@ -360,36 +266,27 @@ function closeModal() {
 }
 
 function saveProfile() {
-    const fields = ["fullname", "email", "student_number", "program"];
-    const data   = new FormData();
+    const data = new FormData();
+    data.append("student_number", document.getElementById("edit_student_number").value.trim());
+    data.append("program",        document.getElementById("edit_program").value.trim());
 
-    fields.forEach(name => {
-        const el = document.querySelector(`#profileForm [name="${name}"]`);
-        if (el) data.append(name, el.value.trim());
-    });
-
-    fetch("profile.php", {
-        method: "POST",
-        body: data
-    })
-    .then(r => r.json())
-    .then(res => {
-        if (res.status === "success") {
-            location.reload();
-        } else {
-            alert(res.message || "An error occurred. Please try again.");
-        }
-    })
-    .catch(() => alert("Network error. Please check your connection."));
+    fetch("profile.php", { method: "POST", body: data })
+        .then(r => r.json())
+        .then(res => {
+            if (res.status === "success") {
+                location.reload();
+            } else {
+                alert(res.message || "An error occurred. Please try again.");
+            }
+        })
+        .catch(() => alert("Network error. Please check your connection."));
 }
 
 /* PROFILE PICTURE UPLOAD */
 document.getElementById("profile_picture").addEventListener("change", function () {
-
     const file = this.files[0];
     if (!file) return;
 
-    // Client-side size check (5 MB)
     if (file.size > 5 * 1024 * 1024) {
         alert("File is too large. Maximum size is 5 MB.");
         this.value = "";
@@ -399,34 +296,24 @@ document.getElementById("profile_picture").addEventListener("change", function (
     const formData = new FormData();
     formData.append("profile_picture", file);
 
-    fetch("profile.php", {
-        method: "POST",
-        body: formData
-    })
-    .then(r => r.json())
-    .then(res => {
-        if (res.status === "success") {
-            location.reload();
-        } else {
-            alert(res.message || "Upload failed.");
-        }
-    })
-    .catch(() => alert("Network error. Please check your connection."));
+    fetch("profile.php", { method: "POST", body: formData })
+        .then(r => r.json())
+        .then(res => {
+            if (res.status === "success") {
+                location.reload();
+            } else {
+                alert(res.message || "Upload failed.");
+            }
+        })
+        .catch(() => alert("Network error. Please check your connection."));
 });
 
-/* Close modal when clicking outside */
 window.addEventListener("click", function (e) {
-    const modal = document.getElementById("editModal");
-    if (e.target === modal) {
-        closeModal();
-    }
+    if (e.target === document.getElementById("editModal")) closeModal();
 });
 
-/* Close modal with Escape key */
 window.addEventListener("keydown", function (e) {
-    if (e.key === "Escape") {
-        closeModal();
-    }
+    if (e.key === "Escape") closeModal();
 });
 </script>
 

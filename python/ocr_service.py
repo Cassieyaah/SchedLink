@@ -3,18 +3,36 @@ import pytesseract
 import json
 import sys
 import os
+import shutil
 
 from cleanUp import clean_ocr_text, split_schedules
 from parser import parse_schedule
 
-# Tesseract path configuration
-pytesseract.pytesseract.tesseract_cmd = (
-    r"C:\Program Files\Tesseract-OCR\tesseract.exe"
-)
+def configure_tesseract():
+    candidates = [
+        os.environ.get("TESSERACT_CMD", ""),
+        r"C:\Program Files\Tesseract-OCR\tesseract.exe",
+        r"C:\Program Files (x86)\Tesseract-OCR\tesseract.exe",
+        r"C:\Users\laptop\AppData\Local\Programs\Tesseract-OCR\tesseract.exe",
+        shutil.which("tesseract") or "",
+    ]
+
+    for candidate in candidates:
+        if candidate and os.path.exists(candidate):
+            pytesseract.pytesseract.tesseract_cmd = candidate
+            return True
+
+    return False
 
 def run_ocr():
     if len(sys.argv) < 2:
         print(json.dumps({"error": "No image path provided"}, indent=4))
+        return
+
+    if not configure_tesseract():
+        print(json.dumps({
+            "error": "Tesseract OCR is not installed or could not be found. Install Tesseract, then set TESSERACT_CMD to the full tesseract.exe path if it is not installed in Program Files."
+        }, indent=4))
         return
 
     image_path = sys.argv[1]
@@ -23,6 +41,9 @@ def run_ocr():
         return
 
     img = cv2.imread(image_path)
+    if img is None:
+        print(json.dumps({"error": "Uploaded file could not be read as an image."}, indent=4))
+        return
 
     # Convert to grayscale
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -42,7 +63,13 @@ def run_ocr():
 
     # Process via sequential column layout mode
     custom_config = r'--oem 3 --psm 4'
-    text = pytesseract.image_to_string(thresh, config=custom_config)
+    try:
+        text = pytesseract.image_to_string(thresh, config=custom_config)
+    except pytesseract.pytesseract.TesseractNotFoundError:
+        print(json.dumps({
+            "error": "Tesseract OCR executable was not found. Check the Tesseract installation path."
+        }, indent=4))
+        return
 
     cleaned_text = clean_ocr_text(text)
     schedules = split_schedules(cleaned_text)

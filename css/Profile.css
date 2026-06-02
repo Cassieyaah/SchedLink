@@ -92,6 +92,10 @@ body{
     outline:none;
 }
 
+.list-item input[value="N/A"]{
+    opacity:0.35;
+}
+
 .edit-btn{
     width:205px;
     padding:16px;
@@ -221,39 +225,77 @@ body{
    RESPONSIVE
 ========================= */
 
-@media(max-width:900px){
+@media(max-width:1200px){
+    .profile-card{
+        padding:50px;
+        gap:50px;
+    }
+    .title{
+        font-size:50px;
+    }
+    .profile-aside{
+        width:340px;
+    }
+}
 
+@media(max-width:900px){
     body{
         flex-direction:column;
     }
-
     .sidebar{
         width:100%;
         position:relative;
     }
-
     .main{
         margin-left:0;
+        padding:20px;
     }
-
     .profile-card{
         flex-direction:column;
-        padding:51px;
-        gap:45px;
+        padding:36px;
+        gap:32px;
     }
-
     .profile-details,
     .profile-aside{
         width:100%;
     }
-
     .image-container{
-        max-width:320px;
+        max-width:280px;
     }
-
     .title{
-        font-size:44px;
+        font-size:38px;
         text-align:center;
+    }
+    .edit-btn{
+        width:100%;
+    }
+}
+
+@media(max-width:480px){
+    .profile-card{
+        padding:24px;
+        gap:24px;
+        border-radius:16px;
+    }
+    .title{
+        font-size:30px;
+        margin-bottom:28px;
+    }
+    .list-item input{
+        font-size:16px;
+    }
+    .label{
+        font-size:12px;
+    }
+    .image-container{
+        max-width:220px;
+    }
+    .profile-role{
+        font-size:22px;
+    }
+    .modal-content{
+        width:92vw;
+        padding:24px;
     }
 }
 

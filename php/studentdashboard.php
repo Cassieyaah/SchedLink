@@ -1,6 +1,7 @@
 <?php
 session_start();
 include '../includes/db.php';
+date_default_timezone_set('Asia/Manila');
 
 if (!isset($_SESSION['user_id'])) {
     header("Location:../php/logIn.php");
@@ -69,18 +70,81 @@ if ($profile_picture === $default_image && !file_exists($default_image)) {
     $profile_picture = "https://ui-avatars.com/api/?name=" . urlencode($fullname) . "&size=200&background=4a90d9&color=fff";
 }
 
+function day_matches_today(string $stored_day, string $today_code): bool {
+    $normalized = strtoupper(trim($stored_day));
+    if ($normalized === '') {
+        return false;
+    }
+
+    $normalized = str_replace(['THU', 'THURS', 'THURSDAY'], 'TH', $normalized);
+    $normalized = str_replace(['MONDAY', 'MON'], 'M', $normalized);
+    $normalized = str_replace(['TUESDAY', 'TUE', 'TUES'], 'T', $normalized);
+    $normalized = str_replace(['WEDNESDAY', 'WED'], 'W', $normalized);
+    $normalized = str_replace(['FRIDAY', 'FRI'], 'F', $normalized);
+    $normalized = str_replace(['SATURDAY', 'SAT'], 'S', $normalized);
+    $normalized = str_replace(['SUNDAY', 'SUN'], 'SU', $normalized);
+
+    preg_match_all('/TH|SU|M|T|W|F|S/', $normalized, $matches);
+    return in_array($today_code, $matches[0] ?? [], true);
+}
+
+$day_map = [
+    1 => 'M',
+    2 => 'T',
+    3 => 'W',
+    4 => 'TH',
+    5 => 'F',
+    6 => 'S',
+    7 => 'SU',
+];
+$today_code = $day_map[(int) date('N')];
+$today_label = date('l, F j, Y');
+$latest_upload = null;
+$latest_schedule_rows = [];
+$today_schedule_rows = [];
+
 /* =========================
-   SCHEDULE QUERY
+   LATEST UPLOAD SCHEDULE QUERY
 ========================= */
-if (!empty($user['student_id'])) {
-    $scheduleQuery = "SELECT * FROM student_schedules WHERE student_id = ?";
+$latest_stmt = $conn->prepare("
+    SELECT upload_id, original_filename, uploaded_at
+    FROM schedule_uploads
+    WHERE user_id = ? AND role = 'student'
+    ORDER BY uploaded_at DESC, upload_id DESC
+    LIMIT 1
+");
+$latest_stmt->bind_param("i", $user_id);
+$latest_stmt->execute();
+$latest_upload = $latest_stmt->get_result()->fetch_assoc();
+$latest_stmt->close();
+
+if (!empty($user['student_id']) && $latest_upload) {
+    $scheduleQuery = "
+        SELECT *
+        FROM student_schedules
+        WHERE student_id = ? AND upload_id = ?
+        ORDER BY time_start ASC, course_code ASC
+    ";
     $stmt2 = $conn->prepare($scheduleQuery);
-    $stmt2->bind_param("i", $user['student_id']);
+    $upload_id = (int) $latest_upload['upload_id'];
+    $stmt2->bind_param("ii", $user['student_id'], $upload_id);
     $stmt2->execute();
     $scheduleResult = $stmt2->get_result();
-} else {
-    $scheduleResult = null;
+
+    while ($row = $scheduleResult->fetch_assoc()) {
+        $latest_schedule_rows[] = $row;
+        if (day_matches_today($row['day'] ?? '', $today_code)) {
+            $today_schedule_rows[] = $row;
+        }
+    }
+
+    $stmt2->close();
 }
+
+$total_latest_subjects = count(array_unique(array_map(function ($row) {
+    return ($row['schedule_code'] ?? '') . '|' . ($row['course_code'] ?? '');
+}, $latest_schedule_rows)));
+$today_subject_count = count($today_schedule_rows);
 
 $upload_success = $_SESSION['upload_success'] ?? '';
 $upload_error = $_SESSION['upload_error'] ?? '';
@@ -134,7 +198,7 @@ unset($_SESSION['upload_success'], $_SESSION['upload_error']);
                 <i class="fa-solid fa-chart-line"></i> Dashboard
             </a>
 
-            <a href="#">
+            <a href="myschedule.php">
                 <i class="fa-regular fa-calendar"></i> My Schedule
             </a>
 
@@ -221,32 +285,38 @@ unset($_SESSION['upload_success'], $_SESSION['upload_error']);
         <div class="stats">
 
             <div class="stat-card">
-                <h4>Total Subjects</h4>
-                <p>5</p>
+                <h4>Latest Upload Subjects</h4>
+                <p><?php echo $total_latest_subjects; ?></p>
             </div>
 
             <div class="stat-card">
-                <h4>Upcoming Classes</h4>
-                <p>3</p>
+                <h4>Today's Classes</h4>
+                <p><?php echo $today_subject_count; ?></p>
             </div>
 
             <div class="stat-card">
-                <h4>Matched Schedules</h4>
-                <p>2</p>
+                <h4>Current Day</h4>
+                <p><?php echo htmlspecialchars($today_code); ?></p>
             </div>
 
         </div>
 
         <div class="section-title-main">
-            <h3>My Schedule</h3>
+            <h3>Today's Schedule</h3>
+            <p class="schedule-context">
+                <?php echo htmlspecialchars($today_label); ?>
+                <?php if ($latest_upload): ?>
+                    &middot; from latest upload on <?php echo date("F j, Y g:i A", strtotime($latest_upload['uploaded_at'])); ?>
+                <?php endif; ?>
+            </p>
             <div class="line"></div>
         </div>
 
         <div class="card-container">
 
-            <?php if ($scheduleResult && $scheduleResult->num_rows > 0): ?>
+            <?php if (!empty($today_schedule_rows)): ?>
 
-                <?php while ($row = $scheduleResult->fetch_assoc()): ?>
+                <?php foreach ($today_schedule_rows as $row): ?>
 
                     <div class="card">
                         <h4>
@@ -262,11 +332,15 @@ unset($_SESSION['upload_success'], $_SESSION['upload_error']);
                         <p><?php echo htmlspecialchars($row['room']); ?></p>
                     </div>
 
-                <?php endwhile; ?>
+                <?php endforeach; ?>
 
             <?php else: ?>
 
-                <p class="empty-state">No schedules found.</p>
+                <?php if ($latest_upload): ?>
+                    <p class="empty-state">No classes scheduled for today in your latest upload.</p>
+                <?php else: ?>
+                    <p class="empty-state">No uploaded schedule found yet.</p>
+                <?php endif; ?>
 
             <?php endif; ?>
 
@@ -299,7 +373,7 @@ unset($_SESSION['upload_success'], $_SESSION['upload_error']);
             <label class="schedule-dropzone" for="schedule_file">
                 <i class="fa-regular fa-image"></i>
                 <span class="dropzone-title">Choose schedule file</span>
-                <span class="dropzone-help">PNG, JPG, WEBP, or PDF up to 10 MB</span>
+                <span class="dropzone-help">PNG, JPG, or WEBP up to 10 MB</span>
                 <span class="selected-file" id="selectedScheduleFile">No file selected</span>
             </label>
 
@@ -307,7 +381,7 @@ unset($_SESSION['upload_success'], $_SESSION['upload_error']);
                 type="file"
                 id="schedule_file"
                 name="schedule_file"
-                accept="image/png,image/jpeg,image/webp,application/pdf"
+                accept="image/png,image/jpeg,image/webp"
                 required
             >
 
@@ -363,6 +437,10 @@ window.addEventListener("keydown", function (e) {
     }
 });
 
+if (window.location.hash === "#upload") {
+    openUploadModal();
+}
+
 links.forEach(link => {
     link.addEventListener("click", function (e) {
 
@@ -396,6 +474,12 @@ links.forEach(link => {
                 <p>Tesseract has completed extraction processing. Review entries and correct any alignment errors before saving to your profile.</p>
             </div>
         </div>
+
+        <?php if ($upload_error): ?>
+            <div class="dashboard-alert error-alert">
+                <?php echo htmlspecialchars($upload_error); ?>
+            </div>
+        <?php endif; ?>
 
         <form action="save_verified_schedule.php" method="POST" class="schedule-upload-form">
             <div class="preview-cards-container" style="margin: 20px 0; display: flex; flex-direction: column; gap: 15px;">

@@ -50,11 +50,11 @@ if ($file['size'] > $max_size) {
     exit();
 }
 
-$allowed_extensions = ['jpg', 'jpeg', 'png', 'webp', 'pdf'];
+$allowed_extensions = ['jpg', 'jpeg', 'png', 'webp'];
 $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
 
 if (!in_array($extension, $allowed_extensions, true)) {
-    $_SESSION['upload_error'] = "Invalid file type. Please upload PNG, JPG, WEBP, or PDF.";
+    $_SESSION['upload_error'] = "Invalid file type. Please upload PNG, JPG, or WEBP.";
     header("Location: " . $redirect_page);
     exit();
 }
@@ -78,12 +78,12 @@ if (!move_uploaded_file($file['tmp_name'], $target)) {
 // ========================================================
 
 // 1. Locate Python binaries environment and renamed script execution
-$python = realpath("../python/venv/Scripts/python.exe");
+$python = realpath("../python/venv/Scripts/python.exe") ?: "python";
 $script = realpath("../python/ocr_service.py"); // Updated script name here
 $uploaded_file = realpath($target);
 
 // Fail early if paths are broken to avoid executing a dead command
-if (!$python || !$script || !$uploaded_file) {
+if (!$script || !$uploaded_file) {
     $_SESSION['upload_error'] = "System path configuration error. Verify file paths in your directory structure.";
     header("Location: " . $redirect_page);
     exit();
@@ -104,13 +104,27 @@ $parsed_data = json_decode($output, true);
 
 if ($parsed_data === null) {
     // If it's not valid JSON, capture the raw error text string directly onto the dashboard view
-    $_SESSION['upload_error'] = "OCR Service Engine Error: <pre style='background:#fee; padding:10px; border-radius:4px;'>" . htmlspecialchars($output) . "</pre>";
+    $_SESSION['upload_error'] = "OCR Service Engine Error. Please check the Python OCR configuration.";
+    header("Location: " . $redirect_page);
+    exit();
+}
+
+if (isset($parsed_data['error'])) {
+    $_SESSION['upload_error'] = "OCR processing failed: " . htmlspecialchars($parsed_data['error']);
+    header("Location: " . $redirect_page);
+    exit();
+}
+
+if (!is_array($parsed_data) || empty($parsed_data)) {
+    $_SESSION['upload_error'] = "OCR could not detect schedule entries. Please upload a clearer screenshot.";
     header("Location: " . $redirect_page);
     exit();
 }
 
 // CACHE PARSED DATA IN SESSION INSTEAD OF BLIND SAVING TO THE DATABASE
 $_SESSION['ocr_preview_data'] = $parsed_data;
+$_SESSION['ocr_upload_original_name'] = $file['name'];
+$_SESSION['ocr_upload_stored_path'] = str_replace("\\", "/", $target);
 $_SESSION['upload_success'] = "OCR analysis complete! Please review and confirm your parsed schedule below.";
 
 header("Location: " . $redirect_page);
