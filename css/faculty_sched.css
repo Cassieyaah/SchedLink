@@ -1,0 +1,30 @@
+/* faculty_schedule.css */
+.grid-table-header {
+    display: grid;
+    /* 4 columns: Sched Code, Subjects, Course/Year, Room */
+    grid-template-columns: 1fr 2fr 1.5fr 1fr; 
+    background: #0b6b3a; /* Ginawang green para sa faculty */
+    color: #ffffff;
+    font-weight: bold;
+    text-align: center;
+    padding: 12px 4px;
+    border-radius: 8px 8px 0 0;
+    font-size: 13px;
+}
+
+.grid-table-row {
+    display: grid;
+    grid-template-columns: 1fr 2fr 1.5fr 1fr;
+    background: white;
+    padding: 10px 4px;
+    gap: 8px;
+    align-items: center;
+    border-bottom: 1px solid #eee;
+}
+
+.editable-grid-row input {
+    width: 95%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
