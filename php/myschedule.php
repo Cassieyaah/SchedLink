@@ -33,6 +33,11 @@ function ensure_schedule_upload_schema(mysqli $conn): void {
         $conn->query("ALTER TABLE student_schedules ADD CONSTRAINT student_schedules_upload_fk FOREIGN KEY (upload_id) REFERENCES schedule_uploads (upload_id) ON DELETE CASCADE ON UPDATE CASCADE");
     }
 
+    $profColumnCheck = $conn->query("SHOW COLUMNS FROM student_schedules LIKE 'prof_name'");
+    if ($profColumnCheck && $profColumnCheck->num_rows === 0) {
+        $conn->query("ALTER TABLE student_schedules ADD prof_name VARCHAR(255) DEFAULT NULL AFTER course_description");
+    }
+
     $facultyColumn = $conn->query("SHOW COLUMNS FROM faculty_schedules LIKE 'upload_id'");
     if ($facultyColumn && $facultyColumn->num_rows === 0) {
         $conn->query("ALTER TABLE faculty_schedules ADD upload_id INT(11) DEFAULT NULL AFTER professor_id");
@@ -104,7 +109,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['upload_id'], $_POST['
         if ($role === 'student') {
             $delete_stmt = $conn->prepare("DELETE FROM student_schedules WHERE upload_id = ? AND student_id = ?");
             $delete_stmt->bind_param("ii", $upload_id, $profile_id);
-            $insert_stmt = $conn->prepare("INSERT INTO student_schedules (student_id, upload_id, schedule_code, course_code, course_description, time_start, time_end, day, room, semester, school_year, status) SELECT ?, upload_id, ?, ?, ?, ?, ?, ?, ?, semester, school_year, 'active' FROM schedule_uploads WHERE upload_id = ?");
+            $insert_stmt = $conn->prepare("INSERT INTO student_schedules (student_id, upload_id, schedule_code, course_code, course_description, prof_name, time_start, time_end, day, room, semester, school_year, status) SELECT ?, upload_id, ?, ?, ?, ?, ?, ?, ?, ?, semester, school_year, 'active' FROM schedule_uploads WHERE upload_id = ?");
         } else {
             $delete_stmt = $conn->prepare("DELETE FROM faculty_schedules WHERE upload_id = ? AND professor_id = ?");
             $delete_stmt->bind_param("ii", $upload_id, $profile_id);
@@ -122,6 +127,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['upload_id'], $_POST['
             $room = trim($course['room'] ?? '');
             $time_start = trim($course['time_start'] ?? '');
             $time_end = trim($course['time_end'] ?? '');
+            $prof_name = trim($course['prof_name'] ?? '');
 
             if ($schedule_code === '' && $course_code === '' && $course_description === '') {
                 continue;
@@ -131,7 +137,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['upload_id'], $_POST['
             $time_end = $time_end !== '' ? date('H:i:s', strtotime($time_end)) : '00:00:00';
 
             if ($role === 'student') {
-                $insert_stmt->bind_param("isssssssi", $profile_id, $schedule_code, $course_code, $course_description, $time_start, $time_end, $day, $room, $upload_id);
+                $insert_stmt->bind_param("issssssssi", $profile_id, $schedule_code, $course_code, $course_description, $prof_name, $time_start, $time_end, $day, $room, $upload_id);
             } else {
                 $insert_stmt->bind_param("isssssssi", $profile_id, $schedule_code, $course_code, $course_description, $day, $time_start, $time_end, $room, $upload_id);
             }
@@ -190,6 +196,34 @@ if ($uploads) {
             $uploads[(int) $course['upload_id']]['courses'][] = $course;
         }
     }
+
+    // --- CUSTOM SORTING (Monday to Saturday + Time Start) ---
+    $day_order = [
+        'M'  => 1, 'MON' => 1, 'MONDAY' => 1,
+        'T'  => 2, 'TUE' => 2, 'TUESDAY' => 2,
+        'W'  => 3, 'WED' => 3, 'WEDNESDAY' => 3,
+        'TH' => 4, 'THU' => 4, 'THURSDAY' => 4,
+        'F'  => 5, 'FRI' => 5, 'FRIDAY' => 5,
+        'S'  => 6, 'ST'  => 6, 'SAT' => 6, 'SATURDAY' => 6
+    ];
+
+    foreach ($uploads as $upload_id => $upload_data) {
+        if (!empty($uploads[$upload_id]['courses'])) {
+            usort($uploads[$upload_id]['courses'], function($a, $b) use ($day_order) {
+                $dayA = strtoupper(trim($a['day'] ?? ''));
+                $dayB = strtoupper(trim($b['day'] ?? ''));
+                
+                $orderA = $day_order[$dayA] ?? 99;
+                $orderB = $day_order[$dayB] ?? 99;
+
+                if ($orderA === $orderB) {
+                    return strcmp($a['time_start'] ?? '00:00:00', $b['time_start'] ?? '00:00:00');
+                }
+                
+                return $orderA <=> $orderB;
+            });
+        }
+    }
 }
 ?>
 <!DOCTYPE html>
@@ -202,6 +236,7 @@ if ($uploads) {
     <link rel="stylesheet" href="../css/uploadSchedule.css">
     <link rel="stylesheet" href="../css/mysched.css">
     <link rel="stylesheet" href="../fonts/css/all.min.css">
+    <link rel="stylesheet" href="../css/mysched_upgrade.css">
 </head>
 <body>
 <div class="sidebar">
@@ -280,10 +315,12 @@ if ($uploads) {
                     <form method="POST" class="schedule-edit-form">
                         <input type="hidden" name="upload_id" value="<?php echo (int) $upload['upload_id']; ?>">
 
+                        <!-- BINAGO: Pitong Columns na ang Header -->
                         <div class="grid-table-header">
                             <span>Sched Code</span>
                             <span>Course Code</span>
                             <span>Description</span>
+                            <span>Instructor</span>
                             <span>Day</span>
                             <span>Time</span>
                             <span>Room</span>
@@ -295,6 +332,12 @@ if ($uploads) {
                                     <input type="text" name="courses[<?php echo $index; ?>][schedule_code]" value="<?php echo htmlspecialchars($course['schedule_code']); ?>">
                                     <input type="text" name="courses[<?php echo $index; ?>][course_code]" value="<?php echo htmlspecialchars($course['course_code']); ?>">
                                     <input type="text" name="courses[<?php echo $index; ?>][course_description]" value="<?php echo htmlspecialchars($course['course_description']); ?>">
+                                    
+                                    <!-- BINAGO: May sarili nang editable box ang Instructor/Prof -->
+                                    <div class="prof-column-input-wrapper">
+                                        <input type="text" name="courses[<?php echo $index; ?>][prof_name]" value="<?php echo htmlspecialchars($course['prof_name'] ?? 'Prof: not found in the uploaded image'); ?>" class="prof-input-field">
+                                    </div>
+
                                     <input type="text" name="courses[<?php echo $index; ?>][day]" value="<?php echo htmlspecialchars($course['day']); ?>">
                                     <span class="time-pair">
                                         <input type="time" name="courses[<?php echo $index; ?>][time_start]" value="<?php echo format_time_value($course['time_start']); ?>">
@@ -310,9 +353,13 @@ if ($uploads) {
                                 <i class="fa-solid fa-plus"></i>
                                 Add Row
                             </button>
+                            <a href="myschedule.php" class="discard-btn">
+                                <i class="fa-solid fa-trash-can"></i>
+                                Discard Update
+                            </a>
                             <button type="submit" class="primary-upload-btn">
                                 <i class="fa-solid fa-floppy-disk"></i>
-                                Save Changes
+                                Save Update
                             </button>
                         </div>
                     </form>
@@ -336,10 +383,15 @@ document.querySelectorAll(".add-row-btn").forEach(button => {
         const index = body.querySelectorAll(".grid-table-row").length;
         const row = document.createElement("div");
         row.className = "grid-table-row editable-grid-row";
+        
+        // BINAGO: HTML Structure ng js add-row para sumunod sa pitong columns
         row.innerHTML = `
             <input type="text" name="courses[${index}][schedule_code]" placeholder="Sched code">
             <input type="text" name="courses[${index}][course_code]" placeholder="Course code">
             <input type="text" name="courses[${index}][course_description]" placeholder="Description">
+            <div class="prof-column-input-wrapper">
+                <input type="text" name="courses[${index}][prof_name]" value="Prof: not found in the uploaded image" class="prof-input-field">
+            </div>
             <input type="text" name="courses[${index}][day]" placeholder="Day">
             <span class="time-pair">
                 <input type="time" name="courses[${index}][time_start]">
