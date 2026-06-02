@@ -54,31 +54,33 @@ function ensure_schedule_upload_schema(mysqli $conn): void {
 }
 
 function get_or_create_student_id(mysqli $conn, int $user_id): int {
-    $profile_stmt = $conn->prepare("SELECT student_id FROM students WHERE user_id = ?");
+
+    $profile_stmt = $conn->prepare("
+        SELECT student_id 
+        FROM students 
+        WHERE user_id = ?
+    ");
+
+    if (!$profile_stmt) {
+        throw new Exception("Failed preparing student lookup: " . $conn->error);
+    }
+
     $profile_stmt->bind_param("i", $user_id);
     $profile_stmt->execute();
+
     $profile_res = $profile_stmt->get_result()->fetch_assoc();
+
     $profile_stmt->close();
 
+    // Existing student profile found
     if ($profile_res) {
         return (int) $profile_res['student_id'];
     }
 
-    $student_number = 900000000 + $user_id;
-    $program = 'not found in the uploaded image';
-    $insert_stmt = $conn->prepare("INSERT INTO students (user_id, student_number, program) VALUES (?, ?, ?)");
-    if (!$insert_stmt) {
-        throw new Exception("Could not prepare student profile creation: " . $conn->error);
-    }
-
-    $insert_stmt->bind_param("iis", $user_id, $student_number, $program);
-    if (!$insert_stmt->execute()) {
-        throw new Exception("Could not create student profile for schedule upload: " . $insert_stmt->error);
-    }
-
-    $student_id = (int) $conn->insert_id;
-    $insert_stmt->close();
-    return $student_id;
+    // No student profile found
+    throw new Exception(
+        "Student profile not found. Please complete your profile first before uploading schedules."
+    );
 }
 
 function get_or_create_professor_id(mysqli $conn, int $user_id): int {
