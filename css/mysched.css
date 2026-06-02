@@ -112,15 +112,49 @@
     font-size: 12px;
 }
 
+/* ── Prof column ─────────────────────────────────────────── */
 .prof-column-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 5px;
     width: 100%;
 }
 
 .prof-input-field {
+    flex: 1;
+    min-width: 0;
     border: 1px solid #ccd1d9 !important;
     background-color: #f9fafb;
     font-style: italic;
     color: #374151 !important;
+}
+
+/* Icon button that replaces the old text hyperlink */
+.prof-lookup-icon-btn {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 6px;
+    background: #dbeafe;
+    color: #2563eb;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, transform 0.1s;
+}
+
+.prof-lookup-icon-btn:hover {
+    background: #2563eb;
+    color: #fff;
+    transform: scale(1.1);
+}
+
+.prof-lookup-icon-btn i {
+    font-size: 13px;
+    pointer-events: none;
 }
 
 .time-pair {
@@ -212,3 +246,190 @@
         padding: 16px;
     }
 }
+
+/* ── Faculty card overlay ────────────────────────────────── */
+.fac-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    padding: 1rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.18s;
+}
+
+.fac-overlay.open {
+    opacity: 1;
+    pointer-events: all;
+}
+
+/* ── Card ── */
+.fac-card {
+    background: #fff;
+    border-radius: 18px;
+    border: 0.5px solid #e5e7eb;
+    padding: 1.5rem 1.5rem 1.25rem;
+    width: 100%;
+    max-width: 320px;
+    position: relative;
+    transform: scale(0.9);
+    opacity: 0;
+    transition: transform 0.18s ease, opacity 0.18s ease;
+    text-align: center;
+}
+
+.fac-overlay.open .fac-card {
+    transform: scale(1);
+    opacity: 1;
+}
+
+.fac-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: #f3f4f6;
+    border: none;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #6b7280;
+    font-size: 13px;
+}
+.fac-close:hover { 
+    background: #e5e7eb; 
+    color: #111; 
+}
+
+/* ── Loading spinner ── */
+.fac-loading {
+    padding: 28px 0 20px;
+    color: #9ca3af;
+}
+
+.fac-loading i {
+    font-size: 28px;
+    color: #2563eb;
+    margin-bottom: 10px;
+    display: block;
+}
+
+.fac-loading p {
+    margin: 0;
+    font-size: 13px;
+}
+
+/* ── Avatar ── */
+.fac-avatar-wrap {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 2px solid #e5e7eb;
+    margin: 0 auto 12px;
+    background: #dbeafe;
+}
+
+.fac-avatar-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* ── Name / dept ── */
+.fac-card .fac-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: #111827;
+    margin: 0 0 3px;
+}
+
+.fac-card .fac-dept {
+    font-size: 12px;
+    color: #6b7280;
+    margin: 0 0 10px;
+}
+
+/* ── Registered badge ── */
+.fac-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: #dcfce7;
+    color: #166534;
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 99px;
+    margin-bottom: 14px;
+}
+
+.fac-divider {
+    border: none;
+    border-top: 0.5px solid #e5e7eb;
+    margin: 0 0 12px;
+}
+
+/* ── Info rows ── */
+.fac-info {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    text-align: left;
+}
+
+.fac-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: #374151;
+}
+
+.fac-row i {
+    font-size: 14px;
+    color: #9ca3af;
+    width: 16px;
+    flex-shrink: 0;
+}
+
+.fac-row a {
+    color: #2563eb;
+    text-decoration: none;
+    word-break: break-all;
+}
+.fac-row a:hover { text-decoration: underline; }
+
+/* ── Not found state ── */
+.fac-notfound {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    color: #9ca3af;
+    font-size: 13px;
+    padding: 8px 0;
+}
+.fac-notfound i { font-size: 26px; }
+.fac-notfound p { margin: 0; }
+
+/* ── Actions ── */
+.fac-actions { margin-top: 14px; }
+
+.fac-actions button {
+    width: 100%;
+    font-size: 13px;
+    padding: 8px 0;
+    border-radius: 8px;
+    cursor: pointer;
+    border: 1px solid #e5e7eb;
+    background: #f9fafb;
+    color: #374151;
+}
+.fac-actions button:hover { background: #f3f4f6; }
