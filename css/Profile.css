@@ -35,11 +35,12 @@ body{
     height:100%;
     background:rgba(6,80,42,0.92);
     border-radius:2%;
-    padding:clamp(2rem, 6vw, 5rem);
+    padding:clamp(1.25rem, 5vw, 5rem);
     display:flex;
+    flex-direction:row;          /* always row — zoom won't collapse it */
     justify-content:center;
     align-items:center;
-    gap:clamp(2rem, 6vw, 5.625rem);
+    gap:clamp(1.25rem, 5vw, 5.625rem);
     box-shadow:0 0.6vh 2vh rgba(0,0,0,0.28);
     color:white;
 }
@@ -49,32 +50,33 @@ body{
 ========================= */
 
 .profile-details{
-    width:65%;
+    flex:1 1 0;                  /* grows to fill space, not a fixed % */
+    min-width:0;                 /* allows shrinking below content size */
     display:flex;
     flex-direction:column;
     justify-content:center;
 }
 
 .title{
-    font-size:clamp(1.75rem, 4.5vw, 4.0625rem);
-    margin-bottom:clamp(1.5rem, 3.5vw, 2.8125rem);
+    font-size:clamp(1.4rem, 4vw, 4.0625rem);
+    margin-bottom:clamp(1rem, 3vw, 2.8125rem);
     line-height:1.1;
 }
 
 .profile-list{
     display:flex;
     flex-direction:column;
-    gap:clamp(1rem, 2.5vw, 1.9375rem);
+    gap:clamp(0.75rem, 2vw, 1.9375rem);
 }
 
 .list-item{
     display:flex;
     flex-direction:column;
-    gap:clamp(0.5rem, 1vw, 0.75rem);
+    gap:clamp(0.35rem, 0.8vw, 0.75rem);
 }
 
 .label{
-    font-size:clamp(0.65rem, 1vw, 0.875rem);
+    font-size:clamp(0.6rem, 0.85vw, 0.875rem);
     letter-spacing:0.2em;
     text-transform:uppercase;
     color:#c9f7cf;
@@ -84,9 +86,9 @@ body{
 .list-item input{
     border:none;
     border-bottom:2px solid rgba(255,255,255,0.35);
-    padding:clamp(0.6rem, 1.5vh, 1rem) 0;
+    padding:clamp(0.45rem, 1.2vh, 1rem) 0;
     background:transparent;
-    font-size:clamp(0.95rem, 1.5vw, 1.25rem);
+    font-size:clamp(0.85rem, 1.3vw, 1.25rem);
     color:white;
     outline:none;
 }
@@ -96,14 +98,14 @@ body{
 }
 
 .edit-btn{
-    width:clamp(10rem, 16vw, 12.8125rem);
-    padding:clamp(0.6rem, 1.5vh, 1rem);
-    margin-top:clamp(1.5rem, 3vh, 2.5rem);
+    width:clamp(8rem, 14vw, 12.8125rem);
+    padding:clamp(0.5rem, 1.2vh, 1rem);
+    margin-top:clamp(1rem, 2.5vh, 2.5rem);
     border:none;
-    border-radius:clamp(0.5rem, 1vw, 0.8125rem);
+    border-radius:clamp(0.5rem, 0.8vw, 0.8125rem);
     background:white;
     color:#06502a;
-    font-size:clamp(0.85rem, 1.2vw, 1rem);
+    font-size:clamp(0.8rem, 1vw, 1rem);
     font-weight:bold;
     cursor:pointer;
     transition:0.2s;
@@ -118,7 +120,8 @@ body{
 ========================= */
 
 .profile-aside{
-    width:clamp(14rem, 32vw, 27.5rem);
+    flex:0 0 auto;               /* don't grow/shrink unexpectedly */
+    width:clamp(11rem, 28vw, 27.5rem);
     display:flex;
     flex-direction:column;
     justify-content:center;
@@ -129,7 +132,6 @@ body{
 .image-container{
     position:relative;
     width:100%;
-    max-width:clamp(14rem, 32vw, 27.5rem);
     aspect-ratio:1 / 1;
 }
 
@@ -138,34 +140,24 @@ body{
     width:100%;
     aspect-ratio:1 / 1;
     object-fit:cover;
-    border-radius:clamp(1rem, 2vw, 1.75rem);
+    border-radius:clamp(0.75rem, 1.8vw, 1.75rem);
     display:block;
-    border:clamp(4px, 0.6vw, 9px) solid rgba(255,255,255,0.95);
+    border:clamp(3px, 0.5vw, 9px) solid rgba(255,255,255,0.95);
 }
 
 /* =========================
    GRADIENT OVER IMAGE ONLY
-   (NOT AFFECTING BORDER)
 ========================= */
 
 .image-container::after{
     content:"";
     position:absolute;
-
-    left:clamp(4px, 0.6vw, 9px);
-    right:clamp(4px, 0.6vw, 9px);
-    bottom:clamp(4px, 0.6vw, 9px);
-
+    left:clamp(3px, 0.5vw, 9px);
+    right:clamp(3px, 0.5vw, 9px);
+    bottom:clamp(3px, 0.5vw, 9px);
     height:45%;
-
-    border-radius:0 0 clamp(0.8rem, 1.5vw, 1.25rem) clamp(0.8rem, 1.5vw, 1.25rem);
-
-    background:linear-gradient(
-        to top,
-        rgba(0,0,0,0.65),
-        rgba(0,0,0,0)
-    );
-
+    border-radius:0 0 clamp(0.6rem, 1.3vw, 1.25rem) clamp(0.6rem, 1.3vw, 1.25rem);
+    background:linear-gradient(to top, rgba(0,0,0,0.65), rgba(0,0,0,0));
     pointer-events:none;
 }
 
@@ -173,9 +165,9 @@ body{
 .profile-role{
     position:absolute;
     left:50%;
-    bottom:clamp(0.6rem, 1.5vh, 1.0625rem);
+    bottom:clamp(0.45rem, 1.2vh, 1.0625rem);
     transform:translateX(-50%);
-    font-size:clamp(1.1rem, 2.2vw, 1.875rem);
+    font-size:clamp(0.85rem, 1.8vw, 1.875rem);
     font-weight:bold;
     letter-spacing:0.1em;
     text-transform:capitalize;
@@ -187,28 +179,20 @@ body{
 
 /* CHANGE PROFILE BUTTON */
 .change-profile-btn{
-    margin-top:clamp(0.6rem, 1.5vh, 0.9375rem);
-
-    width:clamp(2.5rem, 4vw, 3.625rem);
-    height:clamp(2.5rem, 4vw, 3.625rem);
-
+    margin-top:clamp(0.5rem, 1.2vh, 0.9375rem);
+    width:clamp(2rem, 3.5vw, 3.625rem);
+    height:clamp(2rem, 3.5vw, 3.625rem);
     border:none;
     border-radius:50%;
-
     background:white;
     color:#06502a;
-
-    font-size:clamp(1.2rem, 2vw, 1.875rem);
+    font-size:clamp(1rem, 1.8vw, 1.875rem);
     font-weight:bold;
-
     cursor:pointer;
-
     display:flex;
     justify-content:center;
     align-items:center;
-
     line-height:1;
-
     transition:0.2s;
 }
 
@@ -219,22 +203,31 @@ body{
 
 /* =========================
    RESPONSIVE
+   Breakpoints use em so they
+   scale with browser zoom and
+   fire at the right visual size.
+   1em = 16px at default zoom.
+   900px  → 56.25em
+   600px  → 37.5em
+   480px  → 30em
 ========================= */
 
-@media(max-width:1200px){
+/* Small laptops / tablets landscape */
+@media(max-width:56.25em){
     .profile-card{
-        padding:clamp(2rem, 4vw, 3.125rem);
-        gap:clamp(2rem, 4vw, 3.125rem);
+        padding:clamp(1rem, 3.5vw, 2.5rem);
+        gap:clamp(1rem, 3.5vw, 2.5rem);
     }
     .title{
-        font-size:clamp(1.75rem, 4vw, 3.125rem);
+        font-size:clamp(1.3rem, 3.5vw, 2.5rem);
     }
     .profile-aside{
-        width:clamp(12rem, 28vw, 21.25rem);
+        width:clamp(10rem, 26vw, 18rem);
     }
 }
 
-@media(max-width:900px){
+/* Tablets portrait / large phones */
+@media(max-width:37.5em){
     body{
         flex-direction:column;
     }
@@ -248,18 +241,18 @@ body{
     }
     .profile-card{
         flex-direction:column;
-        padding:clamp(1.5rem, 4vw, 2.25rem);
-        gap:clamp(1.5rem, 3vw, 2rem);
+        padding:clamp(1.25rem, 4vw, 2rem);
+        gap:clamp(1.25rem, 3vw, 2rem);
     }
     .profile-details,
     .profile-aside{
         width:100%;
     }
     .image-container{
-        max-width:clamp(12rem, 40vw, 17.5rem);
+        max-width:clamp(10rem, 38vw, 15rem);
     }
     .title{
-        font-size:clamp(1.5rem, 4.5vw, 2.375rem);
+        font-size:clamp(1.4rem, 4vw, 2.2rem);
         text-align:center;
     }
     .edit-btn{
@@ -267,15 +260,16 @@ body{
     }
 }
 
-@media(max-width:480px){
+/* Small phones */
+@media(max-width:30em){
     .profile-card{
         padding:clamp(1rem, 5vw, 1.5rem);
         gap:clamp(1rem, 5vw, 1.5rem);
         border-radius:4%;
     }
     .title{
-        font-size:clamp(1.25rem, 6vw, 1.875rem);
-        margin-bottom:clamp(1rem, 4vw, 1.75rem);
+        font-size:clamp(1.2rem, 5.5vw, 1.75rem);
+        margin-bottom:clamp(1rem, 4vw, 1.5rem);
     }
     .list-item input{
         font-size:clamp(0.85rem, 3.5vw, 1rem);
@@ -284,10 +278,10 @@ body{
         font-size:clamp(0.6rem, 2.5vw, 0.75rem);
     }
     .image-container{
-        max-width:clamp(10rem, 55vw, 13.75rem);
+        max-width:clamp(9rem, 52vw, 13rem);
     }
     .profile-role{
-        font-size:clamp(0.95rem, 4.5vw, 1.375rem);
+        font-size:clamp(0.9rem, 4vw, 1.3rem);
     }
     .modal-content{
         width:92vw;
@@ -319,7 +313,7 @@ body{
 .modal-content{
     background:white;
     color:#333;
-    width:clamp(18rem, 40vw, 28.125rem);
+    width:clamp(17rem, 38vw, 28rem);
     padding:clamp(1.25rem, 3vw, 2rem);
     border-radius:clamp(0.6rem, 1.2vw, 1rem);
     position:relative;
