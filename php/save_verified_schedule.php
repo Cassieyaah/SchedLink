@@ -2,6 +2,8 @@
 session_start();
 require_once __DIR__ . '/../vendor/autoload.php'; // Siguraduhin ang path ng vendor
 include '../includes/db.php';
+include '../includes/matched_schedules.php'; // FIX: Linked the matching engine file here
+
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['schedule_file'])) {
@@ -84,7 +86,6 @@ function ensure_schedule_upload_schema(mysqli $conn): void {
 }
 
 function get_or_create_student_id(mysqli $conn, int $user_id): int {
-
     $profile_stmt = $conn->prepare("
         SELECT student_id 
         FROM students 
@@ -97,17 +98,13 @@ function get_or_create_student_id(mysqli $conn, int $user_id): int {
 
     $profile_stmt->bind_param("i", $user_id);
     $profile_stmt->execute();
-
     $profile_res = $profile_stmt->get_result()->fetch_assoc();
-
     $profile_stmt->close();
 
-    // Existing student profile found
     if ($profile_res) {
         return (int) $profile_res['student_id'];
     }
 
-    // No student profile found
     throw new Exception(
         "Student profile not found. Please complete your profile first before uploading schedules."
     );
@@ -177,10 +174,10 @@ try {
     if ($role === "student") {
         $student_id = get_or_create_student_id($conn, $user_id);
         $insert_stmt = $conn->prepare("INSERT INTO student_schedules (student_id, upload_id, schedule_code, course_code, course_description, time_start, time_end, day, room, semester, school_year, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active')");
-
     } else if ($role === "faculty") {
         $faculty_id = get_or_create_faculty_id($conn, $user_id);
-        $insert_stmt = $conn->prepare("INSERT INTO faculty_schedules (faculty_id, upload_id, schedule_code, course_code, course_description, day, time_start, time_end, room, semester, school_year, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active')");
+        // FIX: Removed course_description field to accurately reflect faculty table parameters
+        $insert_stmt = $conn->prepare("INSERT INTO faculty_schedules (faculty_id, upload_id, schedule_code, course_code, day, time_start, time_end, room, semester, school_year, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active')");
     } else {
         throw new Exception("Unauthorized role status action matching exception structural scope: Current user detected as role: '" . htmlspecialchars($role) . "'");
     }
@@ -216,9 +213,10 @@ try {
                 $current_semester, $current_school_year
             );
         } else {
+            // FIX: Remapped query sequence properties to properly align with faculty table schema strings
             $insert_stmt->bind_param(
-                "iisssssssss", 
-                $faculty_id, $upload_id, $sched_code, $course_code, $description, 
+                "iissssssss", 
+                $faculty_id, $upload_id, $sched_code, $course_code, 
                 $day, $time_start, $time_end, $room, 
                 $current_semester, $current_school_year
             );
