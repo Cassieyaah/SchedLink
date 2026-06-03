@@ -3,6 +3,7 @@ session_start();
 
 // Ensure the database connection layout configuration handles requests cleanly
 include '../includes/db.php'; 
+require_once __DIR__ . '/schedule_matcher.php';
 
 if (!isset($_SESSION['user_id'])) {
     header("Location: ../php/logIn.php");
@@ -119,6 +120,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST' || empty($_POST['courses'])) {
 }
 
 ensure_schedule_upload_schema($conn);
+ensure_matched_schedule_schema($conn);
 
 $conn->begin_transaction();
 
@@ -199,6 +201,13 @@ try {
     }
 
     $insert_stmt->close();
+
+    if ($role === "student") {
+        match_student_upload_schedules($conn, $student_id, (int) $upload_id);
+    } else if ($role === "faculty") {
+        refresh_matches_for_faculty_upload($conn, $professor_id, (int) $upload_id);
+    }
+
     $conn->commit();
 
     // SUCCESS! Clear the preview cache so the modal closes automatically

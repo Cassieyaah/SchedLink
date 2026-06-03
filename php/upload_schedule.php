@@ -78,7 +78,25 @@ if (!move_uploaded_file($file['tmp_name'], $target)) {
 // ========================================================
 
 // 1. Locate Python binaries environment and renamed script execution
-$python = realpath("../python/venv/Scripts/python.exe") ?: "python";
+$python_candidates = [
+    realpath("../python/venv/Scripts/python.exe") ?: "",
+    "C:\\Program Files\\Python314\\python.exe",
+    "C:\\Users\\Danna\\AppData\\Local\\Programs\\Python\\Python314\\python.exe",
+    "python"
+];
+
+$python = "python";
+foreach ($python_candidates as $candidate) {
+    if ($candidate === "") {
+        continue;
+    }
+
+    if ($candidate === "python" || file_exists($candidate)) {
+        $python = $candidate;
+        break;
+    }
+}
+
 $script = realpath("../python/ocr_service.py"); // Updated script name here
 $uploaded_file = realpath($target);
 
@@ -104,7 +122,9 @@ $parsed_data = json_decode($output, true);
 
 if ($parsed_data === null) {
     // If it's not valid JSON, capture the raw error text string directly onto the dashboard view
-    $_SESSION['upload_error'] = "OCR Service Engine Error. Please check the Python OCR configuration.";
+    $raw_error = trim(strip_tags($output));
+    $raw_error = preg_replace('/\s+/', ' ', $raw_error);
+    $_SESSION['upload_error'] = "OCR Service Engine Error: " . htmlspecialchars(substr($raw_error, 0, 240));
     header("Location: " . $redirect_page);
     exit();
 }
