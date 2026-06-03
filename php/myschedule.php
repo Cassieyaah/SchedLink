@@ -467,50 +467,37 @@ if ($uploads) {
     </section>
 </main>
 
-<div class="fac-overlay" id="fac-overlay">
-    <div class="fac-card" id="fac-card">
-        <button class="fac-close" id="fac-close" aria-label="Close">
+<div class="faculty-info-modal" id="facultyInfoModal" aria-hidden="true" hidden>
+    <div class="faculty-info-backdrop" data-faculty-info-close></div>
+    <div class="faculty-info-dialog" role="dialog" aria-modal="true" aria-labelledby="facultyInfoTitle">
+        <button type="button" class="faculty-info-close" data-faculty-info-close aria-label="Close faculty information">
             <i class="fa-solid fa-xmark"></i>
         </button>
 
-        <div class="fac-loading" id="fac-loading">
-            <i class="fa-solid fa-spinner fa-spin"></i>
-            <p>Looking up faculty…</p>
-        </div>
-
-        <div class="fac-body" id="fac-body">
-            <div class="fac-avatar-wrap">
-                <img src="../media/images.jpg" alt="Faculty photo" id="fac-avatar-img">
+        <div class="faculty-info-heading">
+            <div class="faculty-info-avatar">
+                <i class="fa-solid fa-user-tie"></i>
             </div>
-
-            <p class="fac-name" id="fac-name"></p>
-
-            <hr class="fac-divider">
-
-            <div class="fac-info" id="fac-info">
-                <div class="fac-row">
-                    <i class="fa-solid fa-envelope"></i>
-                    <a id="fac-email" href="#">—</a>
-                </div>
-                <div class="fac-row" id="fac-fb-row" >
-                    <i class="fa-brands fa-facebook"></i>
-                    <a id="fac-fb">View Facebook profile</a>
-                </div>
-                <div class="fac-row" id="fac-dept-row">
-                    <i class="fa-solid fa-building"></i>
-                    <span id="fac-dept-text"></span>
-                </div>
+            <div>
+                <h3 id="facultyInfoTitle">Faculty Information</h3>
+                <p id="facultyInfoName">N/A</p>
             </div>
-
-            <!-- FIX: this element was referenced in JS but missing from the HTML -->
-            <p id="fac-notfound" hidden style="text-align:center; color: #888; margin: 1rem 0;">
-                Faculty profile not found.
-            </p>
         </div>
 
-        <div class="fac-actions">
-            <button type="button" onclick="closeFacCard()">Close</button>
-        </div>
+        <dl class="faculty-info-list">
+            <div>
+                <dt>Email</dt>
+                <dd id="facultyInfoEmail">N/A</dd>
+            </div>
+            <div>
+                <dt>Department</dt>
+                <dd id="facultyInfoDepartment">N/A</dd>
+            </div>
+            <div>
+                <dt>Facebook</dt>
+                <dd><a id="facultyInfoFacebook" href="#" target="_blank" rel="noopener">N/A</a></dd>
+            </div>
+        </dl>
     </div>
 </div>
 
@@ -549,110 +536,53 @@ document.querySelectorAll(".add-row-btn").forEach(button => {
 });
 
 // --- Faculty Pop-up Card ---
-const facOverlay   = document.getElementById('fac-overlay');
-const facClose     = document.getElementById('fac-close');
-const facLoading   = document.getElementById('fac-loading');
-const facBody      = document.getElementById('fac-body');
-const facName      = document.getElementById('fac-name');
-const facDeptText  = document.getElementById('fac-dept-text');
-const facInfo      = document.getElementById('fac-info');
-const facEmail     = document.getElementById('fac-email');
-const facFb        = document.getElementById('fac-fb');
-const facFbRow     = document.getElementById('fac-fb-row');
-const facAvatarImg = document.getElementById('fac-avatar-img');
-const facNotFound  = document.getElementById('fac-notfound'); // now exists in the HTML
+const facultyInfoModal      = document.getElementById('facultyInfoModal');
+const facultyInfoName       = document.getElementById('facultyInfoName');
+const facultyInfoEmail      = document.getElementById('facultyInfoEmail');
+const facultyInfoDepartment = document.getElementById('facultyInfoDepartment');
+const facultyInfoFacebook   = document.getElementById('facultyInfoFacebook');
 
-function closeFacCard() {
-    facOverlay.classList.remove('open');
-    document.body.style.overflow = '';
+function displayFacultyValue(value) {
+    return value && value.toString().trim() ? value.toString().trim() : 'N/A';
 }
 
-function resetFacCard() {
-    facLoading.hidden  = false;
-    facBody.hidden     = true;
+function openFacultyInfoModal(name) {
+    facultyInfoName.textContent       = 'N/A';
+    facultyInfoEmail.textContent      = 'N/A';
+    facultyInfoDepartment.textContent = 'N/A';
+    facultyInfoFacebook.textContent   = 'N/A';
+    facultyInfoFacebook.removeAttribute('href');
 
-    facInfo.hidden     = true;
-    facFbRow.hidden    = true;
-    facNotFound.hidden = true;
-
-    facFb.href              = '#';
-    facName.textContent     = '';
-    facDeptText.textContent = '';
-
-    facEmail.textContent = '—';
-    facEmail.href = '#';
-
-    facAvatarImg.src = '../media/images.jpg';
-
-    // Hide both rows until data confirms they should be shown
-    facEmail.closest('.fac-row').hidden = true;
-    facDeptText.closest('.fac-row').hidden = true;
-}
-
-function openFacCard(name) {
-    resetFacCard();
-
-    facOverlay.classList.add('open');
-    document.body.style.overflow = 'hidden';
+    facultyInfoModal.removeAttribute('hidden');
+    facultyInfoModal.classList.add('show');
+    facultyInfoModal.setAttribute('aria-hidden', 'false');
 
     fetch(`../php/get_faculty_info.php?name=${encodeURIComponent(name)}`)
         .then(r => r.json())
         .then(data => {
-            facLoading.hidden = true;
-            facBody.hidden = false;
-
             if (data.error) {
-                facName.textContent = '';
-                facNotFound.hidden = false;
-
-                facInfo.hidden = true;
-                facFbRow.hidden = true;
-
-                facAvatarImg.src = '../media/images.jpg';
                 return;
             }
 
-            facInfo.hidden = false;
-            facName.textContent = data.fullname;
+            facultyInfoName.textContent = displayFacultyValue(data.fullname || data.name || 'N/A');
+            facultyInfoEmail.textContent = displayFacultyValue(data.email || 'N/A');
+            facultyInfoDepartment.textContent = displayFacultyValue(data.department || 'N/A');
 
-            if (data.profile_picture) {
-                facAvatarImg.src = `../uploads/${data.profile_picture}`;
-            }
-
-            const facEmailRow = facEmail.closest('.fac-row');
-            if (data.email) {
-                facEmail.href = `mailto:${data.email}`;
-                facEmail.textContent = data.email;
-                facEmailRow.hidden = false;
+            const fbLink = displayFacultyValue(data.fb_link || data.facebook || '');
+            if (/^https?:\/\//i.test(fbLink)) {
+                facultyInfoFacebook.href = fbLink;
+                facultyInfoFacebook.textContent = fbLink;
             } else {
-                facEmailRow.hidden = true;
-            }
-
-            if (data.fb_link && data.fb_link.trim() !== '') {
-                facFb.href = data.fb_link;
-                facFb.textContent = data.fb_link;
-                facFbRow.hidden = false;
-            } else {
-                facFbRow.hidden = true;
-            }
-
-            const facDeptRow = facDeptText.closest('.fac-row');
-            if (data.department && data.department.trim() !== '') {
-                facDeptText.textContent = data.department;
-                facDeptRow.hidden = false;
-            } else {
-                facDeptRow.hidden = true;
+                facultyInfoFacebook.textContent = fbLink || 'N/A';
+                facultyInfoFacebook.removeAttribute('href');
             }
         })
         .catch(() => {
-            facLoading.hidden = true;
-            facBody.hidden = false;
-
-            facName.textContent = '';
-            facNotFound.hidden = false;
-
-            facInfo.hidden = true;
-            facAvatarImg.src = '../media/images.jpg';
+            facultyInfoName.textContent       = 'N/A';
+            facultyInfoEmail.textContent      = 'N/A';
+            facultyInfoDepartment.textContent = 'N/A';
+            facultyInfoFacebook.textContent   = 'N/A';
+            facultyInfoFacebook.removeAttribute('href');
         });
 }
 
@@ -661,21 +591,23 @@ document.addEventListener('click', e => {
     const btn = e.target.closest('.prof-lookup-icon-btn');
     if (btn) {
         e.preventDefault();
-        openFacCard(btn.dataset.prof);
+        openFacultyInfoModal(btn.dataset.prof);
     }
 });
 
-facClose.addEventListener('click', closeFacCard);
-
-facOverlay.addEventListener('click', e => {
-    if (e.target === facOverlay) {
-        closeFacCard();
-    }
+document.querySelectorAll('[data-faculty-info-close]').forEach(button => {
+    button.addEventListener('click', () => {
+        facultyInfoModal.classList.remove('show');
+        facultyInfoModal.setAttribute('aria-hidden', 'true');
+        facultyInfoModal.setAttribute('hidden', '');
+    });
 });
 
-document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') {
-        closeFacCard();
+window.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && facultyInfoModal.classList.contains('show')) {
+        facultyInfoModal.classList.remove('show');
+        facultyInfoModal.setAttribute('aria-hidden', 'true');
+        facultyInfoModal.setAttribute('hidden', '');
     }
 });
 </script>
