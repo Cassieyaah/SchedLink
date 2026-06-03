@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jun 03, 2026 at 09:12 AM
+-- Generation Time: Jun 03, 2026 at 01:27 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -34,6 +34,13 @@ CREATE TABLE `faculties` (
   `fb_link` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `faculties`
+--
+
+INSERT INTO `faculties` (`faculty_id`, `user_id`, `department`, `fb_link`) VALUES
+(1, 6, 'dit', '');
+
 -- --------------------------------------------------------
 
 --
@@ -46,7 +53,7 @@ CREATE TABLE `faculty_schedules` (
   `upload_id` int(11) DEFAULT NULL,
   `schedule_code` varchar(50) NOT NULL,
   `course_code` varchar(50) NOT NULL,
-  `course/year` varchar(50) DEFAULT NULL,
+  `course_year` varchar(50) DEFAULT NULL,
   `room` varchar(50) DEFAULT NULL,
   `semester` enum('1st Semester','2nd Semester') NOT NULL DEFAULT '1st Semester',
   `school_year` varchar(9) NOT NULL DEFAULT '2025-2026',
@@ -89,7 +96,8 @@ CREATE TABLE `schedule_uploads` (
 --
 
 INSERT INTO `schedule_uploads` (`upload_id`, `user_id`, `role`, `original_filename`, `stored_file_path`, `semester`, `school_year`, `uploaded_at`) VALUES
-(1, 3, 'student', '708992628_1541942054374463_4020655418090965201_n.png', '../uploads/schedules/student/student_schedule_3_1780394610_653529fb.png', '2nd Semester', '2025-2026', '2026-06-02 18:04:00');
+(1, 3, 'student', '708992628_1541942054374463_4020655418090965201_n.png', '../uploads/schedules/student/student_schedule_3_1780394610_653529fb.png', '2nd Semester', '2025-2026', '2026-06-02 18:04:00'),
+(2, 6, 'faculty', '2nd-Semester_2025-2026.xlsx', NULL, '1st Semester', '2025-2026', '2026-06-03 19:20:06');
 
 -- --------------------------------------------------------
 
@@ -198,7 +206,7 @@ INSERT INTO `users` (`user_id`, `fullname`, `email`, `password`, `role`, `profil
 (1, 'System Administrator', 'admin@cvsu.edu.ph', '$2y$10$5rlbf6N5cfdOw8KKJFj/uezX68stLOEnaGwSLpKlsUulybOcEz5ry', 'admin', NULL),
 (3, 'Bryron Gabriel Lim', 'bryrongabriel.lim@cvsu.edu.ph', '$2y$10$AcXmERWNiE6hzB/djznK9.gzwVYaLX6z4jUyDNJNeOQVi/qlvtDYW', 'student', NULL),
 (4, 'danna', 'danna@cvsu.edu.ph', '$2y$10$eadSz1l1u91ufLmAzCDq3uggR8AXIHVSkmGb1bGOx.bNRdyPpRgSu', 'admin', NULL),
-(5, 'Cassie Magistrado', 'cassie@cvsu.edu.ph', '$2y$10$UJ/HmUx0V2mfxr.eeK8QFemC.N1n5KXbGXfYOgbVl1z1W/d/E3HMm', 'faculty', NULL);
+(6, 'Cassie Magistrado', 'cassie@cvsu.edu.ph', '$2y$10$h0OYI2dLXJRjHko6Luvd2u6ThpHpzTx2XR8qUaKkLtCAK/JezqyJO', 'faculty', NULL);
 
 --
 -- Indexes for dumped tables
@@ -276,7 +284,7 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `faculties`
 --
 ALTER TABLE `faculties`
-  MODIFY `faculty_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `faculty_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `faculty_schedules`
@@ -294,7 +302,7 @@ ALTER TABLE `matched_schedules`
 -- AUTO_INCREMENT for table `schedule_uploads`
 --
 ALTER TABLE `schedule_uploads`
-  MODIFY `upload_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `upload_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `students`
@@ -312,7 +320,7 @@ ALTER TABLE `student_schedules`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- Constraints for dumped tables

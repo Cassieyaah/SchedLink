@@ -1,12 +1,9 @@
 <?php
 session_start();
 
-include __DIR__ . '/../includes/db.php';
-$vendorAutoload = __DIR__ . '/../vendor/autoload.php';
-if (!file_exists($vendorAutoload)) {
-    die('Composer autoload not found. Run "composer install" in the project root.');
-}
-require $vendorAutoload;
+include '../includes/db.php';
+include_once '../includes/matched_schedules.php'; // Include Option B Matching Ledger Engine
+require '../vendor/autoload.php';
 
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
@@ -24,7 +21,7 @@ $redirect = "../php/facultydashboard.php";
    GET FACULTY / PROFESSOR ID
 ========================================= */
 $stmt = $conn->prepare("
-    SELECT professor_id 
+    SELECT faculty_id 
     FROM faculties 
     WHERE user_id = ?
 ");
@@ -39,7 +36,6 @@ $stmt->close();
 
 /* AUTO CREATE FACULTY IF MISSING */
 if (!$faculty) {
-
     $create = $conn->prepare("
         INSERT INTO faculties (user_id)
         VALUES (?)
@@ -49,13 +45,13 @@ if (!$faculty) {
     $create->execute();
 
     $faculty = [
-        'professor_id' => $create->insert_id
+        'faculty_id' => $create->insert_id
     ];
 
     $create->close();
 }
 
-$professor_id = (int)$faculty['professor_id'];
+$faculty_id = (int)$faculty['faculty_id'];
 
 /* =========================================
    HANDLE EXCEL UPLOAD
@@ -72,20 +68,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['schedule_file'])) {
 
     $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
 
-    if (!in_array($extension, ['xlsx', 'xls'])) {
-        $_SESSION['upload_error'] = "Invalid file! Excel only.";
+    if (!in_array($extension, ['xlsx', 'xls', 'csv'])) {
+        $_SESSION['upload_error'] = "Invalid file! Excel or CSV only.";
         header("Location: $redirect");
         exit();
     }
 
     try {
-
         /* LOAD EXCEL */
         $spreadsheet = IOFactory::load($file['tmp_name']);
         $sheet = $spreadsheet->getActiveSheet();
         $rows = $sheet->toArray(null, true, true, true);
 
-        /* CREATE UPLOAD LOG (NO created_at column) */
+        /* CREATE UPLOAD LOG */
         $stmt = $conn->prepare("
             INSERT INTO schedule_uploads
             (user_id, role, original_filename)
@@ -98,15 +93,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['schedule_file'])) {
         $upload_id = $stmt->insert_id;
         $stmt->close();
 
-        /* INSERT SCHEDULES */
+        /* INSERT SCHEDULES (course_description removed, course_year added) */
         $insert = $conn->prepare("
             INSERT INTO faculty_schedules
             (
-                professor_id,
+                faculty_id,
                 upload_id,
                 schedule_code,
                 course_code,
-                course_description,
+                course_year,
                 room,
                 semester,
                 school_year,
@@ -115,23 +110,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['schedule_file'])) {
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         ");
 
-        $semester = "1st Semester";
+        $semester = "2nd Semester";
         $school_year = "2025-2026";
         $status = "active";
 
         foreach ($rows as $i => $row) {
+            if ($i === 1) continue; // Skip header row ("Schedule Codes,Subjects...")
 
-            if ($i === 1) continue;
-
-            $schedule_code = trim($row['A'] ?? '');
-            $course_description = trim($row['B'] ?? '');
-            $course_code = trim($row['C'] ?? '');
-            $room = trim($row['D'] ?? '');
+            $schedule_code = trim($row['A'] ?? ''); // Column A: Schedule Codes
+            $course_code   = trim($row['B'] ?? ''); // Column B: Subjects
+            $course_year   = trim($row['C'] ?? ''); // Column C: Course/Year (e.g., BSCS 2-4)
+            $room          = trim($row['D'] ?? ''); // Column D: Rooms
 
             if (
                 $schedule_code === '' &&
-                $course_description === '' &&
                 $course_code === '' &&
+                $course_year === '' &&
                 $room === ''
             ) {
                 continue;
@@ -139,11 +133,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['schedule_file'])) {
 
             $insert->bind_param(
                 "iisssssss",
-                $professor_id,
+                $faculty_id,
                 $upload_id,
                 $schedule_code,
                 $course_code,
-                $course_description,
+                $course_year,
                 $room,
                 $semester,
                 $school_year,
@@ -155,12 +149,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['schedule_file'])) {
 
         $insert->close();
 
-        $_SESSION['upload_success'] = "Schedule uploaded successfully!";
-        header("Location: $redirect");
+        // RUN ENGINE: Check matching states across all students now that new faculty codes are indexed!
+        synchronize_schedule_matches($conn);
+
+        $_SESSION['upload_success'] = "Schedule uploaded and matches processed successfully!";
+        header("Location: faculty_schedule.php");
         exit();
 
     } catch (Exception $e) {
-
         $_SESSION['upload_error'] = "Upload failed: " . $e->getMessage();
         header("Location: $redirect");
         exit();

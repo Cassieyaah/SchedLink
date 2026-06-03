@@ -1,11 +1,7 @@
 <?php
 session_start();
-$vendorAutoload = __DIR__ . '/../vendor/autoload.php';
-if (!file_exists($vendorAutoload)) {
-    die('Composer autoload not found. Run "composer install" in the project root and ensure vendor/autoload.php exists.');
-}
-require_once $vendorAutoload;
-include __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../vendor/autoload.php'; // Siguraduhin ang path ng vendor
+include '../includes/db.php';
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['schedule_file'])) {
@@ -25,7 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['schedule_file'])) {
             ];
         }
 
-        // I-save sa session para basahin ng iyong existing save_verified_schedule.php
+        // Save to session to be processed by verified block below
         $_SESSION['ocr_preview_data'] = $parsed_data; 
         $_SESSION['upload_success'] = "Excel processed successfully!";
     } catch (Exception $e) {
@@ -36,11 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['schedule_file'])) {
 }
 ?>
 <?php
-session_start();
-
 // Ensure the database connection layout configuration handles requests cleanly
-include '../includes/db.php'; 
-require_once __DIR__ . '/schedule_matcher.php';
 
 if (!isset($_SESSION['user_id'])) {
     header("Location: ../php/logIn.php");
@@ -85,7 +77,7 @@ function ensure_schedule_upload_schema(mysqli $conn): void {
 
     $facultyColumn = $conn->query("SHOW COLUMNS FROM faculty_schedules LIKE 'upload_id'");
     if ($facultyColumn && $facultyColumn->num_rows === 0) {
-        $conn->query("ALTER TABLE faculty_schedules ADD upload_id INT(11) DEFAULT NULL AFTER professor_id");
+        $conn->query("ALTER TABLE faculty_schedules ADD upload_id INT(11) DEFAULT NULL AFTER faculty_id");
         $conn->query("ALTER TABLE faculty_schedules ADD KEY upload_id (upload_id)");
         $conn->query("ALTER TABLE faculty_schedules ADD CONSTRAINT faculty_schedules_upload_fk FOREIGN KEY (upload_id) REFERENCES schedule_uploads (upload_id) ON DELETE CASCADE ON UPDATE CASCADE");
     }
@@ -121,15 +113,15 @@ function get_or_create_student_id(mysqli $conn, int $user_id): int {
     );
 }
 
-function get_or_create_professor_id(mysqli $conn, int $user_id): int {
-    $profile_stmt = $conn->prepare("SELECT professor_id FROM faculties WHERE user_id = ?");
+function get_or_create_faculty_id(mysqli $conn, int $user_id): int {
+    $profile_stmt = $conn->prepare("SELECT faculty_id FROM faculties WHERE user_id = ?");
     $profile_stmt->bind_param("i", $user_id);
     $profile_stmt->execute();
     $profile_res = $profile_stmt->get_result()->fetch_assoc();
     $profile_stmt->close();
 
     if ($profile_res) {
-        return (int) $profile_res['professor_id'];
+        return (int) $profile_res['faculty_id'];
     }
 
     $department = 'not found in the uploaded image';
@@ -144,9 +136,9 @@ function get_or_create_professor_id(mysqli $conn, int $user_id): int {
         throw new Exception("Could not create faculty profile for schedule upload: " . $insert_stmt->error);
     }
 
-    $professor_id = (int) $conn->insert_id;
+    $faculty_id = (int) $conn->insert_id;
     $insert_stmt->close();
-    return $professor_id;
+    return $faculty_id;
 }
 
 // Catch empty or broken submissions early
@@ -187,8 +179,8 @@ try {
         $insert_stmt = $conn->prepare("INSERT INTO student_schedules (student_id, upload_id, schedule_code, course_code, course_description, time_start, time_end, day, room, semester, school_year, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active')");
 
     } else if ($role === "faculty") {
-        $professor_id = get_or_create_professor_id($conn, $user_id);
-        $insert_stmt = $conn->prepare("INSERT INTO faculty_schedules (professor_id, upload_id, schedule_code, course_code, course_description, day, time_start, time_end, room, semester, school_year, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active')");
+        $faculty_id = get_or_create_faculty_id($conn, $user_id);
+        $insert_stmt = $conn->prepare("INSERT INTO faculty_schedules (faculty_id, upload_id, schedule_code, course_code, course_description, day, time_start, time_end, room, semester, school_year, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active')");
     } else {
         throw new Exception("Unauthorized role status action matching exception structural scope: Current user detected as role: '" . htmlspecialchars($role) . "'");
     }
@@ -226,7 +218,7 @@ try {
         } else {
             $insert_stmt->bind_param(
                 "iisssssssss", 
-                $professor_id, $upload_id, $sched_code, $course_code, $description, 
+                $faculty_id, $upload_id, $sched_code, $course_code, $description, 
                 $day, $time_start, $time_end, $room, 
                 $current_semester, $current_school_year
             );
@@ -238,18 +230,14 @@ try {
     }
 
     $insert_stmt->close();
-
-    if ($role === "student") {
-        match_student_upload_schedules($conn, $student_id, (int) $upload_id);
-    } else if ($role === "faculty") {
-        refresh_matches_for_faculty_upload($conn, $professor_id, (int) $upload_id);
-    }
-
     $conn->commit();
+
+    // RUN THE MATCH ENGINE HERE: Real-time calculation right after database write commits
+    synchronize_schedule_matches($conn);
 
     // SUCCESS! Clear the preview cache so the modal closes automatically
     unset($_SESSION['ocr_preview_data'], $_SESSION['ocr_upload_original_name'], $_SESSION['ocr_upload_stored_path']);
-    $_SESSION['upload_success'] = "Verified class schedule entries saved successfully for $current_semester!";
+    $_SESSION['upload_success'] = "Verified class schedule entries saved and matched successfully!";
 
 } catch (Exception $e) {
     $conn->rollback();

@@ -33,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['fullname'])) {
         mysqli_stmt_close($stmt1);
 
         /* CHECK FACULTIES */
-        $check_sql  = "SELECT professor_id FROM faculties WHERE user_id = ?";
+        $check_sql  = "SELECT faculty_id FROM faculties WHERE user_id = ?";
         $check_stmt = mysqli_prepare($conn, $check_sql);
         mysqli_stmt_bind_param($check_stmt, "i", $user_id);
         mysqli_stmt_execute($check_stmt);
@@ -205,7 +205,7 @@ SELECT
     users.fullname,
     users.email,
     users.profile_picture,
-    faculties.professor_id,
+    faculties.faculty_id,
     faculties.department,
     faculties.fb_link
 FROM users
