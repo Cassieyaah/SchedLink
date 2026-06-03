@@ -371,60 +371,7 @@ function na(mixed $value): string {
     </div>
 </div>
 
-<style>
-.profile-btn-row {
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-    margin-top: 40px;
-}
-.profile-btn-row .edit-btn {
-    margin-top: 0;
-}
-.change-pw-btn {
-    background: transparent !important;
-    color: white !important;
-    border: 2px solid rgba(255,255,255,0.6) !important;
-}
-.change-pw-btn:hover {
-    background: rgba(255,255,255,0.12) !important;
-    opacity: 1 !important;
-}
-.pw-field {
-    position: relative;
-    margin: 8px 0 16px;
-}
-.pw-field input {
-    width: 100%;
-    padding: 13px 44px 13px 13px;
-    border: 1px solid #ccc;
-    border-radius: 10px;
-    outline: none;
-    font-size: 15px;
-    margin: 0;
-}
-.pw-toggle {
-    position: absolute;
-    right: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: #888;
-    padding: 0;
-    font-size: 15px;
-}
-.pw-toggle:hover { color: #333; }
-.pw-error {
-    background: #fdecea;
-    color: #c0392b;
-    border-radius: 8px;
-    padding: 10px 14px;
-    font-size: 14px;
-    margin-bottom: 12px;
-}
-</style>
+
 
 <script>
 /* EDIT PROFILE MODAL */

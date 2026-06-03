@@ -120,7 +120,7 @@ unset($_SESSION['upload_success'], $_SESSION['upload_error']);
                 <i class="fa-solid fa-chart-line"></i> Dashboard
             </a>
 
-            <a href="myschedule.php">
+            <a href="faculty_schedule.php">
                 <i class="fa-regular fa-calendar"></i> My Schedule
             </a>
 
@@ -235,17 +235,16 @@ unset($_SESSION['upload_success'], $_SESSION['upload_error']);
                 <?php while ($row = $scheduleResult->fetch_assoc()): ?>
 
                     <div class="card">
-                        <h4>
-                            <?php echo htmlspecialchars($row['course_code']); ?> -
-                            <?php echo htmlspecialchars($row['course_description']); ?>
-                        </h4>
-                        <p>
-                            <?php echo htmlspecialchars($row['day']); ?> |
-                            <?php echo date("g:i A", strtotime($row['time_start'])); ?>
-                            -
-                            <?php echo date("g:i A", strtotime($row['time_end'])); ?>
-                        </p>
-                        <p><?php echo htmlspecialchars($row['room']); ?></p>
+                        <div class="card-info-main">
+                            <h4>
+                                <?php echo htmlspecialchars($row['course_code']); ?> —
+                                <?php echo htmlspecialchars($row['course_description']); ?>
+                            </h4>
+                            <p><?php echo htmlspecialchars($row['room']); ?></p>
+                        </div>
+                        <div class="card-info-meta">
+                            <p><?php echo htmlspecialchars($row['day']); ?></p>
+                        </div>
                     </div>
 
                 <?php endwhile; ?>
@@ -281,30 +280,29 @@ unset($_SESSION['upload_success'], $_SESSION['upload_error']);
             </div>
         </div>
 
-        <form action="upload_schedule.php" method="POST" enctype="multipart/form-data" class="schedule-upload-form">
-            <label class="schedule-dropzone" for="schedule_file">
-                <i class="fa-regular fa-image"></i>
-                <span class="dropzone-title">Choose schedule file</span>
-                <span class="dropzone-help">PNG, JPG, or WEBP up to 10 MB</span>
-                <span class="selected-file" id="selectedScheduleFile">No file selected</span>
-            </label>
+        <form action="faculty_upload.php" method="POST" enctype="multipart/form-data" class="schedule-upload-form">
+    <label class="schedule-dropzone" for="schedule_file">
+        <i class="fa-solid fa-file-excel"></i>
+        <span class="dropzone-title">Choose Excel file</span>
+        <span class="dropzone-help">XLSX or XLS files only</span>
+        <span class="selected-file" id="selectedScheduleFile">No file selected</span>
+    </label>
 
-            <input
-                type="file"
-                id="schedule_file"
-                name="schedule_file"
-                accept="image/png,image/jpeg,image/webp"
-                required
-            >
+    <input 
+        type="file" 
+        id="schedule_file" 
+        name="schedule_file" 
+        accept=".xlsx, .xls" 
+        required
+    >
 
-            <div class="upload-modal-actions">
-                <button type="button" class="secondary-upload-btn" data-upload-close>Cancel</button>
-                <button type="submit" class="primary-upload-btn">
-                    <i class="fa-solid fa-upload"></i>
-                    Upload
-                </button>
-            </div>
-        </form>
+    <div class="upload-modal-actions">
+        <button type="button" class="secondary-upload-btn" data-upload-close>Cancel</button>
+        <button type="submit" class="primary-upload-btn">
+            <i class="fa-solid fa-upload"></i> Upload
+        </button>
+    </div>
+</form>
     </div>
 </div>
 
@@ -457,3 +455,4 @@ links.forEach(link => {
 
 </body>
 </html>
+ui-avatars.com

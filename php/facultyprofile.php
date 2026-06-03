@@ -92,6 +92,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
             throw new Exception("New passwords do not match.");
         }
 
+        /* FETCH CURRENT HASH */
         $pw_stmt = mysqli_prepare($conn, "SELECT password FROM users WHERE user_id = ?");
         mysqli_stmt_bind_param($pw_stmt, "i", $user_id);
         mysqli_stmt_execute($pw_stmt);
@@ -106,6 +107,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
             throw new Exception("New password must be different from the current one.");
         }
 
+        /* UPDATE PASSWORD */
         $new_hash = password_hash($new_password, PASSWORD_DEFAULT);
         $upd_stmt = mysqli_prepare($conn, "UPDATE users SET password = ? WHERE user_id = ?");
         mysqli_stmt_bind_param($upd_stmt, "si", $new_hash, $user_id);
@@ -115,10 +117,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
         echo json_encode(["status" => "success"]);
 
     } catch (Exception $e) {
-        echo json_encode([
-            "status"  => "error",
-            "message" => $e->getMessage()
-        ]);
+        echo json_encode(["status" => "error", "message" => $e->getMessage()]);
     }
 
     exit();
@@ -250,6 +249,11 @@ if ($profile_picture === $default_image && !file_exists($default_image)) {
 function e(string $value): string {
     return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
 }
+
+function na(mixed $value): string {
+    $v = trim((string)($value ?? ''));
+    return $v !== '' ? $v : 'N/A';
+}
 ?>
 
 <!DOCTYPE html>
@@ -267,127 +271,79 @@ function e(string $value): string {
 
 <!-- SIDEBAR -->
 <div class="sidebar">
-
     <div>
-
         <div class="profile">
             <img src="<?php echo e($profile_picture); ?>" alt="Profile picture of <?php echo e($data['fullname']); ?>">
             <h3><?php echo e($data['fullname']); ?></h3>
             <p>Faculty Account</p>
         </div>
-
         <div class="section-title">GENERAL</div>
-
         <div class="nav">
-
-            <a href="facultydashboard.php">
-                <i class="fa-solid fa-chart-line"></i>
-                Dashboard
-            </a>
-
-            <a href="faculty_schedule.php">
-                <i class="fa-regular fa-calendar"></i>
-                My Schedule
-            </a>
-
-            <a href="facultydashboard.php#upload">
-                <i class="fa-solid fa-upload"></i>
-                Upload Schedule
-            </a>
-
-            <a class="active" href="facultyprofile.php">
-                <i class="fa-solid fa-user"></i>
-                Profile
-            </a>
-
-            <a href="logout.php">
-                <i class="fa-solid fa-right-from-bracket"></i>
-                Logout
-            </a>
-
+            <a href="facultydashboard.php"><i class="fa-solid fa-chart-line"></i> Dashboard</a>
+            <a href="faculty_schedule.php"><i class="fa-regular fa-calendar"></i> My Schedule</a>
+            <a href="facultydashboard.php#upload"><i class="fa-solid fa-upload"></i> Upload Schedule</a>
+            <a class="active" href="facultyprofile.php"><i class="fa-solid fa-user"></i> Profile</a>
+            <a href="logout.php"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
         </div>
-
         <div class="divider"></div>
-
     </div>
-
     <div class="sidebar-footer">
         <img src="../media/cvsulogo.png" alt="CvSU Logo">
         <p>Cavite State University</p>
     </div>
-
 </div>
 
 <!-- MAIN -->
 <div class="main">
-
     <div class="profile-card">
 
         <div class="profile-details">
-
             <h1 class="title">Profile</h1>
-
             <div class="profile-list">
-
                 <div class="list-item">
                     <span class="label">Full Name</span>
                     <input type="text" value="<?php echo e($data['fullname']); ?>" readonly aria-label="Full Name">
                 </div>
-
                 <div class="list-item">
                     <span class="label">Department</span>
-                    <input type="text" value="<?php echo e($data['department'] ?? 'Not Assigned'); ?>" readonly aria-label="Department">
+                    <input type="text" value="<?php echo e(na($data['department'])); ?>" readonly aria-label="Department">
                 </div>
-
                 <div class="list-item">
                     <span class="label">Email</span>
                     <input type="text" value="<?php echo e($data['email']); ?>" readonly aria-label="Email">
                 </div>
-
                 <div class="list-item">
                     <span class="label">Facebook</span>
-                    <input type="text" value="<?php echo e($data['fb_link'] ?? 'Not Set'); ?>" readonly aria-label="Facebook Link">
+                    <input type="text" value="<?php echo e(na($data['fb_link'])); ?>" readonly aria-label="Facebook Link">
                 </div>
-
             </div>
-
             <div class="profile-btn-row">
                 <button class="edit-btn" onclick="openModal()">Edit Profile</button>
                 <button class="edit-btn change-pw-btn" onclick="openPasswordModal()">Change Password</button>
             </div>
-
         </div>
 
         <!-- IMAGE SIDE -->
         <div class="profile-aside">
-
             <div class="image-container">
                 <img src="<?php echo e($profile_picture); ?>" class="profile-image" alt="Profile">
                 <div class="profile-role">FACULTY</div>
             </div>
-
             <label class="change-profile-btn" title="Change profile picture">
                 +
                 <input type="file" id="profile_picture" name="profile_picture" accept="image/*" hidden>
             </label>
-
         </div>
 
     </div>
-
 </div>
 
-<!-- EDIT MODAL -->
+<!-- EDIT PROFILE MODAL -->
 <div id="editModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-
     <div class="modal-content">
-
         <span class="close" onclick="closeModal()" aria-label="Close">&times;</span>
-
         <h2 id="modalTitle">Edit Profile</h2>
-
         <div id="profileForm">
-
             <label for="edit_fullname">Full Name</label>
             <input type="text" id="edit_fullname" name="fullname" value="<?php echo e($data['fullname']); ?>">
 
@@ -401,11 +357,47 @@ function e(string $value): string {
             <input type="url" id="edit_fb_link" name="fb_link" value="<?php echo e($data['fb_link'] ?? ''); ?>" placeholder="https://facebook.com/yourprofile">
 
             <button type="button" class="save-btn" onclick="saveProfile()">Save</button>
-
         </div>
-
     </div>
+</div>
 
+<!-- CHANGE PASSWORD MODAL -->
+<div id="passwordModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="pwModalTitle">
+    <div class="modal-content">
+        <span class="close" onclick="closePasswordModal()" aria-label="Close">&times;</span>
+        <h2 id="pwModalTitle">Change Password</h2>
+
+        <div id="passwordForm">
+
+            <label for="current_password">Current Password</label>
+            <div class="pw-field">
+                <input type="password" id="current_password" placeholder="Enter current password" autocomplete="current-password">
+                <button type="button" class="pw-toggle" onclick="togglePw('current_password', this)" tabindex="-1">
+                    <i class="fa-solid fa-eye"></i>
+                </button>
+            </div>
+
+            <label for="new_password">New Password</label>
+            <div class="pw-field">
+                <input type="password" id="new_password" placeholder="At least 8 characters" autocomplete="new-password">
+                <button type="button" class="pw-toggle" onclick="togglePw('new_password', this)" tabindex="-1">
+                    <i class="fa-solid fa-eye"></i>
+                </button>
+            </div>
+
+            <label for="confirm_password">Confirm New Password</label>
+            <div class="pw-field">
+                <input type="password" id="confirm_password" placeholder="Repeat new password" autocomplete="new-password">
+                <button type="button" class="pw-toggle" onclick="togglePw('confirm_password', this)" tabindex="-1">
+                    <i class="fa-solid fa-eye"></i>
+                </button>
+            </div>
+
+            <div id="pw-error" class="pw-error" style="display:none;"></div>
+
+            <button type="button" class="save-btn" onclick="savePassword()">Update Password</button>
+        </div>
+    </div>
 </div>
 
 <!-- CHANGE PASSWORD MODAL -->
@@ -503,10 +495,10 @@ function e(string $value): string {
 </style>
 
 <script>
+/* EDIT PROFILE MODAL */
 function openModal() {
     document.getElementById("editModal").classList.add("show");
 }
-
 function closeModal() {
     document.getElementById("editModal").classList.remove("show");
 }
@@ -520,19 +512,85 @@ function saveProfile() {
         if (el) data.append(name, el.value.trim());
     });
 
-    fetch("facultyprofile.php", {
-        method: "POST",
-        body: data
-    })
-    .then(r => r.json())
-    .then(res => {
-        if (res.status === "success") {
-            location.reload();
-        } else {
-            alert(res.message || "An error occurred. Please try again.");
-        }
-    })
-    .catch(() => alert("Network error. Please check your connection."));
+    fetch("facultyprofile.php", { method: "POST", body: data })
+        .then(r => r.json())
+        .then(res => {
+            if (res.status === "success") {
+                location.reload();
+            } else {
+                alert(res.message || "An error occurred. Please try again.");
+            }
+        })
+        .catch(() => alert("Network error. Please check your connection."));
+}
+
+/* CHANGE PASSWORD MODAL */
+function openPasswordModal() {
+    document.getElementById("current_password").value = "";
+    document.getElementById("new_password").value     = "";
+    document.getElementById("confirm_password").value = "";
+    hidePwError();
+    document.getElementById("passwordModal").classList.add("show");
+}
+function closePasswordModal() {
+    document.getElementById("passwordModal").classList.remove("show");
+}
+
+function showPwError(msg) {
+    const el = document.getElementById("pw-error");
+    el.textContent = msg;
+    el.style.display = "block";
+}
+function hidePwError() {
+    document.getElementById("pw-error").style.display = "none";
+}
+
+function togglePw(inputId, btn) {
+    const input = document.getElementById(inputId);
+    const icon  = btn.querySelector("i");
+    if (input.type === "password") {
+        input.type = "text";
+        icon.classList.replace("fa-eye", "fa-eye-slash");
+    } else {
+        input.type = "password";
+        icon.classList.replace("fa-eye-slash", "fa-eye");
+    }
+}
+
+function savePassword() {
+    hidePwError();
+
+    const current = document.getElementById("current_password").value;
+    const newPw   = document.getElementById("new_password").value;
+    const confirm = document.getElementById("confirm_password").value;
+
+    if (!current || !newPw || !confirm) {
+        showPwError("All fields are required."); return;
+    }
+    if (newPw.length < 8) {
+        showPwError("New password must be at least 8 characters."); return;
+    }
+    if (newPw !== confirm) {
+        showPwError("New passwords do not match."); return;
+    }
+
+    const data = new FormData();
+    data.append("change_password",  "1");
+    data.append("current_password", current);
+    data.append("new_password",     newPw);
+    data.append("confirm_password", confirm);
+
+    fetch("facultyprofile.php", { method: "POST", body: data })
+        .then(r => r.json())
+        .then(res => {
+            if (res.status === "success") {
+                closePasswordModal();
+                alert("Password updated successfully.");
+            } else {
+                showPwError(res.message || "Failed to update password.");
+            }
+        })
+        .catch(() => showPwError("Network error. Please check your connection."));
 }
 
 /* CHANGE PASSWORD MODAL */
@@ -608,7 +666,6 @@ function savePassword() {
 
 /* PROFILE PICTURE UPLOAD */
 document.getElementById("profile_picture").addEventListener("change", function () {
-
     const file = this.files[0];
     if (!file) return;
 
@@ -621,22 +678,18 @@ document.getElementById("profile_picture").addEventListener("change", function (
     const formData = new FormData();
     formData.append("profile_picture", file);
 
-    fetch("facultyprofile.php", {
-        method: "POST",
-        body: formData
-    })
-    .then(r => r.json())
-    .then(res => {
-        if (res.status === "success") {
-            location.reload();
-        } else {
-            alert(res.message || "Upload failed.");
-        }
-    })
-    .catch(() => alert("Network error. Please check your connection."));
+    fetch("facultyprofile.php", { method: "POST", body: formData })
+        .then(r => r.json())
+        .then(res => {
+            if (res.status === "success") {
+                location.reload();
+            } else {
+                alert(res.message || "Upload failed.");
+            }
+        })
+        .catch(() => alert("Network error. Please check your connection."));
 });
 
-/* Close modal when clicking outside */
 window.addEventListener("click", function (e) {
     const editModal     = document.getElementById("editModal");
     const passwordModal = document.getElementById("passwordModal");
@@ -648,8 +701,6 @@ window.addEventListener("click", function (e) {
         closePasswordModal();
     }
 });
-
-/* Close modal with Escape key */
 window.addEventListener("keydown", function (e) {
     if (e.key === "Escape") {
         closeModal();
