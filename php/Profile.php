@@ -24,13 +24,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['student_number'])) {
         $student_number = trim($_POST['student_number']) ?: null;
         $program        = trim($_POST['program']) ?: null;
 
-        /* Update fullname in users table */
-        if ($fullname !== '') {
-            $name_stmt = mysqli_prepare($conn, "UPDATE users SET fullname = ? WHERE user_id = ?");
-            mysqli_stmt_bind_param($name_stmt, "si", $fullname, $user_id);
-            mysqli_stmt_execute($name_stmt);
-            mysqli_stmt_close($name_stmt);
+        if ($fullname === '') {
+            throw new Exception("Full name is required.");
         }
+
+        $user_stmt = mysqli_prepare($conn, "UPDATE users SET fullname = ? WHERE user_id = ?");
+        mysqli_stmt_bind_param($user_stmt, "si", $fullname, $user_id);
+        mysqli_stmt_execute($user_stmt);
+        mysqli_stmt_close($user_stmt);
 
         /* check student */
         $check_stmt = mysqli_prepare($conn, "SELECT user_id FROM students WHERE user_id = ?");
@@ -317,9 +318,8 @@ function na(mixed $value): string {
         <span class="close" onclick="closeModal()" aria-label="Close">&times;</span>
         <h2 id="modalTitle">Edit Profile</h2>
         <div id="profileForm">
-
             <label for="edit_fullname">Full Name</label>
-            <input type="text" id="edit_fullname" name="fullname" value="<?php echo e($data['fullname']); ?>">
+            <input type="text" id="edit_fullname" name="fullname" value="<?php echo e($data['fullname'] ?? ''); ?>" required>
 
             <label for="edit_student_number">Student Number</label>
             <input type="text" id="edit_student_number" name="student_number" value="<?php echo e($data['student_number'] ?? ''); ?>">
@@ -383,8 +383,15 @@ function closeModal() {
 }
 
 function saveProfile() {
+    const fullname = document.getElementById("edit_fullname").value.trim();
+
+    if (!fullname) {
+        alert("Full name is required.");
+        return;
+    }
+
     const data = new FormData();
-    data.append("fullname",       document.getElementById("edit_fullname").value.trim());
+    data.append("fullname",       fullname);
     data.append("student_number", document.getElementById("edit_student_number").value.trim());
     data.append("program",        document.getElementById("edit_program").value.trim());
 

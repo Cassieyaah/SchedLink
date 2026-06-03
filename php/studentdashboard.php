@@ -1,6 +1,7 @@
 <?php
 session_start();
 include '../includes/db.php';
+require_once __DIR__ . '/schedule_matcher.php';
 date_default_timezone_set('Asia/Manila');
 
 if (!isset($_SESSION['user_id'])) {
@@ -103,6 +104,8 @@ $latest_upload = null;
 $latest_schedule_rows = [];
 $today_schedule_rows = [];
 
+ensure_matched_schedule_schema($conn);
+
 /* =========================
    LATEST UPLOAD SCHEDULE QUERY
 ========================= */
@@ -120,10 +123,17 @@ $latest_stmt->close();
 
 if (!empty($user['student_id']) && $latest_upload) {
     $scheduleQuery = "
-        SELECT *
-        FROM student_schedules
-        WHERE student_id = ? AND upload_id = ?
-        ORDER BY time_start ASC, course_code ASC
+        SELECT
+            ss.*,
+            ms.match_status,
+            faculty_users.fullname AS assigned_faculty_name
+        FROM student_schedules ss
+        LEFT JOIN matched_schedules ms ON ss.student_schedule_id = ms.student_schedule_id
+        LEFT JOIN faculty_schedules fs ON ms.professor_schedule_id = fs.professor_schedule_id
+        LEFT JOIN faculties faculty_profiles ON fs.professor_id = faculty_profiles.professor_id
+        LEFT JOIN users faculty_users ON faculty_profiles.user_id = faculty_users.user_id
+        WHERE ss.student_id = ? AND ss.upload_id = ?
+        ORDER BY ss.time_start ASC, ss.course_code ASC
     ";
     $stmt2 = $conn->prepare($scheduleQuery);
     $upload_id = (int) $latest_upload['upload_id'];
@@ -145,6 +155,9 @@ $total_latest_subjects = count(array_unique(array_map(function ($row) {
     return ($row['schedule_code'] ?? '') . '|' . ($row['course_code'] ?? '');
 }, $latest_schedule_rows)));
 $today_subject_count = count($today_schedule_rows);
+$assigned_faculty_count = count(array_filter($latest_schedule_rows, function ($row) {
+    return ($row['match_status'] ?? '') === 'matched' && !empty($row['assigned_faculty_name']);
+}));
 
 $upload_success = $_SESSION['upload_success'] ?? '';
 $upload_error = $_SESSION['upload_error'] ?? '';
@@ -295,6 +308,11 @@ unset($_SESSION['upload_success'], $_SESSION['upload_error']);
             </div>
 
             <div class="stat-card">
+                <h4>Assigned Faculty</h4>
+                <p><?php echo $assigned_faculty_count; ?></p>
+            </div>
+
+            <div class="stat-card">
                 <h4>Current Day</h4>
                 <p><?php echo htmlspecialchars($today_code); ?></p>
             </div>
@@ -332,6 +350,16 @@ unset($_SESSION['upload_success'], $_SESSION['upload_error']);
                                 <?php echo date("g:i A", strtotime($row['time_end'])); ?>
                             </p>
                             <p><?php echo htmlspecialchars($row['day']); ?></p>
+                            <p>
+                                Faculty:
+                                <?php if (($row['match_status'] ?? '') === 'matched' && !empty($row['assigned_faculty_name'])): ?>
+                                    <?php echo htmlspecialchars($row['assigned_faculty_name']); ?>
+                                <?php elseif (($row['match_status'] ?? '') === 'conflict'): ?>
+                                    Multiple possible matches
+                                <?php else: ?>
+                                    Not assigned yet
+                                <?php endif; ?>
+                            </p>
                         </div>
                     </div>
 

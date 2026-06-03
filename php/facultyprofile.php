@@ -400,6 +400,100 @@ function na(mixed $value): string {
     </div>
 </div>
 
+<!-- CHANGE PASSWORD MODAL -->
+<div id="passwordModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="pwModalTitle">
+    <div class="modal-content">
+        <span class="close" onclick="closePasswordModal()" aria-label="Close">&times;</span>
+        <h2 id="pwModalTitle">Change Password</h2>
+
+        <div id="passwordForm">
+
+            <label for="current_password">Current Password</label>
+            <div class="pw-field">
+                <input type="password" id="current_password" placeholder="Enter current password" autocomplete="current-password">
+                <button type="button" class="pw-toggle" onclick="togglePw('current_password', this)" tabindex="-1">
+                    <i class="fa-solid fa-eye"></i>
+                </button>
+            </div>
+
+            <label for="new_password">New Password</label>
+            <div class="pw-field">
+                <input type="password" id="new_password" placeholder="At least 8 characters" autocomplete="new-password">
+                <button type="button" class="pw-toggle" onclick="togglePw('new_password', this)" tabindex="-1">
+                    <i class="fa-solid fa-eye"></i>
+                </button>
+            </div>
+
+            <label for="confirm_password">Confirm New Password</label>
+            <div class="pw-field">
+                <input type="password" id="confirm_password" placeholder="Repeat new password" autocomplete="new-password">
+                <button type="button" class="pw-toggle" onclick="togglePw('confirm_password', this)" tabindex="-1">
+                    <i class="fa-solid fa-eye"></i>
+                </button>
+            </div>
+
+            <div id="pw-error" class="pw-error" style="display:none;"></div>
+
+            <button type="button" class="save-btn" onclick="savePassword()">Update Password</button>
+        </div>
+    </div>
+</div>
+
+<style>
+.profile-btn-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 24px;
+}
+.profile-btn-row .edit-btn {
+    margin-top: 0;
+}
+.change-pw-btn {
+    background: transparent !important;
+    color: white !important;
+    border: 2px solid rgba(255,255,255,0.6) !important;
+}
+.change-pw-btn:hover {
+    background: rgba(255,255,255,0.12) !important;
+    opacity: 1 !important;
+}
+.pw-field {
+    position: relative;
+    margin: 8px 0 16px;
+}
+.pw-field input {
+    width: 100%;
+    padding: 13px 44px 13px 13px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    outline: none;
+    font-size: 15px;
+    margin: 0;
+}
+.pw-toggle {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #888;
+    padding: 0;
+    font-size: 15px;
+}
+.pw-toggle:hover { color: #333; }
+.pw-error {
+    background: #fdecea;
+    color: #c0392b;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 14px;
+    margin-bottom: 12px;
+}
+</style>
+
 <script>
 /* EDIT PROFILE MODAL */
 function openModal() {
@@ -499,6 +593,77 @@ function savePassword() {
         .catch(() => showPwError("Network error. Please check your connection."));
 }
 
+/* CHANGE PASSWORD MODAL */
+function openPasswordModal() {
+    document.getElementById("current_password").value = "";
+    document.getElementById("new_password").value     = "";
+    document.getElementById("confirm_password").value = "";
+    hidePwError();
+    document.getElementById("passwordModal").classList.add("show");
+}
+
+function closePasswordModal() {
+    document.getElementById("passwordModal").classList.remove("show");
+}
+
+function showPwError(msg) {
+    const el = document.getElementById("pw-error");
+    el.textContent = msg;
+    el.style.display = "block";
+}
+
+function hidePwError() {
+    document.getElementById("pw-error").style.display = "none";
+}
+
+function togglePw(inputId, btn) {
+    const input = document.getElementById(inputId);
+    const icon  = btn.querySelector("i");
+    if (input.type === "password") {
+        input.type = "text";
+        icon.classList.replace("fa-eye", "fa-eye-slash");
+    } else {
+        input.type = "password";
+        icon.classList.replace("fa-eye-slash", "fa-eye");
+    }
+}
+
+function savePassword() {
+    hidePwError();
+
+    const current = document.getElementById("current_password").value;
+    const newPw   = document.getElementById("new_password").value;
+    const confirm = document.getElementById("confirm_password").value;
+
+    if (!current || !newPw || !confirm) {
+        showPwError("All fields are required."); return;
+    }
+    if (newPw.length < 8) {
+        showPwError("New password must be at least 8 characters."); return;
+    }
+    if (newPw !== confirm) {
+        showPwError("New passwords do not match."); return;
+    }
+
+    const data = new FormData();
+    data.append("change_password",  "1");
+    data.append("current_password", current);
+    data.append("new_password",     newPw);
+    data.append("confirm_password", confirm);
+
+    fetch("facultyprofile.php", { method: "POST", body: data })
+        .then(r => r.json())
+        .then(res => {
+            if (res.status === "success") {
+                closePasswordModal();
+                alert("Password updated successfully.");
+            } else {
+                showPwError(res.message || "Failed to update password.");
+            }
+        })
+        .catch(() => showPwError("Network error. Please check your connection."));
+}
+
 /* PROFILE PICTURE UPLOAD */
 document.getElementById("profile_picture").addEventListener("change", function () {
     const file = this.files[0];
@@ -526,11 +691,21 @@ document.getElementById("profile_picture").addEventListener("change", function (
 });
 
 window.addEventListener("click", function (e) {
-    if (e.target === document.getElementById("editModal"))     closeModal();
-    if (e.target === document.getElementById("passwordModal")) closePasswordModal();
+    const editModal     = document.getElementById("editModal");
+    const passwordModal = document.getElementById("passwordModal");
+
+    if (e.target === editModal) {
+        closeModal();
+    }
+    if (e.target === passwordModal) {
+        closePasswordModal();
+    }
 });
 window.addEventListener("keydown", function (e) {
-    if (e.key === "Escape") { closeModal(); closePasswordModal(); }
+    if (e.key === "Escape") {
+        closeModal();
+        closePasswordModal();
+    }
 });
 </script>
 

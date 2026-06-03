@@ -61,6 +61,7 @@ function format_time_value(string $value): string {
 }
 
 ensure_schedule_upload_schema($conn);
+ensure_matched_schedule_schema($conn);
 
 // Retrieve active user contextual identity metadata
 $stmt = $conn->prepare("
@@ -114,6 +115,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['upload_id'], $_POST['
 
     $conn->begin_transaction();
     try {
+        $schedule_name = trim($_POST['schedule_name'] ?? '');
+        if ($schedule_name === '') {
+            $schedule_name = 'Uploaded schedule';
+        }
+
+        $name_stmt = $conn->prepare("UPDATE schedule_uploads SET original_filename = ? WHERE upload_id = ? AND user_id = ? AND role = ?");
+        $name_stmt->bind_param("siis", $schedule_name, $upload_id, $user_id, $role);
+        if (!$name_stmt->execute()) {
+            throw new Exception($name_stmt->error);
+        }
+        $name_stmt->close();
+
         if ($role === 'student') {
             $delete_stmt = $conn->prepare("DELETE FROM student_schedules WHERE upload_id = ? AND student_id = ?");
             $delete_stmt->bind_param("ii", $upload_id, $profile_id);
@@ -156,6 +169,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['upload_id'], $_POST['
         }
 
         $insert_stmt->close();
+
+        if ($role === 'student') {
+            match_student_upload_schedules($conn, $profile_id, $upload_id);
+        } else {
+            refresh_matches_for_faculty_upload($conn, $profile_id, $upload_id);
+        }
+
         $conn->commit();
         
         // Execute the tracking engine located in matched_schedules.php
@@ -351,6 +371,16 @@ if ($uploads) {
                     <form method="POST" class="schedule-edit-form">
                         <input type="hidden" name="upload_id" value="<?php echo (int) $upload['upload_id']; ?>">
 
+                        <label class="schedule-name-field">
+                            <span>Schedule Name</span>
+                            <input
+                                type="text"
+                                name="schedule_name"
+                                value="<?php echo htmlspecialchars($upload['original_filename'] ?: 'Uploaded schedule'); ?>"
+                                placeholder="Schedule name"
+                                required>
+                        </label>
+
                         <div class="grid-table-header">
                             <span>Sched Code</span>
                             <span>Course Code</span>
@@ -419,9 +449,15 @@ if ($uploads) {
                             <button type="button" class="secondary-upload-btn add-row-btn">
                                 <i class="fa-solid fa-plus"></i> Add Row
                             </button>
-                            <a href="myschedule.php" class="discard-btn">
-                                <i class="fa-solid fa-trash-can"></i> Discard Update
-                            </a>
+                            <button
+                                type="submit"
+                                name="delete_upload_id"
+                                value="<?php echo (int) $upload['upload_id']; ?>"
+                                class="discard-btn delete-upload-btn"
+                                formnovalidate>
+                                <i class="fa-solid fa-trash-can"></i>
+                                Delete Upload
+                            </button>
                             <button type="submit" class="primary-upload-btn">
                                 <i class="fa-solid fa-floppy-disk"></i> Save Update
                             </button>
@@ -433,39 +469,35 @@ if ($uploads) {
     </section>
 </main>
 
-<div class="fac-overlay" id="fac-overlay">
-    <div class="fac-card" id="fac-card">
-        <button class="fac-close" id="fac-close" aria-label="Close">
+<div class="faculty-info-modal" id="facultyInfoModal" aria-hidden="true" hidden>
+    <div class="faculty-info-backdrop" data-faculty-info-close></div>
+    <div class="faculty-info-dialog" role="dialog" aria-modal="true" aria-labelledby="facultyInfoTitle">
+        <button type="button" class="faculty-info-close" data-faculty-info-close aria-label="Close faculty information">
             <i class="fa-solid fa-xmark"></i>
         </button>
 
-        <div class="fac-loading" id="fac-loading">
-            <i class="fa-solid fa-spinner fa-spin"></i>
-            <p>Looking up faculty…</p>
+        <div class="faculty-info-heading">
+            <div class="faculty-info-avatar">
+                <i class="fa-solid fa-user-tie"></i>
+            </div>
+            <div>
+                <h3 id="facultyInfoTitle">Faculty Information</h3>
+                <p id="facultyInfoName">N/A</p>
+            </div>
         </div>
 
-        <div class="fac-body" id="fac-body">
-            <div class="fac-avatar-wrap">
-                <img src="../media/images.jpg" alt="Faculty photo" id="fac-avatar-img">
+        <dl class="faculty-info-list">
+            <div>
+                <dt>Email</dt>
+                <dd id="facultyInfoEmail">N/A</dd>
             </div>
-
-            <p class="fac-name" id="fac-name"></p>
-
-            <hr class="fac-divider">
-
-            <div class="fac-info" id="fac-info">
-                <div class="fac-row">
-                    <i class="fa-solid fa-envelope"></i>
-                    <a id="fac-email" href="#">—</a>
-                </div>
-                <div class="fac-row" id="fac-fb-row" >
-                    <i class="fa-brands fa-facebook"></i>
-                    <a id="fac-fb">View Facebook profile</a>
-                </div>
-                <div class="fac-row" id="fac-dept-row">
-                    <i class="fa-solid fa-building"></i>
-                    <span id="fac-dept-text"></span>
-                </div>
+            <div>
+                <dt>Department</dt>
+                <dd id="facultyInfoDepartment">N/A</dd>
+            </div>
+            <div>
+                <dt>Facebook</dt>
+                <dd><a id="facultyInfoFacebook" href="#" target="_blank" rel="noopener">N/A</a></dd>
             </div>
 
             <p id="fac-notfound" hidden style="text-align:center; color: #888; margin: 1rem 0;">
@@ -558,9 +590,6 @@ function openFacCard(name) {
     fetch(`../php/get_faculty_info.php?name=${encodeURIComponent(name)}`)
         .then(r => r.json())
         .then(data => {
-            facLoading.hidden = true;
-            facBody.hidden = false;
-
             if (data.error) {
                 facName.textContent = '';
                 facNotFound.hidden = false;
@@ -570,36 +599,17 @@ function openFacCard(name) {
                 return;
             }
 
-            facInfo.hidden = false;
-            facName.textContent = data.fullname;
+            facultyInfoName.textContent = displayFacultyValue(data.fullname || data.name || 'N/A');
+            facultyInfoEmail.textContent = displayFacultyValue(data.email || 'N/A');
+            facultyInfoDepartment.textContent = displayFacultyValue(data.department || 'N/A');
 
-            if (data.profile_picture) {
-                facAvatarImg.src = `../uploads/${data.profile_picture}`;
-            }
-
-            const facEmailRow = facEmail.closest('.fac-row');
-            if (data.email) {
-                facEmail.href = `mailto:${data.email}`;
-                facEmail.textContent = data.email;
-                facEmailRow.hidden = false;
+            const fbLink = displayFacultyValue(data.fb_link || data.facebook || '');
+            if (/^https?:\/\//i.test(fbLink)) {
+                facultyInfoFacebook.href = fbLink;
+                facultyInfoFacebook.textContent = fbLink;
             } else {
-                facEmailRow.hidden = true;
-            }
-
-            if (data.fb_link && data.fb_link.trim() !== '') {
-                facFb.href = data.fb_link;
-                facFb.textContent = data.fb_link;
-                facFbRow.hidden = false;
-            } else {
-                facFbRow.hidden = true;
-            }
-
-            const facDeptRow = facDeptText.closest('.fac-row');
-            if (data.department && data.department.trim() !== '') {
-                facDeptText.textContent = data.department;
-                facDeptRow.hidden = false;
-            } else {
-                facDeptRow.hidden = true;
+                facultyInfoFacebook.textContent = fbLink || 'N/A';
+                facultyInfoFacebook.removeAttribute('href');
             }
         })
         .catch(() => {
@@ -616,7 +626,7 @@ document.addEventListener('click', e => {
     const btn = e.target.closest('.prof-lookup-icon-btn');
     if (btn) {
         e.preventDefault();
-        openFacCard(btn.dataset.prof);
+        openFacultyInfoModal(btn.dataset.prof);
     }
 });
 
@@ -627,9 +637,11 @@ facOverlay.addEventListener('click', e => {
     }
 });
 
-document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') {
-        closeFacCard();
+window.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && facultyInfoModal.classList.contains('show')) {
+        facultyInfoModal.classList.remove('show');
+        facultyInfoModal.setAttribute('aria-hidden', 'true');
+        facultyInfoModal.setAttribute('hidden', '');
     }
 });
 </script>

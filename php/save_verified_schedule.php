@@ -151,6 +151,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST' || empty($_POST['courses'])) {
 }
 
 ensure_schedule_upload_schema($conn);
+ensure_matched_schedule_schema($conn);
 
 $conn->begin_transaction();
 
