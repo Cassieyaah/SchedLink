@@ -1,6 +1,7 @@
 <?php
 session_start();
 include '../includes/db.php';
+include '../includes/matched_schedules.php'; // Option B: External matching engine
 
 if (!isset($_SESSION['user_id'])) {
     header("Location: ../php/logIn.php");
@@ -9,6 +10,9 @@ if (!isset($_SESSION['user_id'])) {
 
 $user_id = (int) $_SESSION['user_id'];
 
+/**
+ * Ensures required schemas and columns exist dynamically
+ */
 function ensure_schedule_upload_schema($conn): void {
     $conn->query("
         CREATE TABLE IF NOT EXISTS schedule_uploads (
@@ -40,12 +44,15 @@ function ensure_schedule_upload_schema($conn): void {
 
     $facultyColumn = $conn->query("SHOW COLUMNS FROM faculty_schedules LIKE 'upload_id'");
     if ($facultyColumn && $facultyColumn->num_rows === 0) {
-        $conn->query("ALTER TABLE faculty_schedules ADD upload_id INT(11) DEFAULT NULL AFTER professor_id");
+        $conn->query("ALTER TABLE faculty_schedules ADD upload_id INT(11) DEFAULT NULL AFTER faculty_id");
         $conn->query("ALTER TABLE faculty_schedules ADD KEY upload_id (upload_id)");
         $conn->query("ALTER TABLE faculty_schedules ADD CONSTRAINT faculty_schedules_upload_fk FOREIGN KEY (upload_id) REFERENCES schedule_uploads (upload_id) ON DELETE CASCADE ON UPDATE CASCADE");
     }
 }
 
+/**
+ * Formats database TIME string (HH:MM:SS) to standard input value (HH:MM)
+ */
 function format_time_value(string $value): string {
     if ($value === '' || $value === '00:00:00') {
         return '';
@@ -55,13 +62,14 @@ function format_time_value(string $value): string {
 
 ensure_schedule_upload_schema($conn);
 
+// Retrieve active user contextual identity metadata
 $stmt = $conn->prepare("
     SELECT
         users.*,
         students.student_id,
         students.student_number,
         students.program,
-        faculties.professor_id,
+        faculties.faculty_id,
         faculties.department
     FROM users
     LEFT JOIN students ON users.user_id = students.user_id
@@ -87,8 +95,9 @@ if (!in_array($role, ['student', 'faculty'], true)) {
 
 $dashboard_page = $role === 'faculty' ? 'facultydashboard.php' : 'studentdashboard.php';
 $profile_page   = $role === 'faculty' ? 'facultyprofile.php' : 'profile.php';
-$profile_id     = $role === 'faculty' ? (int) ($user['professor_id'] ?? 0) : (int) ($user['student_id'] ?? 0);
+$profile_id     = $role === 'faculty' ? (int) ($user['faculty_id'] ?? 0) : (int) ($user['student_id'] ?? 0);
 
+// Process Update Form Submissions
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['upload_id'], $_POST['courses'])) {
     $upload_id = (int) $_POST['upload_id'];
     $owner_stmt = $conn->prepare("SELECT upload_id FROM schedule_uploads WHERE upload_id = ? AND user_id = ? AND role = ?");
@@ -110,9 +119,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['upload_id'], $_POST['
             $delete_stmt->bind_param("ii", $upload_id, $profile_id);
             $insert_stmt = $conn->prepare("INSERT INTO student_schedules (student_id, upload_id, schedule_code, course_code, course_description, prof_name, time_start, time_end, day, room, semester, school_year, status) SELECT ?, upload_id, ?, ?, ?, ?, ?, ?, ?, ?, semester, school_year, 'active' FROM schedule_uploads WHERE upload_id = ?");
         } else {
-            $delete_stmt = $conn->prepare("DELETE FROM faculty_schedules WHERE upload_id = ? AND professor_id = ?");
+            $delete_stmt = $conn->prepare("DELETE FROM faculty_schedules WHERE upload_id = ? AND faculty_id = ?");
             $delete_stmt->bind_param("ii", $upload_id, $profile_id);
-            $insert_stmt = $conn->prepare("INSERT INTO faculty_schedules (professor_id, upload_id, schedule_code, course_code, course_description, day, time_start, time_end, room, semester, school_year, status) SELECT ?, upload_id, ?, ?, ?, ?, ?, ?, ?, semester, school_year, 'active' FROM schedule_uploads WHERE upload_id = ?");
+            $insert_stmt = $conn->prepare("INSERT INTO faculty_schedules (faculty_id, upload_id, schedule_code, course_code, day, time_start, time_end, room, semester, school_year, status) SELECT ?, upload_id, ?, ?, ?, ?, ?, ?, semester, school_year, 'active' FROM schedule_uploads WHERE upload_id = ?");
         }
 
         $delete_stmt->execute();
@@ -128,7 +137,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['upload_id'], $_POST['
             $time_end           = trim($course['time_end'] ?? '');
             $prof_name          = trim($course['prof_name'] ?? '');
 
-            if ($schedule_code === '' && $course_code === '' && $course_description === '') {
+            if ($schedule_code === '' && $course_code === '') {
                 continue;
             }
 
@@ -138,7 +147,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['upload_id'], $_POST['
             if ($role === 'student') {
                 $insert_stmt->bind_param("issssssssi", $profile_id, $schedule_code, $course_code, $course_description, $prof_name, $time_start, $time_end, $day, $room, $upload_id);
             } else {
-                $insert_stmt->bind_param("isssssssi", $profile_id, $schedule_code, $course_code, $course_description, $day, $time_start, $time_end, $room, $upload_id);
+                $insert_stmt->bind_param("isssssssi", $profile_id, $schedule_code, $course_code, $day, $time_start, $time_end, $room, $upload_id);
             }
 
             if (!$insert_stmt->execute()) {
@@ -148,6 +157,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['upload_id'], $_POST['
 
         $insert_stmt->close();
         $conn->commit();
+        
+        // Execute the tracking engine located in matched_schedules.php
+        synchronize_schedule_matches($conn);
+
         $_SESSION['schedule_success'] = "Schedule upload updated successfully.";
     } catch (Exception $e) {
         $conn->rollback();
@@ -179,17 +192,32 @@ while ($upload = $upload_result->fetch_assoc()) {
 $upload_stmt->close();
 
 if ($uploads) {
-    $ids          = implode(',', array_map('intval', array_keys($uploads)));
-    $table        = $role === 'faculty' ? 'faculty_schedules'      : 'student_schedules';
-    $id_column    = $role === 'faculty' ? 'professor_schedule_id'  : 'student_schedule_id';
-    $owner_column = $role === 'faculty' ? 'professor_id'           : 'student_id';
+    $ids = implode(',', array_map('intval', array_keys($uploads)));
 
-    $course_query = $conn->query("
-        SELECT *
-        FROM $table
-        WHERE $owner_column = $profile_id AND upload_id IN ($ids)
-        ORDER BY upload_id DESC, $id_column ASC
-    ");
+    if ($role === 'student') {
+        // Read directly through the matched_schedules tracking table link
+        $course_query = $conn->query("
+            SELECT 
+                ss.*,
+                ms.match_status,
+                COALESCE(u.fullname, ss.prof_name) AS matched_prof_name,
+                CASE WHEN u.fullname IS NOT NULL THEN 1 ELSE 0 END AS is_matched
+            FROM student_schedules ss
+            LEFT JOIN matched_schedules ms ON ss.student_schedule_id = ms.student_schedule_id
+            LEFT JOIN faculty_schedules fs ON ms.professor_schedule_id = fs.professor_schedule_id
+            LEFT JOIN faculties f ON fs.faculty_id = f.faculty_id
+            LEFT JOIN users u ON f.user_id = u.user_id
+            WHERE ss.student_id = $profile_id AND ss.upload_id IN ($ids)
+            ORDER BY ss.upload_id DESC, ss.student_schedule_id ASC
+        ");
+    } else {
+        $course_query = $conn->query("
+            SELECT *
+            FROM faculty_schedules
+            WHERE faculty_id = $profile_id AND upload_id IN ($ids)
+            ORDER BY upload_id DESC, professor_schedule_id ASC
+        ");
+    }
 
     if ($course_query) {
         while ($course = $course_query->fetch_assoc()) {
@@ -233,6 +261,21 @@ if ($uploads) {
     <link rel="stylesheet" href="../css/mysched.css">
     <link rel="stylesheet" href="../fonts/css/all.min.css">
     <link rel="stylesheet" href="../css/mysched_upgrade.css">
+    <style>
+        /* Stylistic badges for tracking alignment states */
+        .status-badge {
+            font-size: 0.75rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+            text-transform: uppercase;
+            display: inline-block;
+            margin-top: 4px;
+        }
+        .badge-matched { background-color: #d1e7dd; color: #0f5132; }
+        .badge-conflict { background-color: #f8d7da; color: #842029; }
+        .badge-no_match { background-color: #e2e3e5; color: #41464b; }
+    </style>
 </head>
 <body>
 
@@ -311,7 +354,9 @@ if ($uploads) {
                         <div class="grid-table-header">
                             <span>Sched Code</span>
                             <span>Course Code</span>
-                            <span>Description</span>
+                            <?php if ($role === 'student'): ?>
+                                <span>Description</span>
+                            <?php endif; ?>
                             <span>Instructor</span>
                             <span>Day</span>
                             <span>Time</span>
@@ -320,20 +365,31 @@ if ($uploads) {
 
                         <div class="grid-table-body">
                             <?php foreach ($upload['courses'] as $index => $course):
-                                $prof_raw   = $course['prof_name'] ?? '';
-                                $is_unknown = ($prof_raw === '' || stripos($prof_raw, 'not found') !== false);
+                                if ($role === 'student') {
+                                    $prof_raw = $course['matched_prof_name'] ?? $course['prof_name'] ?? '';
+                                    $is_unknown = ($prof_raw === '' || stripos($prof_raw, 'not found') !== false);
+                                    $match_status = $course['match_status'] ?? 'no_match';
+                                } else {
+                                    $prof_raw = '';
+                                    $is_unknown = true;
+                                    $match_status = '';
+                                }
                             ?>
                                 <div class="grid-table-row editable-grid-row">
-                                    <input type="text" name="courses[<?php echo $index; ?>][schedule_code]"      value="<?php echo htmlspecialchars($course['schedule_code']); ?>">
-                                    <input type="text" name="courses[<?php echo $index; ?>][course_code]"        value="<?php echo htmlspecialchars($course['course_code']); ?>">
-                                    <input type="text" name="courses[<?php echo $index; ?>][course_description]" value="<?php echo htmlspecialchars($course['course_description']); ?>">
+                                    <input type="text" name="courses[<?php echo $index; ?>][schedule_code]" value="<?php echo htmlspecialchars($course['schedule_code'] ?? ''); ?>">
+                                    <input type="text" name="courses[<?php echo $index; ?>][course_code]" value="<?php echo htmlspecialchars($course['course_code'] ?? ''); ?>">
+                                    
+                                    <?php if ($role === 'student'): ?>
+                                        <input type="text" name="courses[<?php echo $index; ?>][course_description]" value="<?php echo htmlspecialchars($course['course_description'] ?? ''); ?>">
+                                    <?php endif; ?>
 
                                     <div class="prof-column-input-wrapper">
                                         <input type="text"
                                             name="courses[<?php echo $index; ?>][prof_name]"
-                                            value="<?php echo htmlspecialchars($is_unknown ? 'Prof: not found in the uploaded image' : $prof_raw); ?>"
-                                            class="prof-input-field">
-                                        <?php if (!$is_unknown): ?>
+                                            value="<?php echo htmlspecialchars(($role === 'student' && $is_unknown) ? 'Prof: not found in the uploaded image' : $prof_raw); ?>"
+                                            class="prof-input-field" <?php echo ($role === 'faculty') ? 'disabled style="background:#eee;" placeholder="N/A"' : ''; ?>>
+                                        
+                                        <?php if ($role === 'student' && !$is_unknown): ?>
                                             <button type="button"
                                                     class="prof-lookup-icon-btn"
                                                     title="View faculty profile"
@@ -341,12 +397,18 @@ if ($uploads) {
                                                 <i class="fa-solid fa-address-card"></i>
                                             </button>
                                         <?php endif; ?>
+
+                                        <?php if ($role === 'student'): ?>
+                                            <span class="status-badge badge-<?php echo $match_status; ?>">
+                                                <?php echo str_replace('_', ' ', $match_status); ?>
+                                            </span>
+                                        <?php endif; ?>
                                     </div>
 
-                                    <input type="text" name="courses[<?php echo $index; ?>][day]"  value="<?php echo htmlspecialchars($course['day']); ?>">
+                                    <input type="text" name="courses[<?php echo $index; ?>][day]" value="<?php echo htmlspecialchars($course['day'] ?? ''); ?>">
                                     <span class="time-pair">
-                                        <input type="time" name="courses[<?php echo $index; ?>][time_start]" value="<?php echo format_time_value($course['time_start']); ?>">
-                                        <input type="time" name="courses[<?php echo $index; ?>][time_end]"   value="<?php echo format_time_value($course['time_end']); ?>">
+                                        <input type="time" name="courses[<?php echo $index; ?>][time_start]" value="<?php echo format_time_value($course['time_start'] ?? ''); ?>">
+                                        <input type="time" name="courses[<?php echo $index; ?>][time_end]" value="<?php echo format_time_value($course['time_end'] ?? ''); ?>">
                                     </span>
                                     <input type="text" name="courses[<?php echo $index; ?>][room]" value="<?php echo htmlspecialchars($course['room'] ?? ''); ?>">
                                 </div>
@@ -406,7 +468,6 @@ if ($uploads) {
                 </div>
             </div>
 
-            <!-- FIX: this element was referenced in JS but missing from the HTML -->
             <p id="fac-notfound" hidden style="text-align:center; color: #888; margin: 1rem 0;">
                 Faculty profile not found.
             </p>
@@ -433,15 +494,17 @@ document.querySelectorAll(".add-row-btn").forEach(button => {
         const body  = form.querySelector(".grid-table-body");
         const index = body.querySelectorAll(".grid-table-row").length;
         const row   = document.createElement("div");
+        const isStudent = <?php echo json_encode($role === 'student'); ?>;
+        
         row.className = "grid-table-row editable-grid-row";
         row.innerHTML = `
-            <input type="text" name="courses[${index}][schedule_code]"      placeholder="Sched code">
-            <input type="text" name="courses[${index}][course_code]"        placeholder="Course code">
-            <input type="text" name="courses[${index}][course_description]" placeholder="Description">
+            <input type="text" name="courses[${index}][schedule_code]" placeholder="Sched code">
+            <input type="text" name="courses[${index}][course_code]" placeholder="Course code">
+            ${isStudent ? `<input type="text" name="courses[${index}][course_description]" placeholder="Description">` : ''}
             <div class="prof-column-input-wrapper">
-                <input type="text" name="courses[${index}][prof_name]" value="Prof: not found in the uploaded image" class="prof-input-field">
+                <input type="text" name="courses[${index}][prof_name]" value="${isStudent ? 'Prof: not found in the uploaded image' : ''}" class="prof-input-field" ${!isStudent ? 'disabled style="background:#eee;" placeholder="N/A"' : ''}>
             </div>
-            <input type="text" name="courses[${index}][day]"  placeholder="Day">
+            <input type="text" name="courses[${index}][day]" placeholder="Day">
             <span class="time-pair">
                 <input type="time" name="courses[${index}][time_start]">
                 <input type="time" name="courses[${index}][time_end]">
@@ -464,7 +527,7 @@ const facEmail     = document.getElementById('fac-email');
 const facFb        = document.getElementById('fac-fb');
 const facFbRow     = document.getElementById('fac-fb-row');
 const facAvatarImg = document.getElementById('fac-avatar-img');
-const facNotFound  = document.getElementById('fac-notfound'); // now exists in the HTML
+const facNotFound  = document.getElementById('fac-notfound');
 
 function closeFacCard() {
     facOverlay.classList.remove('open');
@@ -474,28 +537,21 @@ function closeFacCard() {
 function resetFacCard() {
     facLoading.hidden  = false;
     facBody.hidden     = true;
-
     facInfo.hidden     = true;
     facFbRow.hidden    = true;
     facNotFound.hidden = true;
-
     facFb.href              = '#';
     facName.textContent     = '';
     facDeptText.textContent = '';
-
     facEmail.textContent = '—';
     facEmail.href = '#';
-
     facAvatarImg.src = '../media/images.jpg';
-
-    // Hide both rows until data confirms they should be shown
     facEmail.closest('.fac-row').hidden = true;
     facDeptText.closest('.fac-row').hidden = true;
 }
 
 function openFacCard(name) {
     resetFacCard();
-
     facOverlay.classList.add('open');
     document.body.style.overflow = 'hidden';
 
@@ -508,10 +564,8 @@ function openFacCard(name) {
             if (data.error) {
                 facName.textContent = '';
                 facNotFound.hidden = false;
-
                 facInfo.hidden = true;
                 facFbRow.hidden = true;
-
                 facAvatarImg.src = '../media/images.jpg';
                 return;
             }
@@ -551,16 +605,13 @@ function openFacCard(name) {
         .catch(() => {
             facLoading.hidden = true;
             facBody.hidden = false;
-
             facName.textContent = '';
             facNotFound.hidden = false;
-
             facInfo.hidden = true;
             facAvatarImg.src = '../media/images.jpg';
         });
 }
 
-// Delegate click to icon buttons
 document.addEventListener('click', e => {
     const btn = e.target.closest('.prof-lookup-icon-btn');
     if (btn) {
@@ -570,7 +621,6 @@ document.addEventListener('click', e => {
 });
 
 facClose.addEventListener('click', closeFacCard);
-
 facOverlay.addEventListener('click', e => {
     if (e.target === facOverlay) {
         closeFacCard();

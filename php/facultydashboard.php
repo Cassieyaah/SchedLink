@@ -12,7 +12,7 @@ $user_id = (int) $_SESSION['user_id'];
 $stmt = $conn->prepare("
     SELECT
         users.*,
-        faculties.professor_id,
+        faculties.faculty_id,
         faculties.department
     FROM users
     LEFT JOIN faculties ON users.user_id = faculties.user_id
@@ -69,10 +69,10 @@ if ($profile_picture === $default_image && !file_exists($default_image)) {
 /* =========================
    SCHEDULE QUERY
 ========================= */
-if (!empty($user['professor_id'])) {
-    $scheduleQuery = "SELECT * FROM faculty_schedules WHERE professor_id = ?";
+if (!empty($user['faculty_id'])) {
+    $scheduleQuery = "SELECT * FROM faculty_schedules WHERE faculty_id = ?";
     $stmt2 = $conn->prepare($scheduleQuery);
-    $stmt2->bind_param("i", $user['professor_id']);
+    $stmt2->bind_param("i", $user['faculty_id']);
     $stmt2->execute();
     $scheduleResult = $stmt2->get_result();
 } else {
@@ -175,7 +175,7 @@ unset($_SESSION['upload_success'], $_SESSION['upload_error']);
         </div>
     <?php endif; ?>
 
-    <?php if (empty($user['professor_id']) || empty($user['department'])): ?>
+    <?php if (empty($user['faculty_id']) || empty($user['department'])): ?>
         <div style="
             background:#fff3cd;
             color:#856404;
