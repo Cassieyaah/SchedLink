@@ -13,28 +13,41 @@ $user_id = (int) $_SESSION['user_id'];
 /* =========================
    UPDATE PROFILE (AJAX)
 ========================= */
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['department'])) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['fullname'])) {
 
     ob_clean();
     header('Content-Type: application/json');
 
     try {
 
-        $department = trim($_POST['department']) ?: null;
-        $fb_link    = trim($_POST['fb_link']) ?: null;
+        $fullname   = trim($_POST['fullname']);
+        $email      = trim($_POST['email']);
+        $department = trim($_POST['department']);
+        $fb_link    = trim($_POST['fb_link']);
+
+        /* USERS TABLE */
+        $sql1 = "UPDATE users SET fullname = ?, email = ? WHERE user_id = ?";
+        $stmt1 = mysqli_prepare($conn, $sql1);
+        mysqli_stmt_bind_param($stmt1, "ssi", $fullname, $email, $user_id);
+        mysqli_stmt_execute($stmt1);
+        mysqli_stmt_close($stmt1);
 
         /* CHECK FACULTIES */
-        $check_stmt = mysqli_prepare($conn, "SELECT professor_id FROM faculties WHERE user_id = ?");
+        $check_sql  = "SELECT professor_id FROM faculties WHERE user_id = ?";
+        $check_stmt = mysqli_prepare($conn, $check_sql);
         mysqli_stmt_bind_param($check_stmt, "i", $user_id);
         mysqli_stmt_execute($check_stmt);
-        $exists = mysqli_num_rows(mysqli_stmt_get_result($check_stmt)) > 0;
+        $check_result = mysqli_stmt_get_result($check_stmt);
+        $exists = mysqli_num_rows($check_result) > 0;
         mysqli_stmt_close($check_stmt);
 
         if ($exists) {
-            $stmt2 = mysqli_prepare($conn, "UPDATE faculties SET department = ?, fb_link = ? WHERE user_id = ?");
+            $sql2 = "UPDATE faculties SET department = ?, fb_link = ? WHERE user_id = ?";
+            $stmt2 = mysqli_prepare($conn, $sql2);
             mysqli_stmt_bind_param($stmt2, "ssi", $department, $fb_link, $user_id);
         } else {
-            $stmt2 = mysqli_prepare($conn, "INSERT INTO faculties (user_id, department, fb_link) VALUES (?, ?, ?)");
+            $sql2 = "INSERT INTO faculties (user_id, department, fb_link) VALUES (?, ?, ?)";
+            $stmt2 = mysqli_prepare($conn, $sql2);
             mysqli_stmt_bind_param($stmt2, "iss", $user_id, $department, $fb_link);
         }
 
@@ -44,7 +57,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['department'])) {
         echo json_encode(["status" => "success"]);
 
     } catch (Exception $e) {
-        echo json_encode(["status" => "error", "message" => $e->getMessage()]);
+        echo json_encode([
+            "status"  => "error",
+            "message" => $e->getMessage()
+        ]);
     }
 
     exit();
@@ -92,8 +108,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
         }
 
         /* UPDATE PASSWORD */
-        $new_hash   = password_hash($new_password, PASSWORD_DEFAULT);
-        $upd_stmt   = mysqli_prepare($conn, "UPDATE users SET password = ? WHERE user_id = ?");
+        $new_hash = password_hash($new_password, PASSWORD_DEFAULT);
+        $upd_stmt = mysqli_prepare($conn, "UPDATE users SET password = ? WHERE user_id = ?");
         mysqli_stmt_bind_param($upd_stmt, "si", $new_hash, $user_id);
         mysqli_stmt_execute($upd_stmt);
         mysqli_stmt_close($upd_stmt);
@@ -133,7 +149,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['profile_picture'])) 
         }
 
         $upload_dir = "../uploads/";
-        if (!is_dir($upload_dir)) mkdir($upload_dir, 0755, true);
+        if (!is_dir($upload_dir)) {
+            mkdir($upload_dir, 0755, true);
+        }
 
         $filename = time() . "_" . uniqid() . "." . $ext;
         $target   = $upload_dir . $filename;
@@ -142,26 +160,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['profile_picture'])) 
             throw new Exception("Failed to save file.");
         }
 
-        $old_stmt = mysqli_prepare($conn, "SELECT profile_picture FROM users WHERE user_id = ?");
+        /* Delete old profile picture */
+        $old_sql  = "SELECT profile_picture FROM users WHERE user_id = ?";
+        $old_stmt = mysqli_prepare($conn, $old_sql);
         mysqli_stmt_bind_param($old_stmt, "i", $user_id);
         mysqli_stmt_execute($old_stmt);
-        $old_data = mysqli_fetch_assoc(mysqli_stmt_get_result($old_stmt));
+        $old_result = mysqli_stmt_get_result($old_stmt);
+        $old_data   = mysqli_fetch_assoc($old_result);
         mysqli_stmt_close($old_stmt);
 
         if (!empty($old_data['profile_picture'])) {
             $old_file = $upload_dir . $old_data['profile_picture'];
-            if (file_exists($old_file)) unlink($old_file);
+            if (file_exists($old_file)) {
+                unlink($old_file);
+            }
         }
 
-        $stmt = mysqli_prepare($conn, "UPDATE users SET profile_picture = ? WHERE user_id = ?");
+        $sql  = "UPDATE users SET profile_picture = ? WHERE user_id = ?";
+        $stmt = mysqli_prepare($conn, $sql);
         mysqli_stmt_bind_param($stmt, "si", $filename, $user_id);
         mysqli_stmt_execute($stmt);
         mysqli_stmt_close($stmt);
 
-        echo json_encode(["status" => "success", "file" => $filename]);
+        echo json_encode([
+            "status" => "success",
+            "file"   => $filename
+        ]);
 
     } catch (Exception $e) {
-        echo json_encode(["status" => "error", "message" => $e->getMessage()]);
+        echo json_encode([
+            "status"  => "error",
+            "message" => $e->getMessage()
+        ]);
     }
 
     exit();
@@ -186,7 +216,9 @@ WHERE users.user_id = ?
 $stmt = mysqli_prepare($conn, $query);
 mysqli_stmt_bind_param($stmt, "i", $user_id);
 mysqli_stmt_execute($stmt);
-$data = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
+
+$result = mysqli_stmt_get_result($stmt);
+$data   = mysqli_fetch_assoc($result);
 mysqli_stmt_close($stmt);
 
 if (!$data) {
@@ -200,11 +232,14 @@ if (!$data) {
 ========================= */
 $default_image   = "../media/images.jpg";
 $profile_picture = $default_image;
-$stored_picture  = trim($data['profile_picture'] ?? '');
+
+$stored_picture = trim($data['profile_picture'] ?? '');
 
 if ($stored_picture !== '') {
     $uploaded_path = "../uploads/" . $stored_picture;
-    if (file_exists($uploaded_path)) $profile_picture = $uploaded_path;
+    if (file_exists($uploaded_path)) {
+        $profile_picture = $uploaded_path;
+    }
 }
 
 if ($profile_picture === $default_image && !file_exists($default_image)) {
@@ -245,7 +280,7 @@ function na(mixed $value): string {
         <div class="section-title">GENERAL</div>
         <div class="nav">
             <a href="facultydashboard.php"><i class="fa-solid fa-chart-line"></i> Dashboard</a>
-            <a href="myschedule.php"><i class="fa-regular fa-calendar"></i> My Schedule</a>
+            <a href="faculty_schedule.php"><i class="fa-regular fa-calendar"></i> My Schedule</a>
             <a href="facultydashboard.php#upload"><i class="fa-solid fa-upload"></i> Upload Schedule</a>
             <a class="active" href="facultyprofile.php"><i class="fa-solid fa-user"></i> Profile</a>
             <a href="logout.php"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
@@ -309,6 +344,12 @@ function na(mixed $value): string {
         <span class="close" onclick="closeModal()" aria-label="Close">&times;</span>
         <h2 id="modalTitle">Edit Profile</h2>
         <div id="profileForm">
+            <label for="edit_fullname">Full Name</label>
+            <input type="text" id="edit_fullname" name="fullname" value="<?php echo e($data['fullname']); ?>">
+
+            <label for="edit_email">Email</label>
+            <input type="email" id="edit_email" name="email" value="<?php echo e($data['email']); ?>">
+
             <label for="edit_department">Department</label>
             <input type="text" id="edit_department" name="department" value="<?php echo e($data['department'] ?? ''); ?>">
 
@@ -359,61 +400,6 @@ function na(mixed $value): string {
     </div>
 </div>
 
-<style>
-.profile-btn-row {
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-    margin-top: 40px;
-}
-.profile-btn-row .edit-btn {
-    margin-top: 0;
-}
-.change-pw-btn {
-    background: transparent !important;
-    color: white !important;
-    border: 2px solid rgba(255,255,255,0.6) !important;
-}
-.change-pw-btn:hover {
-    background: rgba(255,255,255,0.12) !important;
-    opacity: 1 !important;
-}
-.pw-field {
-    position: relative;
-    margin: 8px 0 16px;
-}
-.pw-field input {
-    width: 100%;
-    padding: 13px 44px 13px 13px;
-    border: 1px solid #ccc;
-    border-radius: 10px;
-    outline: none;
-    font-size: 15px;
-    margin: 0;
-}
-.pw-toggle {
-    position: absolute;
-    right: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: #888;
-    padding: 0;
-    font-size: 15px;
-}
-.pw-toggle:hover { color: #333; }
-.pw-error {
-    background: #fdecea;
-    color: #c0392b;
-    border-radius: 8px;
-    padding: 10px 14px;
-    font-size: 14px;
-    margin-bottom: 12px;
-}
-</style>
-
 <script>
 /* EDIT PROFILE MODAL */
 function openModal() {
@@ -424,9 +410,13 @@ function closeModal() {
 }
 
 function saveProfile() {
-    const data = new FormData();
-    data.append("department", document.getElementById("edit_department").value.trim());
-    data.append("fb_link",    document.getElementById("edit_fb_link").value.trim());
+    const fields = ["fullname", "email", "department", "fb_link"];
+    const data   = new FormData();
+
+    fields.forEach(name => {
+        const el = document.querySelector(`#profileForm [name="${name}"]`);
+        if (el) data.append(name, el.value.trim());
+    });
 
     fetch("facultyprofile.php", { method: "POST", body: data })
         .then(r => r.json())
@@ -536,7 +526,7 @@ document.getElementById("profile_picture").addEventListener("change", function (
 });
 
 window.addEventListener("click", function (e) {
-    if (e.target === document.getElementById("editModal"))    closeModal();
+    if (e.target === document.getElementById("editModal"))     closeModal();
     if (e.target === document.getElementById("passwordModal")) closePasswordModal();
 });
 window.addEventListener("keydown", function (e) {

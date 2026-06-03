@@ -20,8 +20,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['student_number'])) {
 
     try {
 
+        $fullname       = trim($_POST['fullname'] ?? '');
         $student_number = trim($_POST['student_number']) ?: null;
         $program        = trim($_POST['program']) ?: null;
+
+        /* Update fullname in users table */
+        if ($fullname !== '') {
+            $name_stmt = mysqli_prepare($conn, "UPDATE users SET fullname = ? WHERE user_id = ?");
+            mysqli_stmt_bind_param($name_stmt, "si", $fullname, $user_id);
+            mysqli_stmt_execute($name_stmt);
+            mysqli_stmt_close($name_stmt);
+        }
 
         /* check student */
         $check_stmt = mysqli_prepare($conn, "SELECT user_id FROM students WHERE user_id = ?");
@@ -308,6 +317,10 @@ function na(mixed $value): string {
         <span class="close" onclick="closeModal()" aria-label="Close">&times;</span>
         <h2 id="modalTitle">Edit Profile</h2>
         <div id="profileForm">
+
+            <label for="edit_fullname">Full Name</label>
+            <input type="text" id="edit_fullname" name="fullname" value="<?php echo e($data['fullname']); ?>">
+
             <label for="edit_student_number">Student Number</label>
             <input type="text" id="edit_student_number" name="student_number" value="<?php echo e($data['student_number'] ?? ''); ?>">
 
@@ -358,60 +371,7 @@ function na(mixed $value): string {
     </div>
 </div>
 
-<style>
-.profile-btn-row {
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-    margin-top: 40px;
-}
-.profile-btn-row .edit-btn {
-    margin-top: 0;
-}
-.change-pw-btn {
-    background: transparent !important;
-    color: white !important;
-    border: 2px solid rgba(255,255,255,0.6) !important;
-}
-.change-pw-btn:hover {
-    background: rgba(255,255,255,0.12) !important;
-    opacity: 1 !important;
-}
-.pw-field {
-    position: relative;
-    margin: 8px 0 16px;
-}
-.pw-field input {
-    width: 100%;
-    padding: 13px 44px 13px 13px;
-    border: 1px solid #ccc;
-    border-radius: 10px;
-    outline: none;
-    font-size: 15px;
-    margin: 0;
-}
-.pw-toggle {
-    position: absolute;
-    right: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: #888;
-    padding: 0;
-    font-size: 15px;
-}
-.pw-toggle:hover { color: #333; }
-.pw-error {
-    background: #fdecea;
-    color: #c0392b;
-    border-radius: 8px;
-    padding: 10px 14px;
-    font-size: 14px;
-    margin-bottom: 12px;
-}
-</style>
+
 
 <script>
 /* EDIT PROFILE MODAL */
@@ -424,6 +384,7 @@ function closeModal() {
 
 function saveProfile() {
     const data = new FormData();
+    data.append("fullname",       document.getElementById("edit_fullname").value.trim());
     data.append("student_number", document.getElementById("edit_student_number").value.trim());
     data.append("program",        document.getElementById("edit_program").value.trim());
 

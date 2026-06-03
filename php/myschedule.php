@@ -9,7 +9,7 @@ if (!isset($_SESSION['user_id'])) {
 
 $user_id = (int) $_SESSION['user_id'];
 
-function ensure_schedule_upload_schema(mysqli $conn): void {
+function ensure_schedule_upload_schema($conn): void {
     $conn->query("
         CREATE TABLE IF NOT EXISTS schedule_uploads (
             upload_id INT(11) NOT NULL AUTO_INCREMENT,
@@ -50,7 +50,6 @@ function format_time_value(string $value): string {
     if ($value === '' || $value === '00:00:00') {
         return '';
     }
-
     return date('H:i', strtotime($value));
 }
 
@@ -87,8 +86,8 @@ if (!in_array($role, ['student', 'faculty'], true)) {
 }
 
 $dashboard_page = $role === 'faculty' ? 'facultydashboard.php' : 'studentdashboard.php';
-$profile_page = $role === 'faculty' ? 'facultyprofile.php' : 'profile.php';
-$profile_id = $role === 'faculty' ? (int) ($user['professor_id'] ?? 0) : (int) ($user['student_id'] ?? 0);
+$profile_page   = $role === 'faculty' ? 'facultyprofile.php' : 'profile.php';
+$profile_id     = $role === 'faculty' ? (int) ($user['professor_id'] ?? 0) : (int) ($user['student_id'] ?? 0);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['upload_id'], $_POST['courses'])) {
     $upload_id = (int) $_POST['upload_id'];
@@ -120,21 +119,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['upload_id'], $_POST['
         $delete_stmt->close();
 
         foreach ($_POST['courses'] as $course) {
-            $schedule_code = trim($course['schedule_code'] ?? '');
-            $course_code = trim($course['course_code'] ?? '');
+            $schedule_code      = trim($course['schedule_code'] ?? '');
+            $course_code        = trim($course['course_code'] ?? '');
             $course_description = trim($course['course_description'] ?? '');
-            $day = trim($course['day'] ?? '');
-            $room = trim($course['room'] ?? '');
-            $time_start = trim($course['time_start'] ?? '');
-            $time_end = trim($course['time_end'] ?? '');
-            $prof_name = trim($course['prof_name'] ?? '');
+            $day                = trim($course['day'] ?? '');
+            $room               = trim($course['room'] ?? '');
+            $time_start         = trim($course['time_start'] ?? '');
+            $time_end           = trim($course['time_end'] ?? '');
+            $prof_name          = trim($course['prof_name'] ?? '');
 
             if ($schedule_code === '' && $course_code === '' && $course_description === '') {
                 continue;
             }
 
             $time_start = $time_start !== '' ? date('H:i:s', strtotime($time_start)) : '00:00:00';
-            $time_end = $time_end !== '' ? date('H:i:s', strtotime($time_end)) : '00:00:00';
+            $time_end   = $time_end   !== '' ? date('H:i:s', strtotime($time_end))   : '00:00:00';
 
             if ($role === 'student') {
                 $insert_stmt->bind_param("issssssssi", $profile_id, $schedule_code, $course_code, $course_description, $prof_name, $time_start, $time_end, $day, $room, $upload_id);
@@ -160,7 +159,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['upload_id'], $_POST['
 }
 
 $upload_success = $_SESSION['schedule_success'] ?? '';
-$upload_error = $_SESSION['schedule_error'] ?? '';
+$upload_error   = $_SESSION['schedule_error']   ?? '';
 unset($_SESSION['schedule_success'], $_SESSION['schedule_error']);
 
 $uploads = [];
@@ -180,10 +179,11 @@ while ($upload = $upload_result->fetch_assoc()) {
 $upload_stmt->close();
 
 if ($uploads) {
-    $ids = implode(',', array_map('intval', array_keys($uploads)));
-    $table = $role === 'faculty' ? 'faculty_schedules' : 'student_schedules';
-    $id_column = $role === 'faculty' ? 'professor_schedule_id' : 'student_schedule_id';
-    $owner_column = $role === 'faculty' ? 'professor_id' : 'student_id';
+    $ids          = implode(',', array_map('intval', array_keys($uploads)));
+    $table        = $role === 'faculty' ? 'faculty_schedules'      : 'student_schedules';
+    $id_column    = $role === 'faculty' ? 'professor_schedule_id'  : 'student_schedule_id';
+    $owner_column = $role === 'faculty' ? 'professor_id'           : 'student_id';
+
     $course_query = $conn->query("
         SELECT *
         FROM $table
@@ -197,29 +197,25 @@ if ($uploads) {
         }
     }
 
-    // --- CUSTOM SORTING (Monday to Saturday + Time Start) ---
     $day_order = [
-        'M'  => 1, 'MON' => 1, 'MONDAY' => 1,
-        'T'  => 2, 'TUE' => 2, 'TUESDAY' => 2,
+        'M'  => 1, 'MON' => 1, 'MONDAY'    => 1,
+        'T'  => 2, 'TUE' => 2, 'TUESDAY'   => 2,
         'W'  => 3, 'WED' => 3, 'WEDNESDAY' => 3,
-        'TH' => 4, 'THU' => 4, 'THURSDAY' => 4,
-        'F'  => 5, 'FRI' => 5, 'FRIDAY' => 5,
-        'S'  => 6, 'ST'  => 6, 'SAT' => 6, 'SATURDAY' => 6
+        'TH' => 4, 'THU' => 4, 'THURSDAY'  => 4,
+        'F'  => 5, 'FRI' => 5, 'FRIDAY'    => 5,
+        'S'  => 6, 'ST'  => 6, 'SAT' => 6, 'SATURDAY' => 6,
     ];
 
-    foreach ($uploads as $upload_id => $upload_data) {
-        if (!empty($uploads[$upload_id]['courses'])) {
-            usort($uploads[$upload_id]['courses'], function($a, $b) use ($day_order) {
-                $dayA = strtoupper(trim($a['day'] ?? ''));
-                $dayB = strtoupper(trim($b['day'] ?? ''));
-                
+    foreach ($uploads as $uid => $upload_data) {
+        if (!empty($uploads[$uid]['courses'])) {
+            usort($uploads[$uid]['courses'], function ($a, $b) use ($day_order) {
+                $dayA   = strtoupper(trim($a['day'] ?? ''));
+                $dayB   = strtoupper(trim($b['day'] ?? ''));
                 $orderA = $day_order[$dayA] ?? 99;
                 $orderB = $day_order[$dayB] ?? 99;
-
                 if ($orderA === $orderB) {
                     return strcmp($a['time_start'] ?? '00:00:00', $b['time_start'] ?? '00:00:00');
                 }
-                
                 return $orderA <=> $orderB;
             });
         }
@@ -239,6 +235,7 @@ if ($uploads) {
     <link rel="stylesheet" href="../css/mysched_upgrade.css">
 </head>
 <body>
+
 <div class="sidebar">
     <div>
         <div class="profile">
@@ -246,7 +243,6 @@ if ($uploads) {
             <h3><?php echo htmlspecialchars($user['fullname']); ?></h3>
             <p><?php echo ucfirst($role); ?> Account</p>
         </div>
-
         <div class="section-title">GENERAL</div>
         <div class="nav">
             <a href="<?php echo $dashboard_page; ?>"><i class="fa-solid fa-chart-line"></i> Dashboard</a>
@@ -257,7 +253,6 @@ if ($uploads) {
         </div>
         <div class="divider"></div>
     </div>
-
     <div class="sidebar-footer">
         <img src="../media/cvsulogo.png" alt="CvSU Logo">
         <p>Cavite State University</p>
@@ -273,7 +268,6 @@ if ($uploads) {
     <?php if ($upload_success): ?>
         <div class="dashboard-alert success-alert"><?php echo htmlspecialchars($upload_success); ?></div>
     <?php endif; ?>
-
     <?php if ($upload_error): ?>
         <div class="dashboard-alert error-alert"><?php echo htmlspecialchars($upload_error); ?></div>
     <?php endif; ?>
@@ -285,8 +279,7 @@ if ($uploads) {
                 <p>Most recent uploads appear first. Open an upload to view or edit the extracted rows.</p>
             </div>
             <a class="primary-upload-btn" href="<?php echo $dashboard_page; ?>#upload">
-                <i class="fa-solid fa-upload"></i>
-                Upload
+                <i class="fa-solid fa-upload"></i> Upload
             </a>
         </div>
 
@@ -315,7 +308,6 @@ if ($uploads) {
                     <form method="POST" class="schedule-edit-form">
                         <input type="hidden" name="upload_id" value="<?php echo (int) $upload['upload_id']; ?>">
 
-                        <!-- BINAGO: Pitong Columns na ang Header -->
                         <div class="grid-table-header">
                             <span>Sched Code</span>
                             <span>Course Code</span>
@@ -327,21 +319,34 @@ if ($uploads) {
                         </div>
 
                         <div class="grid-table-body">
-                            <?php foreach ($upload['courses'] as $index => $course): ?>
+                            <?php foreach ($upload['courses'] as $index => $course):
+                                $prof_raw   = $course['prof_name'] ?? '';
+                                $is_unknown = ($prof_raw === '' || stripos($prof_raw, 'not found') !== false);
+                            ?>
                                 <div class="grid-table-row editable-grid-row">
-                                    <input type="text" name="courses[<?php echo $index; ?>][schedule_code]" value="<?php echo htmlspecialchars($course['schedule_code']); ?>">
-                                    <input type="text" name="courses[<?php echo $index; ?>][course_code]" value="<?php echo htmlspecialchars($course['course_code']); ?>">
+                                    <input type="text" name="courses[<?php echo $index; ?>][schedule_code]"      value="<?php echo htmlspecialchars($course['schedule_code']); ?>">
+                                    <input type="text" name="courses[<?php echo $index; ?>][course_code]"        value="<?php echo htmlspecialchars($course['course_code']); ?>">
                                     <input type="text" name="courses[<?php echo $index; ?>][course_description]" value="<?php echo htmlspecialchars($course['course_description']); ?>">
-                                    
-                                    <!-- BINAGO: May sarili nang editable box ang Instructor/Prof -->
+
                                     <div class="prof-column-input-wrapper">
-                                        <input type="text" name="courses[<?php echo $index; ?>][prof_name]" value="<?php echo htmlspecialchars($course['prof_name'] ?? 'Prof: not found in the uploaded image'); ?>" class="prof-input-field">
+                                        <input type="text"
+                                            name="courses[<?php echo $index; ?>][prof_name]"
+                                            value="<?php echo htmlspecialchars($is_unknown ? 'Prof: not found in the uploaded image' : $prof_raw); ?>"
+                                            class="prof-input-field">
+                                        <?php if (!$is_unknown): ?>
+                                            <button type="button"
+                                                    class="prof-lookup-icon-btn"
+                                                    title="View faculty profile"
+                                                    data-prof="<?php echo htmlspecialchars($prof_raw); ?>">
+                                                <i class="fa-solid fa-address-card"></i>
+                                            </button>
+                                        <?php endif; ?>
                                     </div>
 
-                                    <input type="text" name="courses[<?php echo $index; ?>][day]" value="<?php echo htmlspecialchars($course['day']); ?>">
+                                    <input type="text" name="courses[<?php echo $index; ?>][day]"  value="<?php echo htmlspecialchars($course['day']); ?>">
                                     <span class="time-pair">
                                         <input type="time" name="courses[<?php echo $index; ?>][time_start]" value="<?php echo format_time_value($course['time_start']); ?>">
-                                        <input type="time" name="courses[<?php echo $index; ?>][time_end]" value="<?php echo format_time_value($course['time_end']); ?>">
+                                        <input type="time" name="courses[<?php echo $index; ?>][time_end]"   value="<?php echo format_time_value($course['time_end']); ?>">
                                     </span>
                                     <input type="text" name="courses[<?php echo $index; ?>][room]" value="<?php echo htmlspecialchars($course['room'] ?? ''); ?>">
                                 </div>
@@ -350,16 +355,13 @@ if ($uploads) {
 
                         <div class="schedule-edit-actions">
                             <button type="button" class="secondary-upload-btn add-row-btn">
-                                <i class="fa-solid fa-plus"></i>
-                                Add Row
+                                <i class="fa-solid fa-plus"></i> Add Row
                             </button>
                             <a href="myschedule.php" class="discard-btn">
-                                <i class="fa-solid fa-trash-can"></i>
-                                Discard Update
+                                <i class="fa-solid fa-trash-can"></i> Discard Update
                             </a>
                             <button type="submit" class="primary-upload-btn">
-                                <i class="fa-solid fa-floppy-disk"></i>
-                                Save Update
+                                <i class="fa-solid fa-floppy-disk"></i> Save Update
                             </button>
                         </div>
                     </form>
@@ -369,30 +371,77 @@ if ($uploads) {
     </section>
 </main>
 
+<div class="fac-overlay" id="fac-overlay">
+    <div class="fac-card" id="fac-card">
+        <button class="fac-close" id="fac-close" aria-label="Close">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+
+        <div class="fac-loading" id="fac-loading">
+            <i class="fa-solid fa-spinner fa-spin"></i>
+            <p>Looking up faculty…</p>
+        </div>
+
+        <div class="fac-body" id="fac-body">
+            <div class="fac-avatar-wrap">
+                <img src="../media/images.jpg" alt="Faculty photo" id="fac-avatar-img">
+            </div>
+
+            <p class="fac-name" id="fac-name"></p>
+
+            <hr class="fac-divider">
+
+            <div class="fac-info" id="fac-info">
+                <div class="fac-row">
+                    <i class="fa-solid fa-envelope"></i>
+                    <a id="fac-email" href="#">—</a>
+                </div>
+                <div class="fac-row" id="fac-fb-row" >
+                    <i class="fa-brands fa-facebook"></i>
+                    <a id="fac-fb">View Facebook profile</a>
+                </div>
+                <div class="fac-row" id="fac-dept-row">
+                    <i class="fa-solid fa-building"></i>
+                    <span id="fac-dept-text"></span>
+                </div>
+            </div>
+
+            <!-- FIX: this element was referenced in JS but missing from the HTML -->
+            <p id="fac-notfound" hidden style="text-align:center; color: #888; margin: 1rem 0;">
+                Faculty profile not found.
+            </p>
+        </div>
+
+        <div class="fac-actions">
+            <button type="button" onclick="closeFacCard()">Close</button>
+        </div>
+    </div>
+</div>
+
 <script>
+// --- Accordion ---
 document.querySelectorAll(".schedule-upload-summary").forEach(button => {
     button.addEventListener("click", () => {
         button.closest(".collapsible-container").classList.toggle("active-dropdown");
     });
 });
 
+// --- Add Row ---
 document.querySelectorAll(".add-row-btn").forEach(button => {
     button.addEventListener("click", () => {
-        const form = button.closest("form");
-        const body = form.querySelector(".grid-table-body");
+        const form  = button.closest("form");
+        const body  = form.querySelector(".grid-table-body");
         const index = body.querySelectorAll(".grid-table-row").length;
-        const row = document.createElement("div");
+        const row   = document.createElement("div");
         row.className = "grid-table-row editable-grid-row";
-        
-        // BINAGO: HTML Structure ng js add-row para sumunod sa pitong columns
         row.innerHTML = `
-            <input type="text" name="courses[${index}][schedule_code]" placeholder="Sched code">
-            <input type="text" name="courses[${index}][course_code]" placeholder="Course code">
+            <input type="text" name="courses[${index}][schedule_code]"      placeholder="Sched code">
+            <input type="text" name="courses[${index}][course_code]"        placeholder="Course code">
             <input type="text" name="courses[${index}][course_description]" placeholder="Description">
             <div class="prof-column-input-wrapper">
                 <input type="text" name="courses[${index}][prof_name]" value="Prof: not found in the uploaded image" class="prof-input-field">
             </div>
-            <input type="text" name="courses[${index}][day]" placeholder="Day">
+            <input type="text" name="courses[${index}][day]"  placeholder="Day">
             <span class="time-pair">
                 <input type="time" name="courses[${index}][time_start]">
                 <input type="time" name="courses[${index}][time_end]">
@@ -401,6 +450,137 @@ document.querySelectorAll(".add-row-btn").forEach(button => {
         `;
         body.appendChild(row);
     });
+});
+
+// --- Faculty Pop-up Card ---
+const facOverlay   = document.getElementById('fac-overlay');
+const facClose     = document.getElementById('fac-close');
+const facLoading   = document.getElementById('fac-loading');
+const facBody      = document.getElementById('fac-body');
+const facName      = document.getElementById('fac-name');
+const facDeptText  = document.getElementById('fac-dept-text');
+const facInfo      = document.getElementById('fac-info');
+const facEmail     = document.getElementById('fac-email');
+const facFb        = document.getElementById('fac-fb');
+const facFbRow     = document.getElementById('fac-fb-row');
+const facAvatarImg = document.getElementById('fac-avatar-img');
+const facNotFound  = document.getElementById('fac-notfound'); // now exists in the HTML
+
+function closeFacCard() {
+    facOverlay.classList.remove('open');
+    document.body.style.overflow = '';
+}
+
+function resetFacCard() {
+    facLoading.hidden  = false;
+    facBody.hidden     = true;
+
+    facInfo.hidden     = true;
+    facFbRow.hidden    = true;
+    facNotFound.hidden = true;
+
+    facFb.href              = '#';
+    facName.textContent     = '';
+    facDeptText.textContent = '';
+
+    facEmail.textContent = '—';
+    facEmail.href = '#';
+
+    facAvatarImg.src = '../media/images.jpg';
+
+    // Hide both rows until data confirms they should be shown
+    facEmail.closest('.fac-row').hidden = true;
+    facDeptText.closest('.fac-row').hidden = true;
+}
+
+function openFacCard(name) {
+    resetFacCard();
+
+    facOverlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+
+    fetch(`../php/get_faculty_info.php?name=${encodeURIComponent(name)}`)
+        .then(r => r.json())
+        .then(data => {
+            facLoading.hidden = true;
+            facBody.hidden = false;
+
+            if (data.error) {
+                facName.textContent = '';
+                facNotFound.hidden = false;
+
+                facInfo.hidden = true;
+                facFbRow.hidden = true;
+
+                facAvatarImg.src = '../media/images.jpg';
+                return;
+            }
+
+            facInfo.hidden = false;
+            facName.textContent = data.fullname;
+
+            if (data.profile_picture) {
+                facAvatarImg.src = `../uploads/${data.profile_picture}`;
+            }
+
+            const facEmailRow = facEmail.closest('.fac-row');
+            if (data.email) {
+                facEmail.href = `mailto:${data.email}`;
+                facEmail.textContent = data.email;
+                facEmailRow.hidden = false;
+            } else {
+                facEmailRow.hidden = true;
+            }
+
+            if (data.fb_link && data.fb_link.trim() !== '') {
+                facFb.href = data.fb_link;
+                facFb.textContent = data.fb_link;
+                facFbRow.hidden = false;
+            } else {
+                facFbRow.hidden = true;
+            }
+
+            const facDeptRow = facDeptText.closest('.fac-row');
+            if (data.department && data.department.trim() !== '') {
+                facDeptText.textContent = data.department;
+                facDeptRow.hidden = false;
+            } else {
+                facDeptRow.hidden = true;
+            }
+        })
+        .catch(() => {
+            facLoading.hidden = true;
+            facBody.hidden = false;
+
+            facName.textContent = '';
+            facNotFound.hidden = false;
+
+            facInfo.hidden = true;
+            facAvatarImg.src = '../media/images.jpg';
+        });
+}
+
+// Delegate click to icon buttons
+document.addEventListener('click', e => {
+    const btn = e.target.closest('.prof-lookup-icon-btn');
+    if (btn) {
+        e.preventDefault();
+        openFacCard(btn.dataset.prof);
+    }
+});
+
+facClose.addEventListener('click', closeFacCard);
+
+facOverlay.addEventListener('click', e => {
+    if (e.target === facOverlay) {
+        closeFacCard();
+    }
+});
+
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+        closeFacCard();
+    }
 });
 </script>
 </body>
