@@ -1,8 +1,12 @@
 <?php
 session_start();
 
-include '../includes/db.php';
-require '../vendor/autoload.php';
+include __DIR__ . '/../includes/db.php';
+$vendorAutoload = __DIR__ . '/../vendor/autoload.php';
+if (!file_exists($vendorAutoload)) {
+    die('Composer autoload not found. Run "composer install" in the project root.');
+}
+require $vendorAutoload;
 
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
