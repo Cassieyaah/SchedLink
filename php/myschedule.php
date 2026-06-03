@@ -98,97 +98,126 @@ $dashboard_page = $role === 'faculty' ? 'facultydashboard.php' : 'studentdashboa
 $profile_page   = $role === 'faculty' ? 'facultyprofile.php' : 'profile.php';
 $profile_id     = $role === 'faculty' ? (int) ($user['faculty_id'] ?? 0) : (int) ($user['student_id'] ?? 0);
 
-// Process Update Form Submissions
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['upload_id'], $_POST['courses'])) {
-    $upload_id = (int) $_POST['upload_id'];
-    $owner_stmt = $conn->prepare("SELECT upload_id FROM schedule_uploads WHERE upload_id = ? AND user_id = ? AND role = ?");
-    $owner_stmt->bind_param("iis", $upload_id, $user_id, $role);
-    $owner_stmt->execute();
-    $owned_upload = $owner_stmt->get_result()->fetch_assoc();
-    $owner_stmt->close();
+// Process Update and Delete Form Submissions
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-    if (!$owned_upload || $profile_id === 0) {
-        $_SESSION['schedule_error'] = "Schedule update failed because the upload record was not found.";
+    // INTERCEPT DELETIONS FIRST
+    if (isset($_POST['delete_upload_id'])) {
+        $delete_id = (int)$_POST['delete_upload_id'];
+        
+        // Secure verification that logged-in user owns the record
+        $check = $conn->prepare("SELECT upload_id FROM schedule_uploads WHERE upload_id = ? AND user_id = ?");
+        $check->bind_param("ii", $delete_id, $user_id);
+        $check->execute();
+        
+        if ($check->get_result()->fetch_assoc()) {
+            $del = $conn->prepare("DELETE FROM schedule_uploads WHERE upload_id = ?");
+            $del->bind_param("i", $delete_id);
+            if ($del->execute()) {
+                $_SESSION['schedule_success'] = "Schedule upload removed successfully.";
+            } else {
+                $_SESSION['schedule_error'] = "Error eliminating schedule entry.";
+            }
+            $del->close();
+        }
+        $check->close();
+        
         header("Location: myschedule.php");
         exit();
     }
 
-    $conn->begin_transaction();
-    try {
-        $schedule_name = trim($_POST['schedule_name'] ?? '');
-        if ($schedule_name === '') {
-            $schedule_name = 'Uploaded schedule';
+    // RUN EXISTING SAVE/UPDATE LOGIC
+    if (isset($_POST['upload_id'], $_POST['courses'])) {
+        $upload_id = (int) $_POST['upload_id'];
+        $owner_stmt = $conn->prepare("SELECT upload_id FROM schedule_uploads WHERE upload_id = ? AND user_id = ? AND role = ?");
+        $owner_stmt->bind_param("iis", $upload_id, $user_id, $role);
+        $owner_stmt->execute();
+        $owned_upload = $owner_stmt->get_result()->fetch_assoc();
+        $owner_stmt->close();
+
+        if (!$owned_upload || $profile_id === 0) {
+            $_SESSION['schedule_error'] = "Schedule update failed because the upload record was not found.";
+            header("Location: myschedule.php");
+            exit();
         }
 
-        $name_stmt = $conn->prepare("UPDATE schedule_uploads SET original_filename = ? WHERE upload_id = ? AND user_id = ? AND role = ?");
-        $name_stmt->bind_param("siis", $schedule_name, $upload_id, $user_id, $role);
-        if (!$name_stmt->execute()) {
-            throw new Exception($name_stmt->error);
-        }
-        $name_stmt->close();
-
-        if ($role === 'student') {
-            $delete_stmt = $conn->prepare("DELETE FROM student_schedules WHERE upload_id = ? AND student_id = ?");
-            $delete_stmt->bind_param("ii", $upload_id, $profile_id);
-            $insert_stmt = $conn->prepare("INSERT INTO student_schedules (student_id, upload_id, schedule_code, course_code, course_description, prof_name, time_start, time_end, day, room, semester, school_year, status) SELECT ?, upload_id, ?, ?, ?, ?, ?, ?, ?, ?, semester, school_year, 'active' FROM schedule_uploads WHERE upload_id = ?");
-        } else {
-            $delete_stmt = $conn->prepare("DELETE FROM faculty_schedules WHERE upload_id = ? AND faculty_id = ?");
-            $delete_stmt->bind_param("ii", $upload_id, $profile_id);
-            $insert_stmt = $conn->prepare("INSERT INTO faculty_schedules (faculty_id, upload_id, schedule_code, course_code, day, time_start, time_end, room, semester, school_year, status) SELECT ?, upload_id, ?, ?, ?, ?, ?, ?, semester, school_year, 'active' FROM schedule_uploads WHERE upload_id = ?");
-        }
-
-        $delete_stmt->execute();
-        $delete_stmt->close();
-
-        foreach ($_POST['courses'] as $course) {
-            $schedule_code      = trim($course['schedule_code'] ?? '');
-            $course_code        = trim($course['course_code'] ?? '');
-            $course_description = trim($course['course_description'] ?? '');
-            $day                = trim($course['day'] ?? '');
-            $room               = trim($course['room'] ?? '');
-            $time_start         = trim($course['time_start'] ?? '');
-            $time_end           = trim($course['time_end'] ?? '');
-            $prof_name          = trim($course['prof_name'] ?? '');
-
-            if ($schedule_code === '' && $course_code === '') {
-                continue;
+        $conn->begin_transaction();
+        try {
+            $schedule_name = trim($_POST['schedule_name'] ?? '');
+            if ($schedule_name === '') {
+                $schedule_name = 'Uploaded schedule';
             }
 
-            $time_start = $time_start !== '' ? date('H:i:s', strtotime($time_start)) : '00:00:00';
-            $time_end   = $time_end   !== '' ? date('H:i:s', strtotime($time_end))   : '00:00:00';
+            $name_stmt = $conn->prepare("UPDATE schedule_uploads SET original_filename = ? WHERE upload_id = ? AND user_id = ? AND role = ?");
+            $name_stmt->bind_param("siis", $schedule_name, $upload_id, $user_id, $role);
+            if (!$name_stmt->execute()) {
+                throw new Exception($name_stmt->error);
+            }
+            $name_stmt->close();
 
             if ($role === 'student') {
-                $insert_stmt->bind_param("issssssssi", $profile_id, $schedule_code, $course_code, $course_description, $prof_name, $time_start, $time_end, $day, $room, $upload_id);
+                $delete_stmt = $conn->prepare("DELETE FROM student_schedules WHERE upload_id = ? AND student_id = ?");
+                $delete_stmt->bind_param("ii", $upload_id, $profile_id);
+                $insert_stmt = $conn->prepare("INSERT INTO student_schedules (student_id, upload_id, schedule_code, course_code, course_description, prof_name, time_start, time_end, day, room, semester, school_year, status) SELECT ?, upload_id, ?, ?, ?, ?, ?, ?, ?, ?, semester, school_year, 'active' FROM schedule_uploads WHERE upload_id = ?");
             } else {
-                $insert_stmt->bind_param("isssssssi", $profile_id, $schedule_code, $course_code, $day, $time_start, $time_end, $room, $upload_id);
+                $delete_stmt = $conn->prepare("DELETE FROM faculty_schedules WHERE upload_id = ? AND faculty_id = ?");
+                $delete_stmt->bind_param("ii", $upload_id, $profile_id);
+                $insert_stmt = $conn->prepare("INSERT INTO faculty_schedules (faculty_id, upload_id, schedule_code, course_code, day, time_start, time_end, room, semester, school_year, status) SELECT ?, upload_id, ?, ?, ?, ?, ?, ?, semester, school_year, 'active' FROM schedule_uploads WHERE upload_id = ?");
             }
 
-            if (!$insert_stmt->execute()) {
-                throw new Exception($insert_stmt->error);
+            $delete_stmt->execute();
+            $delete_stmt->close();
+
+            foreach ($_POST['courses'] as $course) {
+                $schedule_code      = trim($course['schedule_code'] ?? '');
+                $course_code        = trim($course['course_code'] ?? '');
+                $course_description = trim($course['course_description'] ?? '');
+                $day                = trim($course['day'] ?? '');
+                $room               = trim($course['room'] ?? '');
+                $time_start         = trim($course['time_start'] ?? '');
+                $time_end           = trim($course['time_end'] ?? '');
+                $prof_name          = trim($course['prof_name'] ?? '');
+
+                if ($schedule_code === '' && $course_code === '') {
+                    continue;
+                }
+
+                $time_start = $time_start !== '' ? date('H:i:s', strtotime($time_start)) : '00:00:00';
+                $time_end   = $time_end   !== '' ? date('H:i:s', strtotime($time_end))   : '00:00:00';
+
+                if ($role === 'student') {
+                    $insert_stmt->bind_param("issssssssi", $profile_id, $schedule_code, $course_code, $course_description, $prof_name, $time_start, $time_end, $day, $room, $upload_id);
+                } else {
+                    $insert_stmt->bind_param("isssssssi", $profile_id, $schedule_code, $course_code, $day, $time_start, $time_end, $room, $upload_id);
+                }
+
+                if (!$insert_stmt->execute()) {
+                    throw new Exception($insert_stmt->error);
+                }
             }
+
+            $insert_stmt->close();
+
+            if ($role === 'student') {
+                match_student_upload_schedules($conn, $profile_id, $upload_id);
+            } else {
+                refresh_matches_for_faculty_upload($conn, $profile_id, $upload_id);
+            }
+
+            $conn->commit();
+            
+            // Execute the tracking engine located in matched_schedules.php
+            synchronize_schedule_matches($conn);
+
+            $_SESSION['schedule_success'] = "Schedule upload updated successfully.";
+        } catch (Exception $e) {
+            $conn->rollback();
+            $_SESSION['schedule_error'] = "Could not update schedule: " . $e->getMessage();
         }
 
-        $insert_stmt->close();
-
-        if ($role === 'student') {
-            match_student_upload_schedules($conn, $profile_id, $upload_id);
-        } else {
-            refresh_matches_for_faculty_upload($conn, $profile_id, $upload_id);
-        }
-
-        $conn->commit();
-        
-        // Execute the tracking engine located in matched_schedules.php
-        synchronize_schedule_matches($conn);
-
-        $_SESSION['schedule_success'] = "Schedule upload updated successfully.";
-    } catch (Exception $e) {
-        $conn->rollback();
-        $_SESSION['schedule_error'] = "Could not update schedule: " . $e->getMessage();
+        header("Location: myschedule.php");
+        exit();
     }
-
-    header("Location: myschedule.php");
-    exit();
 }
 
 $upload_success = $_SESSION['schedule_success'] ?? '';
@@ -469,9 +498,9 @@ if ($uploads) {
     </section>
 </main>
 
-<div class="faculty-info-modal" id="facultyInfoModal" aria-hidden="true" hidden>
-    <div class="faculty-info-backdrop" data-faculty-info-close></div>
-    <div class="faculty-info-dialog" role="dialog" aria-modal="true" aria-labelledby="facultyInfoTitle">
+<div class="faculty-info-modal" id="facultyInfoModal" aria-hidden="true" hidden style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:1000;">
+    <div class="faculty-info-backdrop" data-faculty-info-close style="position:absolute; width:100%; height:100%; background:rgba(0,0,0,0.5);"></div>
+    <div class="faculty-info-dialog" role="dialog" aria-modal="true" aria-labelledby="facultyInfoTitle" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); background:#fff; padding:20px; border-radius:8px; max-width:400px; width:90%;">
         <button type="button" class="faculty-info-close" data-faculty-info-close aria-label="Close faculty information">
             <i class="fa-solid fa-xmark"></i>
         </button>
@@ -499,14 +528,14 @@ if ($uploads) {
                 <dt>Facebook</dt>
                 <dd><a id="facultyInfoFacebook" href="#" target="_blank" rel="noopener">N/A</a></dd>
             </div>
+        </dl>
 
-            <p id="fac-notfound" hidden style="text-align:center; color: #888; margin: 1rem 0;">
-                Faculty profile not found.
-            </p>
-        </div>
+        <p id="fac-notfound" hidden style="text-align:center; color: #888; margin: 1rem 0;">
+            Faculty profile not found.
+        </p>
 
         <div class="fac-actions">
-            <button type="button" onclick="closeFacCard()">Close</button>
+            <button type="button" data-faculty-info-close style="cursor:pointer;">Close</button>
         </div>
     </div>
 </div>
@@ -547,81 +576,63 @@ document.querySelectorAll(".add-row-btn").forEach(button => {
     });
 });
 
-// --- Faculty Pop-up Card ---
-const facOverlay   = document.getElementById('fac-overlay');
-const facClose     = document.getElementById('fac-close');
-const facLoading   = document.getElementById('fac-loading');
-const facBody      = document.getElementById('fac-body');
-const facName      = document.getElementById('fac-name');
-const facDeptText  = document.getElementById('fac-dept-text');
-const facInfo      = document.getElementById('fac-info');
-const facEmail     = document.getElementById('fac-email');
-const facFb        = document.getElementById('fac-fb');
-const facFbRow     = document.getElementById('fac-fb-row');
-const facAvatarImg = document.getElementById('fac-avatar-img');
-const facNotFound  = document.getElementById('fac-notfound');
+// --- Faculty Pop-up Card Fixes ---
+function openFacultyInfoModal(name) {
+    const modal = document.getElementById('facultyInfoModal');
+    const nameField = document.getElementById('facultyInfoName');
+    const emailField = document.getElementById('facultyInfoEmail');
+    const deptField = document.getElementById('facultyInfoDepartment');
+    const fbField = document.getElementById('facultyInfoFacebook');
+    const notFoundText = document.getElementById('fac-notfound');
 
-function closeFacCard() {
-    facOverlay.classList.remove('open');
-    document.body.style.overflow = '';
-}
-
-function resetFacCard() {
-    facLoading.hidden  = false;
-    facBody.hidden     = true;
-    facInfo.hidden     = true;
-    facFbRow.hidden    = true;
-    facNotFound.hidden = true;
-    facFb.href              = '#';
-    facName.textContent     = '';
-    facDeptText.textContent = '';
-    facEmail.textContent = '—';
-    facEmail.href = '#';
-    facAvatarImg.src = '../media/images.jpg';
-    facEmail.closest('.fac-row').hidden = true;
-    facDeptText.closest('.fac-row').hidden = true;
-}
-
-function openFacCard(name) {
-    resetFacCard();
-    facOverlay.classList.add('open');
-    document.body.style.overflow = 'hidden';
+    // Reset layout elements
+    nameField.textContent = "Loading...";
+    emailField.textContent = "—";
+    deptField.textContent = "—";
+    fbField.textContent = "—";
+    fbField.removeAttribute('href');
+    notFoundText.hidden = true;
+    
+    // Display visual container components
+    modal.removeAttribute('hidden');
+    modal.removeAttribute('aria-hidden');
+    modal.style.display = 'block';
 
     fetch(`../php/get_faculty_info.php?name=${encodeURIComponent(name)}`)
         .then(r => r.json())
         .then(data => {
             if (data.error) {
-                facName.textContent = '';
-                facNotFound.hidden = false;
-                facInfo.hidden = true;
-                facFbRow.hidden = true;
-                facAvatarImg.src = '../media/images.jpg';
+                nameField.textContent = 'Not Found';
+                notFoundText.hidden = false;
                 return;
             }
 
-            facultyInfoName.textContent = displayFacultyValue(data.fullname || data.name || 'N/A');
-            facultyInfoEmail.textContent = displayFacultyValue(data.email || 'N/A');
-            facultyInfoDepartment.textContent = displayFacultyValue(data.department || 'N/A');
+            nameField.textContent = data.fullname || data.name || 'N/A';
+            emailField.textContent = data.email || 'N/A';
+            deptField.textContent = data.department || 'N/A';
 
-            const fbLink = displayFacultyValue(data.fb_link || data.facebook || '');
+            const fbLink = data.fb_link || data.facebook || '';
             if (/^https?:\/\//i.test(fbLink)) {
-                facultyInfoFacebook.href = fbLink;
-                facultyInfoFacebook.textContent = fbLink;
+                fbField.href = fbLink;
+                fbField.textContent = fbLink;
             } else {
-                facultyInfoFacebook.textContent = fbLink || 'N/A';
-                facultyInfoFacebook.removeAttribute('href');
+                fbField.textContent = fbLink || 'N/A';
             }
         })
         .catch(() => {
-            facLoading.hidden = true;
-            facBody.hidden = false;
-            facName.textContent = '';
-            facNotFound.hidden = false;
-            facInfo.hidden = true;
-            facAvatarImg.src = '../media/images.jpg';
+            nameField.textContent = 'Error loading profile';
+            notFoundText.hidden = false;
         });
 }
 
+function closeFacCard() {
+    const modal = document.getElementById('facultyInfoModal');
+    modal.setAttribute('aria-hidden', 'true');
+    modal.setAttribute('hidden', '');
+    modal.style.display = 'none';
+}
+
+// Bind lookup icon dynamically 
 document.addEventListener('click', e => {
     const btn = e.target.closest('.prof-lookup-icon-btn');
     if (btn) {
@@ -630,18 +641,15 @@ document.addEventListener('click', e => {
     }
 });
 
-facClose.addEventListener('click', closeFacCard);
-facOverlay.addEventListener('click', e => {
-    if (e.target === facOverlay) {
-        closeFacCard();
-    }
+// Bind element actions to exit anchors
+document.querySelectorAll('[data-faculty-info-close]').forEach(element => {
+    element.addEventListener('click', closeFacCard);
 });
 
+// Structural escape keystroke tracking fallback
 window.addEventListener('keydown', event => {
-    if (event.key === 'Escape' && facultyInfoModal.classList.contains('show')) {
-        facultyInfoModal.classList.remove('show');
-        facultyInfoModal.setAttribute('aria-hidden', 'true');
-        facultyInfoModal.setAttribute('hidden', '');
+    if (event.key === 'Escape' && document.getElementById('facultyInfoModal').style.display === 'block') {
+        closeFacCard();
     }
 });
 </script>

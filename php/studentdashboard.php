@@ -130,7 +130,7 @@ if (!empty($user['student_id']) && $latest_upload) {
         FROM student_schedules ss
         LEFT JOIN matched_schedules ms ON ss.student_schedule_id = ms.student_schedule_id
         LEFT JOIN faculty_schedules fs ON ms.professor_schedule_id = fs.professor_schedule_id
-        LEFT JOIN faculties faculty_profiles ON fs.professor_id = faculty_profiles.professor_id
+        LEFT JOIN faculties faculty_profiles ON fs.faculty_id = faculty_profiles.faculty_id
         LEFT JOIN users faculty_users ON faculty_profiles.user_id = faculty_users.user_id
         WHERE ss.student_id = ? AND ss.upload_id = ?
         ORDER BY ss.time_start ASC, ss.course_code ASC
