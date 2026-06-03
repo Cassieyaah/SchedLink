@@ -1,7 +1,11 @@
 <?php
 session_start();
-require_once __DIR__ . '/../vendor/autoload.php'; // Siguraduhin ang path ng vendor
-include '../includes/db.php';
+$vendorAutoload = __DIR__ . '/../vendor/autoload.php';
+if (!file_exists($vendorAutoload)) {
+    die('Composer autoload not found. Run "composer install" in the project root and ensure vendor/autoload.php exists.');
+}
+require_once $vendorAutoload;
+include __DIR__ . '/../includes/db.php';
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['schedule_file'])) {
