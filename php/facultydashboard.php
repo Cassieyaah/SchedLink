@@ -235,17 +235,16 @@ unset($_SESSION['upload_success'], $_SESSION['upload_error']);
                 <?php while ($row = $scheduleResult->fetch_assoc()): ?>
 
                     <div class="card">
-                        <h4>
-                            <?php echo htmlspecialchars($row['course_code']); ?> -
-                            <?php echo htmlspecialchars($row['course_description']); ?>
-                        </h4>
-                        <p>
-                            <?php echo htmlspecialchars($row['day']); ?> |
-                            <?php echo date("g:i A", strtotime($row['time_start'])); ?>
-                            -
-                            <?php echo date("g:i A", strtotime($row['time_end'])); ?>
-                        </p>
-                        <p><?php echo htmlspecialchars($row['room']); ?></p>
+                        <div class="card-info-main">
+                            <h4>
+                                <?php echo htmlspecialchars($row['course_code']); ?> —
+                                <?php echo htmlspecialchars($row['course_description']); ?>
+                            </h4>
+                            <p><?php echo htmlspecialchars($row['room']); ?></p>
+                        </div>
+                        <div class="card-info-meta">
+                            <p><?php echo htmlspecialchars($row['day']); ?></p>
+                        </div>
                     </div>
 
                 <?php endwhile; ?>
