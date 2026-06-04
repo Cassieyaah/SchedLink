@@ -8,14 +8,14 @@ require '../vendor/autoload.php';
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
 if (!isset($_SESSION['user_id'])) {
-    header("Location: ../php/logIn.php");
+    header("Location: ../logIn.php");
     exit();
 }
 
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
 $user_id = (int) $_SESSION['user_id'];
-$redirect = "../php/facultydashboard.php";
+$redirect = "facultydashboard.php";
 
 /* =========================================
    GET FACULTY / PROFESSOR ID

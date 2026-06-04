@@ -3,7 +3,7 @@ session_start();
 include '../includes/db.php';
 
 if (!isset($_SESSION['user_id'])) {
-    header("Location:../php/logIn.php");
+    header("Location: ../logIn.php");
     exit();
 }
 
@@ -24,7 +24,7 @@ $user = $stmt->get_result()->fetch_assoc();
 
 if (!$user) {
     session_destroy();
-    header("Location: ../php/logIn.php");
+    header("Location: ../logIn.php");
     exit();
 }
 
@@ -33,17 +33,17 @@ $fullname = $user['fullname'];
 
 if ($role !== "faculty") {
     if ($role === "student") {
-        header("Location: studentdashboard.php");
+        header("Location: ../student_folder/studentdashboard.php");
         exit();
     }
 
     if ($role === "admin") {
-        header("Location: admindashboard.php");
+        header("Location: ../admin_folder/admindashboard.php");
         exit();
     }
 
     session_destroy();
-    header("Location: ../php/logIn.php");
+    header("Location: ../logIn.php");
     exit();
 }
 

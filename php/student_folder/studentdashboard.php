@@ -5,7 +5,7 @@ require_once __DIR__ . '/schedule_matcher.php';
 date_default_timezone_set('Asia/Manila');
 
 if (!isset($_SESSION['user_id'])) {
-    header("Location:../php/logIn.php");
+    header("Location: ../logIn.php");
     exit();
 }
 
@@ -27,7 +27,7 @@ $user = $stmt->get_result()->fetch_assoc();
 
 if (!$user) {
     session_destroy();
-    header("Location: ../php/logIn.php");
+    header("Location: ../logIn.php");
     exit();
 }
 
@@ -36,17 +36,17 @@ $fullname = $user['fullname'];
 
 if ($role !== "student") {
     if ($role === "faculty") {
-        header("Location: facultydashboard.php");
+        header("Location: ../faculty_folder/facultydashboard.php");
         exit();
     }
 
     if ($role === "admin") {
-        header("Location: admindashboard.php");
+        header("Location: ../admin_folder/admindashboard.php");
         exit();
     }
 
     session_destroy();
-    header("Location: ../php/logIn.php");
+    header("Location: ../logIn.php");
     exit();
 }
 

@@ -4,7 +4,7 @@ session_start();
 include("../includes/db.php");
 
 if (!isset($_SESSION['user_id'])) {
-    header("Location: ../php/login.php"); //checks if user is logged in
+    header("Location: ../logIn.php"); //checks if user is logged in
     exit();
 }
 
@@ -19,7 +19,7 @@ $role_row = mysqli_fetch_assoc(mysqli_stmt_get_result($role_check));
 mysqli_stmt_close($role_check);
 
 if (!$role_row || $role_row['role'] !== 'admin') {
-    header("Location: ../php/login.php");
+    header("Location: ../logIn.php");
     exit();
 }
 

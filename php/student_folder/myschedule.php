@@ -31,7 +31,7 @@ $active_semester = $active_settings['semester'];
 $active_school_year = $active_settings['school_year'];
 
 if (!isset($_SESSION['user_id'])) {
-    header("Location: ../php/logIn.php");
+    header("Location: ../logIn.php");
     exit();
 }
 
@@ -111,18 +111,18 @@ $stmt->close();
 
 if (!$user) {
     session_destroy();
-    header("Location: ../php/logIn.php");
+    header("Location: ../logIn.php");
     exit();
 }
 
 $role = strtolower(trim($user['role']));
 if (!in_array($role, ['student', 'faculty'], true)) {
-    header("Location: admindashboard.php");
+    header("Location: ../admin_folder/admindashboard.php");
     exit();
 }
 
-$dashboard_page = $role === 'faculty' ? 'facultydashboard.php' : 'studentdashboard.php';
-$profile_page   = $role === 'faculty' ? 'facultyprofile.php' : 'profile.php';
+$dashboard_page = $role === 'faculty' ? '../faculty_folder/facultydashboard.php' : 'studentdashboard.php';
+$profile_page   = $role === 'faculty' ? '../faculty_folder/facultyprofile.php' : 'Profile.php';
 $profile_id     = $role === 'faculty' ? (int) ($user['faculty_id'] ?? 0) : (int) ($user['student_id'] ?? 0);
 
 // Process Update and Delete Form Submissions
@@ -626,7 +626,7 @@ function openFacultyInfoModal(name) {
     modal.removeAttribute('aria-hidden');
     modal.style.display = 'block';
 
-    fetch(`../php/get_faculty_info.php?name=${encodeURIComponent(name)}`)
+    fetch(`../get_faculty_info.php?name=${encodeURIComponent(name)}`)
         .then(r => r.json())
         .then(data => {
             if (data.error) {

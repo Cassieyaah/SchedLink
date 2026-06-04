@@ -29,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['schedule_file'])) {
     } catch (Exception $e) {
         $_SESSION['upload_error'] = "Error: " . $e->getMessage();
     }
-    header("Location: facultydashboard.php");
+    header("Location: faculty_folder/facultydashboard.php");
     exit();
 }
 ?>
@@ -37,7 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['schedule_file'])) {
 // Ensure the database connection layout configuration handles requests cleanly
 
 if (!isset($_SESSION['user_id'])) {
-    header("Location: ../php/logIn.php");
+    header("Location: logIn.php");
     exit();
 }
 
@@ -51,7 +51,7 @@ $user = $stmt->get_result()->fetch_assoc();
 $stmt->close();
 
 $role = $user ? strtolower(trim($user['role'])) : '';
-$redirect_page = ($role === "faculty") ? "facultydashboard.php" : "studentdashboard.php";
+$redirect_page = ($role === "faculty") ? "faculty_folder/facultydashboard.php" : "student_folder/studentdashboard.php";
 
 function ensure_schedule_upload_schema(mysqli $conn): void {
     $conn->query("
