@@ -267,9 +267,6 @@
 }
 
 /* ── Faculty card modal ────────────────────────────────── */
-.faculty-info-modal[hidden] {
-    display: none;
-}
 
 .faculty-info-modal.show {
     position: fixed;

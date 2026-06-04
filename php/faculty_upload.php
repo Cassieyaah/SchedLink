@@ -17,6 +17,23 @@ mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 $user_id = (int) $_SESSION['user_id'];
 $redirect = "../php/facultydashboard.php";
 
+/* ========================================================
+   GET SITE SETTINGS & TRANSLATE ENUM VALUE FOR FACULTY
+   ======================================================== */
+$settings_query = $conn->query("SELECT semester, school_year FROM site_settings WHERE id = 1")->fetch_assoc();
+$admin_semester     = $settings_query['semester'] ?? '1st';
+$active_school_year = $settings_query['school_year'] ?? '2025-2026';
+
+// Translation Map: Converts '1st'/'2nd'/'summer' from admin settings into what faculty_schedules ENUM expects
+$semester_map = [
+    '1st'    => '1st Semester',
+    '2nd'    => '2nd Semester',
+    'summer' => 'Summer'
+];
+
+// Fallback to '1st Semester' if the mapped value doesn't exist
+$active_semester = $semester_map[$admin_semester] ?? '1st Semester';
+
 /* =========================================
    GET FACULTY / PROFESSOR ID
 ========================================= */
@@ -80,20 +97,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['schedule_file'])) {
         $sheet = $spreadsheet->getActiveSheet();
         $rows = $sheet->toArray(null, true, true, true);
 
-        /* CREATE UPLOAD LOG */
+        /* CREATE UPLOAD LOG WITH TRANSLATED SEMESTER */
         $stmt = $conn->prepare("
             INSERT INTO schedule_uploads
-            (user_id, role, original_filename)
-            VALUES (?, 'faculty', ?)
+            (user_id, role, original_filename, semester, school_year)
+            VALUES (?, 'faculty', ?, ?, ?)
         ");
 
-        $stmt->bind_param("is", $user_id, $file['name']);
+        $stmt->bind_param("isss", $user_id, $file['name'], $active_semester, $active_school_year);
         $stmt->execute();
 
         $upload_id = $stmt->insert_id;
         $stmt->close();
 
-        /* INSERT SCHEDULES (course_description removed, course_year added) */
+        /* INSERT SCHEDULES */
         $insert = $conn->prepare("
             INSERT INTO faculty_schedules
             (
@@ -110,17 +127,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['schedule_file'])) {
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         ");
 
-        $semester = "2nd Semester";
-        $school_year = "2025-2026";
         $status = "active";
 
         foreach ($rows as $i => $row) {
-            if ($i === 1) continue; // Skip header row ("Schedule Codes,Subjects...")
+            if ($i === 1) continue; // Skip header row
 
-            $schedule_code = trim($row['A'] ?? ''); // Column A: Schedule Codes
-            $course_code   = trim($row['B'] ?? ''); // Column B: Subjects
-            $course_year   = trim($row['C'] ?? ''); // Column C: Course/Year (e.g., BSCS 2-4)
-            $room          = trim($row['D'] ?? ''); // Column D: Rooms
+            $schedule_code = trim($row['A'] ?? ''); 
+            $course_code   = trim($row['B'] ?? ''); 
+            $course_year   = trim($row['C'] ?? ''); 
+            $room          = trim($row['D'] ?? ''); 
 
             if (
                 $schedule_code === '' &&
@@ -139,8 +154,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['schedule_file'])) {
                 $course_code,
                 $course_year,
                 $room,
-                $semester,
-                $school_year,
+                $active_semester,
+                $active_school_year,
                 $status
             );
 

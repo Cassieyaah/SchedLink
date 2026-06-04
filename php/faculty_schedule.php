@@ -67,6 +67,19 @@ $profile_id = (int) ($user['faculty_id'] ?? 0);
 $dashboard_page = 'facultydashboard.php';
 $profile_page = 'facultyprofile.php';
 
+// --- RESOLVE DYNAMIC PROFILE PICTURE PATH ---
+$default_image = "../media/images.jpg";
+$profile_picture = $default_image;
+$stored_picture = trim($user['profile_picture'] ?? '');
+
+if ($stored_picture !== '') {
+    $uploaded_path = "../uploads/" . $stored_picture;
+    if (file_exists($uploaded_path)) {
+        // Appending timestamp to clear the aggressive browser asset cache
+        $profile_picture = $uploaded_path . "?t=" . time();
+    }
+}
+
 // --- HANDLE POST ACTIONS (UPDATE OR DELETE) ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['upload_id'], $_POST['action'])) {
     $upload_id = (int) $_POST['upload_id'];
@@ -235,7 +248,7 @@ if (!empty($upload_ids)) {
 <div class="sidebar">
     <div>
         <div class="profile">
-            <img src="../media/images.jpg" alt="Profile Picture">
+            <img src="<?php echo htmlspecialchars($profile_picture); ?>" alt="Profile Picture">
             <h3><?php echo htmlspecialchars($user['fullname'] ?? 'Faculty'); ?></h3>
             <p>Faculty Account</p>
         </div>

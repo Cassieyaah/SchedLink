@@ -1,0 +1,160 @@
+.status-badge {
+            font-size: 0.75rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+            text-transform: uppercase;
+            display: inline-block;
+            margin-top: 4px;
+        }
+        .badge-matched   { background-color: #d1e7dd; color: #0f5132; }
+        .badge-conflict  { background-color: #f8d7da; color: #842029; }
+        .badge-no_match  { background-color: #e2e3e5; color: #41464b; }
+
+        /* ── Redesigned Faculty Card Modal ───────────────────── */
+
+        .faculty-info-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .faculty-info-backdrop {
+            position: absolute;
+            inset: 0;
+            background: rgba(17, 24, 39, 0.55);
+            backdrop-filter: blur(2px);
+        }
+
+        .faculty-info-dialog {
+            position: relative;
+            z-index: 1;
+            width: min(400px, 100%);
+            background: #fff;
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.22);
+        }
+
+        .faculty-info-close {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 30px;
+            height: 30px;
+            border: none;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.22);
+            color: #fff;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2;
+            transition: background 0.15s;
+        }
+        .faculty-info-close:hover { background: rgba(255, 255, 255, 0.4); }
+
+        .faculty-card-header {
+            background: #0b6b3a;
+            padding: 28px 20px 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .faculty-card-avatar {
+            width: 62px;
+            height: 62px;
+            flex-shrink: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.18);
+            border: 3px solid rgba(255, 255, 255, 0.45);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            font-weight: 700;
+            color: #fff;
+            overflow: hidden;
+        }
+
+        .faculty-card-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+
+        .faculty-card-name {
+            margin: 0;
+            font-size: 17px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .faculty-card-dept {
+            margin: 5px 0 0;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.78);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .faculty-detail-list {
+            margin: 0;
+            padding: 6px 0 14px;
+        }
+
+        .faculty-detail-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            padding: 12px 20px;
+            border-bottom: 1px solid #f0f2f5;
+        }
+        .faculty-detail-row:last-child { border-bottom: none; }
+
+        .faculty-detail-icon {
+            font-size: 15px;
+            color: #0b6b3a;
+            margin-top: 3px;
+            flex-shrink: 0;
+            width: 18px;
+            text-align: center;
+        }
+
+        .faculty-detail-row dt {
+            font-size: 11px;
+            font-weight: 700;
+            color: #9ca3af;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 3px;
+        }
+
+        .faculty-detail-row dd {
+            margin: 0;
+            font-size: 14px;
+            color: #111827;
+            overflow-wrap: anywhere;
+        }
+
+        .faculty-detail-row a {
+            color: #0b6b3a;
+            font-weight: 600;
+            text-decoration: none;
+        }
+        .faculty-detail-row a:hover { text-decoration: underline; }
+
+        #fac-notfound {
+            text-align: center;
+            color: #9ca3af;
+            padding: 1.2rem 0;
+            font-size: 14px;
+        }
