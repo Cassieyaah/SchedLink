@@ -67,86 +67,109 @@ $profile_id = (int) ($user['faculty_id'] ?? 0);
 $dashboard_page = 'facultydashboard.php';
 $profile_page = 'facultyprofile.php';
 
-// --- HANDLE POST UPDATE ---
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['upload_id'], $_POST['courses'])) {
-
+// --- HANDLE POST ACTIONS (UPDATE OR DELETE) ---
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['upload_id'], $_POST['action'])) {
     $upload_id = (int) $_POST['upload_id'];
+    $action = $_POST['action'];
 
-    if ($profile_id <= 0) {
-        die("Invalid Faculty ID.");
-    }
+    // --- HANDLE DELETE SUBMISSION ---
+    if ($action === 'delete') {
+        try {
+            $delete_upload_stmt = $conn->prepare("
+                DELETE FROM schedule_uploads 
+                WHERE upload_id = ? AND user_id = ?
+            ");
+            $delete_upload_stmt->bind_param("ii", $upload_id, $user_id);
+            $delete_upload_stmt->execute();
+            $delete_upload_stmt->close();
 
-    $conn->begin_transaction();
-
-    try {
-        // DELETE OLD RECORDS
-        $delete_stmt = $conn->prepare("
-            DELETE FROM faculty_schedules
-            WHERE upload_id = ?
-            AND faculty_id = ?
-        ");
-
-        $delete_stmt->bind_param("ii", $upload_id, $profile_id);
-        $delete_stmt->execute();
-        $delete_stmt->close();
-
-        // INSERT UPDATED RECORDS (Using course_year instead of course_description)
-        $insert_stmt = $conn->prepare("
-            INSERT INTO faculty_schedules
-            (
-                faculty_id,
-                upload_id,
-                schedule_code,
-                course_code,
-                course_year,
-                room,
-                status
-            )
-            VALUES
-            (?, ?, ?, ?, ?, ?, 'active')
-        ");
-
-        foreach ($_POST['courses'] as $course) {
-            $schedule_code = trim($course['schedule_code'] ?? '');
-            $course_code   = trim($course['course_code'] ?? '');
-            $course_year   = trim($course['course_year'] ?? '');
-            $room          = trim($course['room'] ?? '');
-
-            // SKIP EMPTY ROWS
-            if (
-                $schedule_code === '' &&
-                $course_code === '' &&
-                $course_year === '' &&
-                $room === ''
-            ) {
-                continue;
-            }
-
-            $insert_stmt->bind_param(
-                "iissss",
-                $profile_id,
-                $upload_id,
-                $schedule_code,
-                $course_code,
-                $course_year,
-                $room
-            );
-
-            $insert_stmt->execute();
+            $_SESSION['upload_success'] = "Schedule upload deleted successfully.";
+        } catch (Exception $e) {
+            $_SESSION['upload_error'] = "Failed to delete schedule: " . $e->getMessage();
         }
 
-        $insert_stmt->close();
-        $conn->commit();
-
-        $_SESSION['upload_success'] = "Schedule updated successfully.";
-
-    } catch (Exception $e) {
-        $conn->rollback();
-        $_SESSION['upload_error'] = "Database Error: " . $e->getMessage();
+        header("Location: faculty_schedule.php");
+        exit();
     }
 
-    header("Location: faculty_schedule.php");
-    exit();
+    // --- HANDLE SAVE UPDATE SUBMISSION ---
+    if ($action === 'update' && isset($_POST['courses'])) {
+        if ($profile_id <= 0) {
+            die("Invalid Faculty ID.");
+        }
+
+        $conn->begin_transaction();
+
+        try {
+            // DELETE OLD RECORDS
+            $delete_stmt = $conn->prepare("
+                DELETE FROM faculty_schedules
+                WHERE upload_id = ?
+                AND faculty_id = ?
+            ");
+
+            $delete_stmt->bind_param("ii", $upload_id, $profile_id);
+            $delete_stmt->execute();
+            $delete_stmt->close();
+
+            // INSERT UPDATED RECORDS
+            $insert_stmt = $conn->prepare("
+                INSERT INTO faculty_schedules
+                (
+                    faculty_id,
+                    upload_id,
+                    schedule_code,
+                    course_code,
+                    course_year,
+                    room,
+                    status
+                )
+                VALUES
+                (?, ?, ?, ?, ?, ?, 'active')
+            ");
+
+            foreach ($_POST['courses'] as $course) {
+                $schedule_code = trim($course['schedule_code'] ?? '');
+                $course_code   = trim($course['course_code'] ?? '');
+                $course_year   = trim($course['course_year'] ?? '');
+                $room          = trim($course['room'] ?? '');
+
+                // SKIP EMPTY ROWS
+                if (
+                    $schedule_code === '' &&
+                    $course_code === '' &&
+                    $course_year === '' &&
+                    $room === ''
+                ) {
+                    continue;
+                }
+
+                $insert_stmt->bind_param(
+                    "iissss",
+                    $profile_id,
+                    $upload_id,
+                    $schedule_code,
+                    $course_code,
+                    $course_year,
+                    $room
+                );
+
+                $insert_stmt->execute();
+            }
+
+            $insert_stmt->close();
+            $conn->commit();
+
+            $_SESSION['upload_success'] = "Schedule updated successfully.";
+
+        } catch (Exception $e) {
+            $conn->rollback();
+            $_SESSION['upload_error'] = "Database Error: " . $e->getMessage();
+        }
+
+        header("Location: faculty_schedule.php");
+        exit();
+    }
 }
 
 // --- FETCH UPLOADS ---
@@ -206,6 +229,32 @@ if (!empty($upload_ids)) {
     <link rel="stylesheet" href="../css/faculty_sched.css">
     <link rel="stylesheet" href="../fonts/css/all.min.css">
     <link rel="stylesheet" href="../css/mysched_upgrade.css">
+    <style>
+        /* Alignment and balancing layout fixes */
+        .schedule-edit-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+            margin-top: 15px;
+        }
+        .danger-btn {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: background 0.2s;
+        }
+        .danger-btn:hover {
+            background-color: #bd2130;
+        }
+    </style>
 </head>
 <body>
 
@@ -261,13 +310,13 @@ if (!empty($upload_ids)) {
 
     <?php if (isset($_SESSION['upload_success'])): ?>
         <div class="success-message">
-            <?php echo htmlspecialchars($_SESSION['upload_success']); ?>
+            <?php echo htmlspecialchars($_SESSION['upload_success']); unset($_SESSION['upload_success']); ?>
         </div>
     <?php endif; ?>
 
     <?php if (isset($_SESSION['upload_error'])): ?>
         <div class="error-message">
-            <?php echo htmlspecialchars($_SESSION['upload_error']); ?>
+            <?php echo htmlspecialchars($_SESSION['upload_error']); unset($_SESSION['upload_error']); ?>
         </div>
     <?php endif; ?>
 
@@ -285,8 +334,9 @@ if (!empty($upload_ids)) {
                 </button>
 
                 <div class="accordion-content">
-                    <form method="POST" class="schedule-edit-form">
+                    <form method="POST" class="schedule-edit-form" onsubmit="return handleFormSubmit(event);">
                         <input type="hidden" name="upload_id" value="<?php echo (int) $upload['upload_id']; ?>">
+                        <input type="hidden" name="action" class="form-action-field" value="update">
 
                         <div class="grid-table-header">
                             <span>Sched Code</span>
@@ -299,11 +349,8 @@ if (!empty($upload_ids)) {
                             <?php foreach ($upload['courses'] as $index => $course): ?>
                                 <div class="grid-table-row editable-grid-row">
                                     <input type="text" name="courses[<?php echo $index; ?>][schedule_code]" value="<?php echo htmlspecialchars($course['schedule_code'] ?? ''); ?>">
-                                    
                                     <input type="text" name="courses[<?php echo $index; ?>][course_code]" value="<?php echo htmlspecialchars($course['course_code'] ?? ''); ?>">
-                                    
                                     <input type="text" name="courses[<?php echo $index; ?>][course_year]" value="<?php echo htmlspecialchars($course['course_year'] ?? ''); ?>">
-                                    
                                     <input type="text" name="courses[<?php echo $index; ?>][room]" value="<?php echo htmlspecialchars($course['room'] ?? ''); ?>">
                                 </div>
                             <?php endforeach; ?>
@@ -313,7 +360,12 @@ if (!empty($upload_ids)) {
                             <button type="button" class="secondary-upload-btn add-row-btn">
                                 <i class="fa-solid fa-plus"></i> Add Row
                             </button>
-                            <button type="submit" class="primary-upload-btn">
+                            
+                            <button type="submit" class="danger-btn" onclick="this.form.querySelector('.form-action-field').value='delete';">
+                                <i class="fa-solid fa-trash-can"></i> Delete Upload
+                            </button>
+
+                            <button type="submit" class="primary-upload-btn" onclick="this.form.querySelector('.form-action-field').value='update';">
                                 <i class="fa-solid fa-floppy-disk"></i> Save Update
                             </button>
                         </div>
@@ -348,6 +400,20 @@ document.querySelectorAll(".add-row-btn").forEach(button => {
         body.appendChild(row);
     });
 });
+
+function handleFormSubmit(event) {
+    const form = event.currentTarget;
+    const action = form.querySelector('.form-action-field').value;
+    
+    if (action === 'delete') {
+        const confirmClear = confirm("Are you absolutely sure you want to delete this file upload? This will completely clear all connected schedule records too!");
+        if (!confirmClear) {
+            event.preventDefault();
+            return false;
+        }
+    }
+    return true;
+}
 </script>
 </body>
 </html>
