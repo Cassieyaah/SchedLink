@@ -95,9 +95,7 @@ CREATE TABLE `schedule_uploads` (
 -- Dumping data for table `schedule_uploads`
 --
 
-INSERT INTO `schedule_uploads` (`upload_id`, `user_id`, `role`, `original_filename`, `stored_file_path`, `semester`, `school_year`, `uploaded_at`) VALUES
-(1, 3, 'student', '708992628_1541942054374463_4020655418090965201_n.png', '../uploads/schedules/student/student_schedule_3_1780394610_653529fb.png', '2nd Semester', '2025-2026', '2026-06-02 18:04:00'),
-(2, 6, 'faculty', '2nd-Semester_2025-2026.xlsx', NULL, '1st Semester', '2025-2026', '2026-06-03 19:20:06');
+
 
 -- --------------------------------------------------------
 
@@ -167,21 +165,19 @@ INSERT INTO `student_schedules` (`student_schedule_id`, `student_id`, `upload_id
 -- --------------------------------------------------------
 
 --
--- Table structure for table `system_settings`
+-- Table structure for table `site_settings`
 --
 
-CREATE TABLE `system_settings` (
-  `id` int(11) NOT NULL DEFAULT 1,
-  `current_semester` enum('1st Semester','2nd Semester') NOT NULL DEFAULT '1st Semester',
-  `current_school_year` varchar(9) NOT NULL DEFAULT '2025-2026'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+CREATE TABLE IF NOT EXISTS site_settings (
+  id TINYINT UNSIGNED NOT NULL PRIMARY KEY DEFAULT 1,
+  semester ENUM('1st','2nd','Summer') NOT NULL DEFAULT '1st',
+  school_year VARCHAR(9) NOT NULL DEFAULT '2025-2026',
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
 
---
--- Dumping data for table `system_settings`
---
-
-INSERT INTO `system_settings` (`id`, `current_semester`, `current_school_year`) VALUES
-(1, '2nd Semester', '2025-2026');
+-- Ensure there’s always a single row with id=1
+INSERT INTO site_settings (id) VALUES (1)
+  ON DUPLICATE KEY UPDATE id = id;
 
 -- --------------------------------------------------------
 
@@ -258,11 +254,6 @@ ALTER TABLE `student_schedules`
   ADD KEY `student_id` (`student_id`),
   ADD KEY `upload_id` (`upload_id`);
 
---
--- Indexes for table `system_settings`
---
-ALTER TABLE `system_settings`
-  ADD PRIMARY KEY (`id`);
 
 --
 -- Indexes for table `users`

@@ -29,6 +29,45 @@ function countRows(mysqli $conn, string $sql): int {
     return (int) ($row['total'] ?? 0);
 }
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_settings'])) {
+    // CSRF check
+    if (!hash_equals($_SESSION['csrf_token'] ?? '', $_POST['csrf_token'] ?? '')) {
+        http_response_code(400);
+        die('Invalid CSRF token.');
+    }
+
+    // Validate inputs
+    $allowed_semesters = ['1st','2nd','Summer'];
+    $new_semester = $_POST['semester'] ?? '';
+    $new_school_year = trim($_POST['school_year'] ?? '');
+
+    if (!in_array($new_semester, $allowed_semesters, true)) {
+        $error_message = 'Invalid semester.';
+    } elseif (!preg_match('/^\d{4}-\d{4}$/', $new_school_year)) {
+        $error_message = 'School year must be in the format YYYY-YYYY (e.g., 2025-2026).';
+    } else {
+        // Optional: ensure SY end = start+1
+        [$sy_start, $sy_end] = array_map('intval', explode('-', $new_school_year));
+        if ($sy_end !== $sy_start + 1) {
+            $error_message = 'School year must span exactly one year (e.g., 2025-2026).';
+        } else {
+            $upd = $conn->prepare("
+                INSERT INTO site_settings (id, semester, school_year)
+                VALUES (1, ?, ?)
+                ON DUPLICATE KEY UPDATE semester = VALUES(semester), school_year = VALUES(school_year)
+            ");
+            $upd->bind_param('ss', $new_semester, $new_school_year);
+            if ($upd->execute()) {
+                $success_message = 'Settings updated.';
+                $current_semester = $new_semester;
+                $current_school_year = $new_school_year;
+            } else {
+                $error_message = 'Failed to update settings.';
+            }
+        }
+    }
+}
+
 $total_users = countRows($conn, "SELECT COUNT(*) AS total FROM users");
 $total_students = countRows($conn, "SELECT COUNT(*) AS total FROM users WHERE role = 'student'");
 $total_faculty = countRows($conn, "SELECT COUNT(*) AS total FROM users WHERE role = 'faculty'");
@@ -64,6 +103,21 @@ if ($stored_picture !== '') {
 if ($profile_picture === $default_image && !file_exists($default_image)) {
     $profile_picture = "https://ui-avatars.com/api/?name=" . urlencode($admin['fullname']) . "&size=200&background=4a90d9&color=fff";
 }
+
+// After the admin/role checks and after include '../includes/db.php';
+
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
+// Fetch current global semester/school year
+$settings_stmt = $conn->prepare("SELECT semester, school_year FROM site_settings WHERE id = 1");
+$settings_stmt->execute();
+$settings = $settings_stmt->get_result()->fetch_assoc();
+
+$current_semester = $settings['semester'] ?? '1st';
+$current_school_year = $settings['school_year'] ?? '2025-2026';
+
 
 function e(string $value): string {
     return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
@@ -226,6 +280,55 @@ function e(string $value): string {
                 </div>
 
             </div>
+            <div class="admin-panel">
+                <div class="admin-panel-header">
+                    <h4>Global Term Settings</h4>
+                    <i class="fa-solid fa-gear"></i>
+                </div>
+
+                <?php if (!empty($success_message)): ?>
+                    <div class="alert success"><?php echo e($success_message); ?></div>
+                <?php endif; ?>
+                <?php if (!empty($error_message)): ?>
+                    <div class="alert error"><?php echo e($error_message); ?></div>
+                <?php endif; ?>
+
+                <div class="admin-metric-row">
+                    <span>Current Semester</span>
+                    <strong><?php echo e($current_semester); ?></strong>
+                </div>
+                <div class="admin-metric-row">
+                    <span>Current School Year</span>
+                    <strong><?php echo e($current_school_year); ?></strong>
+                </div>
+
+                <hr>
+
+                <form method="POST" class="term-settings-form" autocomplete="off">
+                    <input type="hidden" name="csrf_token" value="<?php echo e($_SESSION['csrf_token']); ?>">
+                    <input type="hidden" name="update_settings" value="1">
+
+                    <div class="form-row">
+                        <label for="semester">Semester</label>
+                        <select id="semester" name="semester" required>
+                            <option value="1st" <?php echo $current_semester==='1st'?'selected':''; ?>>1st</option>
+                            <option value="2nd" <?php echo $current_semester==='2nd'?'selected':''; ?>>2nd</option>
+                            <option value="Summer" <?php echo $current_semester==='Summer'?'selected':''; ?>>Summer</option>
+                        </select>
+                    </div>
+
+                    <div class="form-row">
+                        <label for="school_year">School Year</label>
+                        <input id="school_year" name="school_year" type="text" placeholder="e.g., 2025-2026"
+                            value="<?php echo e($current_school_year); ?>" required pattern="^\d{4}-\d{4}$">
+                    </div>
+
+                    <button type="submit" class="admin-action-btn">
+                        <i class="fa-solid fa-floppy-disk"></i> Save
+                    </button>
+                </form>
+            </div>
+
             <div class="admin-panel recent-users-panel">
                 <div class="admin-panel-header">
                     <h4>Recent Users</h4>

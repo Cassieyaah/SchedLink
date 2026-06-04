@@ -3,6 +3,33 @@ session_start();
 include '../includes/db.php';
 include '../includes/matched_schedules.php'; // Option B: External matching engine
 
+$settings = $conn->query("
+    SELECT semester, school_year 
+    FROM site_settings 
+    WHERE id = 1
+")->fetch_assoc();
+
+$active_semester = $settings['semester'] ?? '1st Semester';
+$active_school_year = $settings['school_year'] ?? '2025-2026';
+
+function get_active_settings(mysqli $conn): array {
+    $res = $conn->query("
+        SELECT semester, school_year 
+        FROM site_settings 
+        WHERE id = 1
+    ");
+
+    if (!$res) {
+        throw new Exception("Site settings not found.");
+    }
+
+    return $res->fetch_assoc();
+}
+
+$active_settings = get_active_settings($conn);
+$active_semester = $active_settings['semester'];
+$active_school_year = $active_settings['school_year'];
+
 if (!isset($_SESSION['user_id'])) {
     header("Location: ../php/logIn.php");
     exit();
@@ -232,6 +259,7 @@ $upload_stmt = $conn->prepare("
     ORDER BY uploaded_at DESC, upload_id DESC
 ");
 $upload_stmt->bind_param("is", $user_id, $role);
+
 $upload_stmt->execute();
 $upload_result = $upload_stmt->get_result();
 while ($upload = $upload_result->fetch_assoc()) {
@@ -389,8 +417,8 @@ if ($uploads) {
                         <strong><?php echo htmlspecialchars($upload['original_filename'] ?: 'Uploaded schedule'); ?></strong>
                         <small>
                             <?php echo date('F j, Y g:i A', strtotime($upload['uploaded_at'])); ?>
-                            &middot; <?php echo htmlspecialchars($upload['semester']); ?>
-                            &middot; <?php echo htmlspecialchars($upload['school_year']); ?>
+                            <?php echo htmlspecialchars($active_semester); ?>
+                            &middot; <?php echo htmlspecialchars($active_school_year); ?>
                         </small>
                     </span>
                     <i class="fa-solid fa-chevron-down accordion-arrow"></i>

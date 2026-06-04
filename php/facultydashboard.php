@@ -238,13 +238,10 @@ unset($_SESSION['upload_success'], $_SESSION['upload_error']);
                         <div class="card-info-main">
                             <h4>
                                 <?php echo htmlspecialchars($row['course_code']); ?> —
-                                <?php echo htmlspecialchars($row['course_description']); ?>
                             </h4>
                             <p><?php echo htmlspecialchars($row['room']); ?></p>
                         </div>
-                        <div class="card-info-meta">
-                            <p><?php echo htmlspecialchars($row['day']); ?></p>
-                        </div>
+
                     </div>
 
                 <?php endwhile; ?>

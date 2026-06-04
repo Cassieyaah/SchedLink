@@ -151,15 +151,27 @@ ensure_matched_schedule_schema($conn);
 $conn->begin_transaction();
 
 try {
-    // Fetch active semester settings configuration constraints
-    $settings_query = $conn->query("SELECT current_semester, current_school_year FROM system_settings WHERE id = 1");
-    if (!$settings_query) {
-        throw new Exception("System settings table configuration missing. Please verify database schema.");
-    }
-    
-    $system_config  = $settings_query->fetch_assoc();
-    $current_semester    = $system_config['current_semester'] ?? '1st Semester';
-    $current_school_year = $system_config['current_school_year'] ?? '2025-2026';
+        // Fetch active semester settings configuration constraints
+        $settings_query = $conn->query("
+            SELECT semester, school_year 
+            FROM site_settings 
+            WHERE id = 1
+        ");
+
+        if (!$settings_query) {
+            throw new Exception("Site settings table configuration missing.");
+        }
+
+        $system_config = $settings_query->fetch_assoc();
+
+        $current_semester = match ($system_config['semester'] ?? '1st') {
+            '1st' => '1st Semester',
+            '2nd' => '2nd Semester',
+            'Summer' => 'Summer',
+            default => '1st Semester'
+        };
+
+        $current_school_year = $system_config['school_year'] ?? '2025-2026';
 
     $original_filename = $_SESSION['ocr_upload_original_name'] ?? 'Uploaded schedule';
     $stored_file_path  = $_SESSION['ocr_upload_stored_path'] ?? null;
