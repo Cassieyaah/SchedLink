@@ -10,7 +10,7 @@ if (!isset($_SESSION['user_id'])) {
         header('Content-Type: application/json');
         echo json_encode(["status" => "error", "message" => "Session expired. Please log in again."]);
     } else {
-        header("Location: ../php/logIn.php");
+        header("Location: ../logIn.php");
     }
     exit();
 }
@@ -33,7 +33,7 @@ if (!$role_row || $role_row['role'] !== 'admin') {
         header('Content-Type: application/json');
         echo json_encode(["status" => "error", "message" => "Unauthorized."]);
     } else {
-        header("Location: ../php/logIn.php");
+        header("Location: ../logIn.php");
     }
     exit();
 }
@@ -187,7 +187,7 @@ mysqli_stmt_close($user_stmt);
 
 if (!$data) {
     session_destroy();
-    header("Location: ../php/logIn.php");
+    header("Location: ../logIn.php");
     exit();
 }
 

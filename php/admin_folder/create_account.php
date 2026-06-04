@@ -3,7 +3,7 @@ session_start();
 include '../includes/db.php';
 
 if (!isset($_SESSION['user_id'])) {
-    header("Location: logIn.php");
+    header("Location: ../logIn.php");
     exit();
 }
 
@@ -15,7 +15,7 @@ $stmt->execute();
 $admin = $stmt->get_result()->fetch_assoc();
 
 if (!$admin || strtolower(trim($admin['role'])) !== 'admin') {
-    header("Location: logIn.php");
+    header("Location: ../logIn.php");
     exit();
 }
 
