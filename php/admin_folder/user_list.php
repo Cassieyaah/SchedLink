@@ -1,7 +1,6 @@
 <?php
 session_start();
 ob_start();
-session_start();
 include("../../includes/db.php");
 
 if (!isset($_SESSION['user_id'])) {

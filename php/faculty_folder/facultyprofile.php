@@ -1,7 +1,7 @@
 <?php
 session_start();
 ob_start();
-session_start();
+
 include("../../includes/db.php");
 
 if (!isset($_SESSION['user_id'])) {
@@ -263,9 +263,9 @@ function na(mixed $value): string {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Faculty Profile</title>
-    <link rel="stylesheet" href="../../fonts/css/all.min.css">
     <link rel="stylesheet" href="../../css/studentDashBoard.css">
     <link rel="stylesheet" href="../../css/profile.css">
+        <link rel="stylesheet" href="../../fonts/css/all.min.css">
 </head>
 
 <body>
