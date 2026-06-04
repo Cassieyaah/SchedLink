@@ -1,9 +1,9 @@
 <?php
 session_start();
-include '../../includes/db.php';
+include '../includes/db.php';
 
 if (!isset($_SESSION['user_id'])) {
-    header("Location: ../logIn.php");
+    header("Location: logIn.php");
     exit();
 }
 
@@ -15,7 +15,7 @@ $stmt->execute();
 $admin = $stmt->get_result()->fetch_assoc();
 
 if (!$admin || strtolower(trim($admin['role'])) !== 'admin') {
-    header("Location: ../logIn.php");
+    header("Location: logIn.php");
     exit();
 }
 
@@ -24,12 +24,12 @@ function e($v)
     return htmlspecialchars($v, ENT_QUOTES, 'UTF-8');
 }
 
-$default_image = "../../media/images.jpg";
+$default_image = "../media/images.jpg";
 $profile_picture = $default_image;
 $stored_picture = trim($admin['profile_picture'] ?? '');
 
 if ($stored_picture !== '') {
-    $uploaded_path = "../../uploads/" . $stored_picture;
+    $uploaded_path = "../uploads/" . $stored_picture;
     if (file_exists($uploaded_path)) {
         $profile_picture = $uploaded_path;
     }
@@ -94,10 +94,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <title>Create Account</title>
 
-    <link rel="stylesheet" href="../../css/adminDashboard.css">
-    <link rel="stylesheet" href="../../css/create_account.css">
-    <link rel="stylesheet" href="../../fonts/css/all.min.css">
-    <link rel="stylesheet" href="../../css/studentDashBoard.css">
+    <link rel="stylesheet" href="../css/adminDashboard.css">
+    <link rel="stylesheet" href="../css/create_account.css">
+    <link rel="stylesheet" href="../fonts/css/all.min.css">
+    <link rel="stylesheet" href="../css/studentDashBoard.css">
 </head>
 
 <body>
@@ -137,7 +137,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     Schedule Conflict Management
                 </a>
 
-                <a href="../logout.php" class="logout-btn">
+                <a href="logout.php" class="logout-btn">
                     <i class="fa-solid fa-right-from-bracket"></i> Logout
                 </a>
             </div>
@@ -147,7 +147,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
 
         <div class="sidebar-footer">
-            <img src="../../media/cvsulogo.png">
+            <img src="../media/cvsulogo.png">
             <p>Cavite State University</p>
         </div>
 

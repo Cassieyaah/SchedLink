@@ -29,31 +29,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['schedule_file'])) {
     } catch (Exception $e) {
         $_SESSION['upload_error'] = "Error: " . $e->getMessage();
     }
-        // Redirect uploader to their "My Schedule" page based on role (if logged in)
-        $u_id = $_SESSION['user_id'] ?? null;
-        if ($u_id) {
-            $rstmt = $conn->prepare("SELECT role FROM users WHERE user_id = ?");
-            $rstmt->bind_param("i", $u_id);
-            $rstmt->execute();
-            $ruser = $rstmt->get_result()->fetch_assoc();
-            $rstmt->close();
-            $urole = $ruser ? strtolower(trim($ruser['role'])) : '';
-            if ($urole === 'faculty') {
-                header("Location: faculty_folder/faculty_schedule.php");
-                exit();
-            }
-            header("Location: student_folder/myschedule.php");
-            exit();
-        }
-        header("Location: logIn.php");
-        exit();
+    header("Location: facultydashboard.php");
+    exit();
 }
 ?>
 <?php
 // Ensure the database connection layout configuration handles requests cleanly
 
 if (!isset($_SESSION['user_id'])) {
-    header("Location: logIn.php");
+    header("Location: ../php/logIn.php");
     exit();
 }
 
@@ -67,8 +51,7 @@ $user = $stmt->get_result()->fetch_assoc();
 $stmt->close();
 
 $role = $user ? strtolower(trim($user['role'])) : '';
-// After saving verified entries, go to the user's personal schedule view
-$redirect_page = ($role === "faculty") ? "faculty_folder/faculty_schedule.php" : "student_folder/myschedule.php";
+$redirect_page = ($role === "faculty") ? "facultydashboard.php" : "studentdashboard.php";
 
 function ensure_schedule_upload_schema(mysqli $conn): void {
     $conn->query("

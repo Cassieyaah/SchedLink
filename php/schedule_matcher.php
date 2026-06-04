@@ -212,4 +212,3 @@ function refresh_matches_for_terms(mysqli $conn, array $terms): void {
         $student_stmt->close();
     }
 }
-

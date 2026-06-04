@@ -1,21 +1,21 @@
 <?php
 session_start();
 
-include '../../includes/db.php';
-include_once '../../includes/matched_schedules.php'; // Include Option B Matching Ledger Engine
+include '../includes/db.php';
+include_once '../includes/matched_schedules.php'; // Include Option B Matching Ledger Engine
 require '../vendor/autoload.php';
 
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
 if (!isset($_SESSION['user_id'])) {
-    header("Location: ../logIn.php");
+    header("Location: ../php/logIn.php");
     exit();
 }
 
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
 $user_id = (int) $_SESSION['user_id'];
-$redirect = "facultydashboard.php";
+$redirect = "../php/facultydashboard.php";
 
 /* =========================================
    GET FACULTY / PROFESSOR ID
