@@ -1,7 +1,7 @@
 <?php
 session_start();
-include '../includes/db.php';
-include '../includes/matched_schedules.php'; // Option B: External matching engine
+include '../../includes/db.php';
+include '../../includes/matched_schedules.php'; // Option B: External matching engine
 
 $settings = $conn->query("
     SELECT semester, school_year 
@@ -31,7 +31,7 @@ $active_semester = $active_settings['semester'];
 $active_school_year = $active_settings['school_year'];
 
 if (!isset($_SESSION['user_id'])) {
-    header("Location: ../php/logIn.php");
+    header("Location: ../logIn.php");
     exit();
 }
 
@@ -111,18 +111,18 @@ $stmt->close();
 
 if (!$user) {
     session_destroy();
-    header("Location: ../php/logIn.php");
+    header("Location: ../logIn.php");
     exit();
 }
 
 $role = strtolower(trim($user['role']));
 if (!in_array($role, ['student', 'faculty'], true)) {
-    header("Location: admindashboard.php");
+    header("Location: ../admin_folder/admindashboard.php");
     exit();
 }
 
-$dashboard_page = $role === 'faculty' ? 'facultydashboard.php' : 'studentdashboard.php';
-$profile_page   = $role === 'faculty' ? 'facultyprofile.php' : 'profile.php';
+$dashboard_page = $role === 'faculty' ? '../faculty_folder/facultydashboard.php' : 'studentdashboard.php';
+$profile_page   = $role === 'faculty' ? '../faculty_folder/facultyprofile.php' : 'Profile.php';
 $profile_id     = $role === 'faculty' ? (int) ($user['faculty_id'] ?? 0) : (int) ($user['student_id'] ?? 0);
 
 // Process Update and Delete Form Submissions
@@ -333,11 +333,11 @@ if ($uploads) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Schedule</title>
-    <link rel="stylesheet" href="../css/studentDashBoard.css">
-    <link rel="stylesheet" href="../css/uploadSchedule.css">
-    <link rel="stylesheet" href="../css/mysched.css">
-    <link rel="stylesheet" href="../fonts/css/all.min.css">
-    <link rel="stylesheet" href="../css/mysched_upgrade.css">
+    <link rel="stylesheet" href="../../css/studentDashBoard.css">
+    <link rel="stylesheet" href="../../css/uploadSchedule.css">
+    <link rel="stylesheet" href="../../css/mysched.css">
+    <link rel="stylesheet" href="../../fonts/css/all.min.css">
+    <link rel="stylesheet" href="../../css/mysched_upgrade.css">
     <style>
         /* Stylistic badges for tracking alignment states */
         .status-badge {
@@ -359,7 +359,7 @@ if ($uploads) {
 <div class="sidebar">
     <div>
         <div class="profile">
-            <img src="../media/images.jpg" alt="Profile Picture">
+            <img src="../../media/images.jpg" alt="Profile Picture">
             <h3><?php echo htmlspecialchars($user['fullname']); ?></h3>
             <p><?php echo ucfirst($role); ?> Account</p>
         </div>
@@ -369,12 +369,12 @@ if ($uploads) {
             <a class="active" href="myschedule.php"><i class="fa-regular fa-calendar"></i> My Schedule</a>
             <a href="<?php echo $dashboard_page; ?>#upload"><i class="fa-solid fa-upload"></i> Upload Schedule</a>
             <a href="<?php echo $profile_page; ?>"><i class="fa-solid fa-user"></i> Profile</a>
-            <a href="logout.php" class="logout-btn"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+            <a href="../logout.php" class="logout-btn"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
         </div>
         <div class="divider"></div>
     </div>
     <div class="sidebar-footer">
-        <img src="../media/cvsulogo.png" alt="CvSU Logo">
+        <img src="../../media/cvsulogo.png" alt="CvSU Logo">
         <p>Cavite State University</p>
     </div>
 </div>
@@ -626,7 +626,7 @@ function openFacultyInfoModal(name) {
     modal.removeAttribute('aria-hidden');
     modal.style.display = 'block';
 
-    fetch(`../php/get_faculty_info.php?name=${encodeURIComponent(name)}`)
+    fetch(`../get_faculty_info.php?name=${encodeURIComponent(name)}`)
         .then(r => r.json())
         .then(data => {
             if (data.error) {

@@ -21,11 +21,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $role = strtolower(trim($user['role']));
 
             if ($role === 'admin') {
-                $redirect_page = 'admindashboard.php';
+                $redirect_page = 'admin_folder/admindashboard.php';
             } elseif ($role === 'faculty') {
-                $redirect_page = 'facultydashboard.php';
+                $redirect_page = 'faculty_folder/facultydashboard.php';
             } else {
-                $redirect_page = 'studentdashboard.php';
+                $redirect_page = 'student_folder/studentdashboard.php';
             }
 
             echo "<script>
@@ -104,3 +104,4 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 </body>
 </html>
+

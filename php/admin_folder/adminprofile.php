@@ -1,8 +1,8 @@
 <?php
-ob_start();
 session_start();
+ob_start();
 
-include("../includes/db.php");
+include("../../includes/db.php");
 
 if (!isset($_SESSION['user_id'])) {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -10,7 +10,7 @@ if (!isset($_SESSION['user_id'])) {
         header('Content-Type: application/json');
         echo json_encode(["status" => "error", "message" => "Session expired. Please log in again."]);
     } else {
-        header("Location: ../php/logIn.php");
+        header("Location: ../logIn.php");
     }
     exit();
 }
@@ -33,7 +33,7 @@ if (!$role_row || $role_row['role'] !== 'admin') {
         header('Content-Type: application/json');
         echo json_encode(["status" => "error", "message" => "Unauthorized."]);
     } else {
-        header("Location: ../php/logIn.php");
+        header("Location: ../logIn.php");
     }
     exit();
 }
@@ -59,7 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($_FILES['profile_picture']['size'] > 5 * 1024 * 1024) {
                 throw new Exception("File too large. Maximum size is 5 MB.");
             }
-            $upload_dir = "../uploads/";
+            $upload_dir = "../../uploads/";
             if (!is_dir($upload_dir)) mkdir($upload_dir, 0755, true);
             $filename = time() . "_" . uniqid() . "." . $ext;
             $target   = $upload_dir . $filename;
@@ -187,19 +187,19 @@ mysqli_stmt_close($user_stmt);
 
 if (!$data) {
     session_destroy();
-    header("Location: ../php/logIn.php");
+    header("Location: ../logIn.php");
     exit();
 }
 
 /* =========================
    PROFILE IMAGE
 ========================= */
-$default_image   = "../media/images.jpg";
+$default_image   = "../../media/images.jpg";
 $profile_picture = $default_image;
 $stored_picture  = trim($data['profile_picture'] ?? '');
 
 if (!empty($stored_picture)) {
-    $uploaded_path = "../uploads/" . basename($stored_picture);
+    $uploaded_path = "../../uploads/" . basename($stored_picture);
     if (file_exists($uploaded_path)) $profile_picture = $uploaded_path;
 }
 if ($profile_picture === $default_image && !file_exists($default_image)) {
@@ -217,9 +217,10 @@ function e(string $value): string {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Profile</title>
-    <link rel="stylesheet" href="../fonts/css/all.min.css">
-    <link rel="stylesheet" href="../css/studentDashBoard.css">
-    <link rel="stylesheet" href="../css/profile.css">
+
+    <link rel="stylesheet" href="../../css/studentDashBoard.css">
+    <link rel="stylesheet" href="../../css/profile.css">
+    <link rel="stylesheet" href="../../fonts/css/all.min.css">
 </head>
 <body>
 
@@ -237,12 +238,12 @@ function e(string $value): string {
             <a class="active" href="adminprofile.php"><i class="fa-solid fa-user"></i> Profile</a>
             <a href="create_account.php"><i class="fa-solid fa-user-plus"></i> Create Account</a>
             <a href="user_list.php"><i class="fa-solid fa-users"></i> User List</a>
-            <a href="logout.php" class="logout-btn"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+            <a href="../logout.php" class="logout-btn"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
         </div>
         <div class="divider"></div>
     </div>
     <div class="sidebar-footer">
-        <img src="../media/cvsulogo.png" alt="CvSU Logo">
+        <img src="../../media/cvsulogo.png" alt="CvSU Logo">
         <p>Cavite State University</p>
     </div>
 </div>

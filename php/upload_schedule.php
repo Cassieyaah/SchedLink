@@ -3,7 +3,7 @@ session_start();
 include '../includes/db.php';
 
 if (!isset($_SESSION['user_id'])) {
-    header("Location: ../php/logIn.php");
+    header("Location: logIn.php");
     exit();
 }
 
@@ -16,12 +16,12 @@ $stmt->execute();
 $user = $stmt->get_result()->fetch_assoc();
 
 $role = $user ? strtolower(trim($user['role'])) : '';
-$redirect_page = "studentdashboard.php";
+$redirect_page = "student_folder/studentdashboard.php";
 
 if ($role === "faculty") {
-    $redirect_page = "facultydashboard.php";
+    $redirect_page = "faculty_folder/facultydashboard.php";
 } elseif ($role === "student") {
-    $redirect_page = "studentdashboard.php";
+    $redirect_page = "student_folder/studentdashboard.php";
 }
 
 if (!$user || !in_array($role, ["student", "faculty"], true)) {
@@ -149,3 +149,4 @@ $_SESSION['upload_success'] = "OCR analysis complete! Please review and confirm 
 
 header("Location: " . $redirect_page);
 exit();
+

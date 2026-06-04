@@ -1,9 +1,9 @@
 <?php
-session_start();
-include '../includes/db.php';
+    session_start();
+    include '../../includes/db.php';
 
 if (!isset($_SESSION['user_id'])) {
-    header("Location: ../php/logIn.php");
+    header("Location: ../logIn.php");
     exit();
 }
 
@@ -15,7 +15,7 @@ $stmt->execute();
 $admin = $stmt->get_result()->fetch_assoc();
 
 if (!$admin || strtolower(trim($admin['role'])) !== 'admin') {
-    header("Location: ../php/logIn.php");
+    header("Location: ../logIn.php");
     exit();
 }
 
@@ -78,7 +78,6 @@ $student_uploads = countRows($conn, "SELECT COUNT(*) AS total FROM schedule_uplo
 $faculty_uploads = countRows($conn, "SELECT COUNT(*) AS total FROM schedule_uploads WHERE role = 'faculty'");
 
 $total_matched = countRows($conn, "SELECT COUNT(*) AS total FROM matched_schedules WHERE match_status = 'matched'");
-$total_pending_matches = countRows($conn, "SELECT COUNT(*) AS total FROM matched_schedules WHERE match_status = 'pending'");
 $total_no_match = countRows($conn, "SELECT COUNT(*) AS total FROM matched_schedules WHERE match_status = 'no_match'");
 
 $recent_users = $conn->query("
@@ -89,12 +88,12 @@ $recent_users = $conn->query("
 
 ");
 
-$default_image = "../media/images.jpg";
+$default_image = "../../media/images.jpg";
 $profile_picture = $default_image;
 $stored_picture = trim($admin['profile_picture'] ?? '');
 
 if ($stored_picture !== '') {
-    $uploaded_path = "../uploads/" . $stored_picture;
+    $uploaded_path = "../../uploads/" . $stored_picture;
     if (file_exists($uploaded_path)) {
         $profile_picture = $uploaded_path;
     }
@@ -131,9 +130,9 @@ function e(string $value): string {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard</title>
-    <link rel="stylesheet" href="../css/studentDashBoard.css">
-    <link rel="stylesheet" href="../css/adminDashboard.css">
-    <link rel="stylesheet" href="../fonts/css/all.min.css">
+    <link rel="stylesheet" href="../../css/studentDashBoard.css">
+    <link rel="stylesheet" href="../../css/adminDashboard.css">
+    <link rel="stylesheet" href="../../fonts/css/all.min.css">
 </head>
 
 <body>
@@ -169,7 +168,7 @@ function e(string $value): string {
                 <i class="fa-solid fa-users"></i> User List
             </a>
 
-            <a href="logout.php" class="logout-btn">
+            <a href="../logout.php" class="logout-btn">
                 <i class="fa-solid fa-right-from-bracket"></i> Logout
             </a>
 
@@ -180,7 +179,7 @@ function e(string $value): string {
     </div>
 
     <div class="sidebar-footer">
-        <img src="../media/cvsulogo.png" alt="CvSU Logo">
+        <img src="../../media/cvsulogo.png" alt="CvSU Logo">
         <p>Cavite State University</p>
     </div>
 
@@ -271,11 +270,6 @@ function e(string $value): string {
                     <div>
                         <span>Matched Schedules</span>
                         <strong><?php echo $total_matched; ?></strong>
-                    </div>
-
-                    <div>
-                        <span>Pending Matches</span>
-                        <strong><?php echo $total_pending_matches; ?></strong>
                     </div>
                 </div>
 
@@ -379,3 +373,4 @@ links.forEach(link => {
 
 </body>
 </html>
+

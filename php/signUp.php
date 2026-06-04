@@ -43,7 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
             if ($insertStmt->execute()) {
                 $_SESSION['success'] = "Account created successfully. Please log in.";
-                header("Location: ../php/login.php");
+                header("Location: logIn.php");
                 exit();
             }
 
@@ -240,7 +240,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <div class="footer-text">
 
             Already have an account?
-            <a href= ../php/login.php>Login</a>
+            <a href="logIn.php">Login</a>
         </div>
 
     </div>

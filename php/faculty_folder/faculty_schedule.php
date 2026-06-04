@@ -1,12 +1,12 @@
 <?php
 session_start();
 
-include '../includes/db.php';
+include '../../includes/db.php';
 
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
 if (!isset($_SESSION['user_id'])) {
-    header("Location: ../php/logIn.php");
+    header("Location: ../logIn.php");
     exit();
 }
 
@@ -31,7 +31,7 @@ $stmt->close();
 
 if (!$user) {
     session_destroy();
-    header("Location: ../php/logIn.php");
+    header("Location: ../logIn.php");
     exit();
 }
 
@@ -224,44 +224,18 @@ if (!empty($upload_ids)) {
 <head>
     <meta charset="UTF-8">
     <title>My Schedule</title>
-    <link rel="stylesheet" href="../css/studentDashBoard.css">
-    <link rel="stylesheet" href="../css/uploadSchedule.css">
-    <link rel="stylesheet" href="../css/faculty_sched.css">
-    <link rel="stylesheet" href="../fonts/css/all.min.css">
-    <link rel="stylesheet" href="../css/mysched_upgrade.css">
-    <style>
-        /* Alignment and balancing layout fixes */
-        .schedule-edit-actions {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            width: 100%;
-            margin-top: 15px;
-        }
-        .danger-btn {
-            background-color: #dc3545;
-            color: white;
-            border: none;
-            padding: 8px 14px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            transition: background 0.2s;
-        }
-        .danger-btn:hover {
-            background-color: #bd2130;
-        }
-    </style>
+    <link rel="stylesheet" href="../../css/studentDashBoard.css">
+    <link rel="stylesheet" href="../../css/uploadSchedule.css">
+    <link rel="stylesheet" href="../../css/faculty_sched.css">
+    <link rel="stylesheet" href="../../fonts/css/all.min.css">
+    <link rel="stylesheet" href="../../css/mysched_upgrade.css">
 </head>
 <body>
 
 <div class="sidebar">
     <div>
         <div class="profile">
-            <img src="../media/images.jpg" alt="Profile Picture">
+            <img src="../../media/images.jpg" alt="Profile Picture">
             <h3><?php echo htmlspecialchars($user['fullname'] ?? 'Faculty'); ?></h3>
             <p>Faculty Account</p>
         </div>
@@ -280,14 +254,14 @@ if (!empty($upload_ids)) {
             <a href="<?php echo $profile_page; ?>">
                 <i class="fa-solid fa-user"></i> Profile
             </a>
-            <a href="logout.php" class="logout-btn">
+            <a href="../logout.php" class="logout-btn">
                 <i class="fa-solid fa-right-from-bracket"></i> Logout
             </a>
         </div>
         <div class="divider"></div>
     </div>
     <div class="sidebar-footer">
-        <img src="../media/cvsulogo.png" alt="CvSU Logo">
+        <img src="../../media/cvsulogo.png" alt="CvSU Logo">
         <p>Cavite State University</p>
     </div>
 </div>

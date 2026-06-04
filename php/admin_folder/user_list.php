@@ -1,10 +1,10 @@
 <?php
-ob_start();
 session_start();
-include("../includes/db.php");
+ob_start();
+include("../../includes/db.php");
 
 if (!isset($_SESSION['user_id'])) {
-    header("Location: ../php/login.php"); //checks if user is logged in
+    header("Location: ../logIn.php"); //checks if user is logged in
     exit();
 }
 
@@ -19,7 +19,7 @@ $role_row = mysqli_fetch_assoc(mysqli_stmt_get_result($role_check));
 mysqli_stmt_close($role_check);
 
 if (!$role_row || $role_row['role'] !== 'admin') {
-    header("Location: ../php/login.php");
+    header("Location: ../logIn.php");
     exit();
 }
 
@@ -107,12 +107,12 @@ $admin_data = mysqli_fetch_assoc(mysqli_stmt_get_result($admin_stmt));
 mysqli_stmt_close($admin_stmt);
 
 /*profile image*/
-$default_image   = "../media/images.jpg";
+$default_image   = "../../media/images.jpg";
 $profile_picture = $default_image;
 $stored_picture  = trim($admin_data['profile_picture'] ?? '');
 
 if (!empty($stored_picture)) {
-    $uploaded_path = "../uploads/" . basename($stored_picture);
+    $uploaded_path = "../../uploads/" . basename($stored_picture);
     if (file_exists($uploaded_path)) $profile_picture = $uploaded_path;
 }
 if ($profile_picture === $default_image && !file_exists($default_image)) {
@@ -127,9 +127,9 @@ function e(string $v): string { return htmlspecialchars($v, ENT_QUOTES, 'UTF-8')
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User List</title>
-    <link rel="stylesheet" href="../css/studentDashBoard.css">
-    <link rel="stylesheet" href="../css/user_list.css">
-    <link rel="stylesheet" href="../fonts/css/all.min.css">
+    <link rel="stylesheet" href="../../css/studentDashBoard.css">
+    <link rel="stylesheet" href="../../css/user_list.css">
+    <link rel="stylesheet" href="../../fonts/css/all.min.css">
 </head>
 <body>
 
@@ -147,12 +147,12 @@ function e(string $v): string { return htmlspecialchars($v, ENT_QUOTES, 'UTF-8')
             <a href="adminprofile.php"><i class="fa-solid fa-user"></i> Profile</a>
             <a href="create_account.php"><i class="fa-solid fa-user-plus"></i> Create Account</a>
             <a class="active" href="user_list.php"><i class="fa-solid fa-users"></i> User List</a>
-            <a href="logout.php" class="logout-btn"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+            <a href="../logout.php" class="logout-btn"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
         </div>
         <div class="divider"></div>
     </div>
     <div class="sidebar-footer">
-        <img src="../media/cvsulogo.png" alt="CvSU Logo">
+        <img src="../../media/cvsulogo.png" alt="CvSU Logo">
         <p>Cavite State University</p>
     </div>
 </div>
