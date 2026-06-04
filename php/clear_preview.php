@@ -21,3 +21,4 @@ if (!empty($_SESSION['user_id'])) {
 
 header("Location: " . $redirect_page);
 exit();
+

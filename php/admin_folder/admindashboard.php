@@ -1,6 +1,6 @@
 <?php
-session_start();
-include '../includes/db.php';
+    session_start();
+    include '../../includes/db.php';
 
 if (!isset($_SESSION['user_id'])) {
     header("Location: ../logIn.php");
@@ -89,12 +89,12 @@ $recent_users = $conn->query("
 
 ");
 
-$default_image = "../media/images.jpg";
+$default_image = "../../media/images.jpg";
 $profile_picture = $default_image;
 $stored_picture = trim($admin['profile_picture'] ?? '');
 
 if ($stored_picture !== '') {
-    $uploaded_path = "../uploads/" . $stored_picture;
+    $uploaded_path = "../../uploads/" . $stored_picture;
     if (file_exists($uploaded_path)) {
         $profile_picture = $uploaded_path;
     }
@@ -131,9 +131,9 @@ function e(string $value): string {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard</title>
-    <link rel="stylesheet" href="../css/studentDashBoard.css">
-    <link rel="stylesheet" href="../css/adminDashboard.css">
-    <link rel="stylesheet" href="../fonts/css/all.min.css">
+    <link rel="stylesheet" href="../../css/studentDashBoard.css">
+    <link rel="stylesheet" href="../../css/adminDashboard.css">
+    <link rel="stylesheet" href="../../fonts/css/all.min.css">
 </head>
 
 <body>
@@ -169,7 +169,7 @@ function e(string $value): string {
                 <i class="fa-solid fa-users"></i> User List
             </a>
 
-            <a href="logout.php" class="logout-btn">
+            <a href="../logout.php" class="logout-btn">
                 <i class="fa-solid fa-right-from-bracket"></i> Logout
             </a>
 
@@ -180,7 +180,7 @@ function e(string $value): string {
     </div>
 
     <div class="sidebar-footer">
-        <img src="../media/cvsulogo.png" alt="CvSU Logo">
+        <img src="../../media/cvsulogo.png" alt="CvSU Logo">
         <p>Cavite State University</p>
     </div>
 
@@ -379,3 +379,4 @@ links.forEach(link => {
 
 </body>
 </html>
+

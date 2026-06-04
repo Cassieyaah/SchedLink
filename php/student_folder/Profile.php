@@ -1,7 +1,8 @@
 <?php
+session_start();
 ob_start();
 session_start();
-include("../includes/db.php");
+include("../../includes/db.php");
 
 if (!isset($_SESSION['user_id'])) {
     header("Location: ../logIn.php");
@@ -142,7 +143,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['profile_picture'])) 
             throw new Exception("File too large. Maximum size is 5 MB.");
         }
 
-        $upload_dir = "../uploads/";
+        $upload_dir = "../../uploads/";
         if (!is_dir($upload_dir)) mkdir($upload_dir, 0755, true);
 
         $filename = time() . "_" . uniqid() . "." . $ext;
@@ -207,12 +208,12 @@ if (!$data) {
 /* =========================
    PROFILE IMAGE RESOLUTION
 ========================= */
-$default_image   = "../media/images.jpg";
-$profile_picture = $default_image;
-$stored_picture  = trim($data['profile_picture'] ?? '');
+ $default_image   = "../../media/images.jpg";
+ $profile_picture = $default_image;
+ $stored_picture  = trim($data['profile_picture'] ?? '');
 
 if ($stored_picture !== '') {
-    $uploaded_path = "../uploads/" . $stored_picture;
+    $uploaded_path = "../../uploads/" . $stored_picture;
     if (file_exists($uploaded_path)) $profile_picture = $uploaded_path;
 }
 
@@ -236,9 +237,9 @@ function na(mixed $value): string {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Profile</title>
-    <link rel="stylesheet" href="../fonts/css/all.min.css">
-    <link rel="stylesheet" href="../css/studentDashBoard.css">
-    <link rel="stylesheet" href="../css/profile.css">
+    <link rel="stylesheet" href="../../fonts/css/all.min.css">
+    <link rel="stylesheet" href="../../css/studentDashBoard.css">
+    <link rel="stylesheet" href="../../css/profile.css">
 </head>
 
 <body>
@@ -257,12 +258,12 @@ function na(mixed $value): string {
             <a href="myschedule.php"><i class="fa-regular fa-calendar"></i> My Schedule</a>
             <a href="studentdashboard.php#upload"><i class="fa-solid fa-upload"></i> Upload Schedule</a>
             <a class="active" href="profile.php"><i class="fa-solid fa-user"></i> Profile</a>
-            <a href="logout.php"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+            <a href="../logout.php"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
         </div>
         <div class="divider"></div>
     </div>
     <div class="sidebar-footer">
-        <img src="../media/cvsulogo.png" alt="CvSU Logo">
+        <img src="../../media/cvsulogo.png" alt="CvSU Logo">
         <p>Cavite State University</p>
     </div>
 </div>
@@ -513,3 +514,4 @@ window.addEventListener("keydown", function (e) {
 
 </body>
 </html>
+

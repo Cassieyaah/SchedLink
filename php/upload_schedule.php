@@ -149,3 +149,4 @@ $_SESSION['upload_success'] = "OCR analysis complete! Please review and confirm 
 
 header("Location: " . $redirect_page);
 exit();
+

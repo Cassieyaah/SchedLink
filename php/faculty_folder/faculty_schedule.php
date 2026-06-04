@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-include '../includes/db.php';
+include '../../includes/db.php';
 
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
@@ -201,18 +201,18 @@ if (!empty($upload_ids)) {
 <head>
     <meta charset="UTF-8">
     <title>My Schedule</title>
-    <link rel="stylesheet" href="../css/studentDashBoard.css">
-    <link rel="stylesheet" href="../css/uploadSchedule.css">
-    <link rel="stylesheet" href="../css/faculty_sched.css">
-    <link rel="stylesheet" href="../fonts/css/all.min.css">
-    <link rel="stylesheet" href="../css/mysched_upgrade.css">
+    <link rel="stylesheet" href="../../css/studentDashBoard.css">
+    <link rel="stylesheet" href="../../css/uploadSchedule.css">
+    <link rel="stylesheet" href="../../css/faculty_sched.css">
+    <link rel="stylesheet" href="../../fonts/css/all.min.css">
+    <link rel="stylesheet" href="../../css/mysched_upgrade.css">
 </head>
 <body>
 
 <div class="sidebar">
     <div>
         <div class="profile">
-            <img src="../media/images.jpg" alt="Profile Picture">
+            <img src="../../media/images.jpg" alt="Profile Picture">
             <h3><?php echo htmlspecialchars($user['fullname'] ?? 'Faculty'); ?></h3>
             <p>Faculty Account</p>
         </div>
@@ -231,14 +231,14 @@ if (!empty($upload_ids)) {
             <a href="<?php echo $profile_page; ?>">
                 <i class="fa-solid fa-user"></i> Profile
             </a>
-            <a href="logout.php" class="logout-btn">
+            <a href="../logout.php" class="logout-btn">
                 <i class="fa-solid fa-right-from-bracket"></i> Logout
             </a>
         </div>
         <div class="divider"></div>
     </div>
     <div class="sidebar-footer">
-        <img src="../media/cvsulogo.png" alt="CvSU Logo">
+        <img src="../../media/cvsulogo.png" alt="CvSU Logo">
         <p>Cavite State University</p>
     </div>
 </div>

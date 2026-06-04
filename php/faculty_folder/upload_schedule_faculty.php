@@ -1,7 +1,7 @@
 <?php
 session_start();
 require_once __DIR__ . '/../vendor/autoload.php'; // Siguraduhin ang path ng vendor
-include '../includes/db.php';
+include '../../includes/db.php';
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['schedule_file'])) {

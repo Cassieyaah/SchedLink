@@ -1,7 +1,7 @@
 <?php
 session_start();
-include '../includes/db.php';
-require_once __DIR__ . '/schedule_matcher.php';
+include '../../includes/db.php';
+require_once __DIR__ . '/../schedule_matcher.php';
 date_default_timezone_set('Asia/Manila');
 
 if (!isset($_SESSION['user_id'])) {
@@ -53,13 +53,13 @@ if ($role !== "student") {
 /* =========================
    PROFILE IMAGE RESOLUTION
 ========================= */
-$default_image   = "../media/images.jpg";
+$default_image   = "../../media/images.jpg";
 $profile_picture = $default_image;
 
 $stored_picture = trim($user['profile_picture'] ?? '');
 
 if ($stored_picture !== '') {
-    $uploaded_path = "../uploads/" . $stored_picture;
+    $uploaded_path = "../../uploads/" . $stored_picture;
     if (file_exists($uploaded_path)) {
         $profile_picture = $uploaded_path;
     }
@@ -171,9 +171,9 @@ unset($_SESSION['upload_success'], $_SESSION['upload_error']);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Dashboard</title>
-    <link rel="stylesheet" href="../css/studentDashBoard.css">
-    <link rel="stylesheet" href="../css/uploadSchedule.css">
-    <link rel="stylesheet" href="../fonts/css/all.min.css">
+    <link rel="stylesheet" href="../../css/studentDashBoard.css">
+    <link rel="stylesheet" href="../../css/uploadSchedule.css">
+    <link rel="stylesheet" href="../../fonts/css/all.min.css">
 </head>
 
 <body>
@@ -223,7 +223,7 @@ unset($_SESSION['upload_success'], $_SESSION['upload_error']);
                 <i class="fa-solid fa-user"></i> Profile
             </a>
 
-            <a href="logout.php" class="logout-btn">
+            <a href="../logout.php" class="logout-btn">
                 <i class="fa-solid fa-right-from-bracket"></i> Logout
             </a>
 
@@ -234,7 +234,7 @@ unset($_SESSION['upload_success'], $_SESSION['upload_error']);
     </div>
 
     <div class="sidebar-footer">
-        <img src="../media/cvsulogo.png" alt="CvSU Logo">
+        <img src="../../media/cvsulogo.png" alt="CvSU Logo">
         <p>Cavite State University</p>
     </div>
 
@@ -571,7 +571,7 @@ links.forEach(link => {
             </div>
 
             <div class="upload-modal-actions">
-                <a href="clear_preview.php" class="secondary-upload-btn" style="text-decoration: none; text-align: center; line-height: 38px;">Discard Upload</a>
+                <a href="../clear_preview.php" class="secondary-upload-btn" style="text-decoration: none; text-align: center; line-height: 38px;">Discard Upload</a>
                     <button
                         type="submit"
                         id="confirmSaveBtn"
@@ -607,3 +607,4 @@ if (confirmSaveBtn) {
 }
 </script>
 </html>
+

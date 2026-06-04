@@ -1,8 +1,8 @@
 <?php
 session_start();
 
-include '../includes/db.php';
-include_once '../includes/matched_schedules.php'; // Include Option B Matching Ledger Engine
+include '../../includes/db.php';
+include_once '../../includes/matched_schedules.php'; // Include Option B Matching Ledger Engine
 require '../vendor/autoload.php';
 
 use PhpOffice\PhpSpreadsheet\IOFactory;
