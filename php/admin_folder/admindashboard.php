@@ -78,7 +78,6 @@ $student_uploads = countRows($conn, "SELECT COUNT(*) AS total FROM schedule_uplo
 $faculty_uploads = countRows($conn, "SELECT COUNT(*) AS total FROM schedule_uploads WHERE role = 'faculty'");
 
 $total_matched = countRows($conn, "SELECT COUNT(*) AS total FROM matched_schedules WHERE match_status = 'matched'");
-$total_pending_matches = countRows($conn, "SELECT COUNT(*) AS total FROM matched_schedules WHERE match_status = 'pending'");
 $total_no_match = countRows($conn, "SELECT COUNT(*) AS total FROM matched_schedules WHERE match_status = 'no_match'");
 
 $recent_users = $conn->query("
@@ -271,11 +270,6 @@ function e(string $value): string {
                     <div>
                         <span>Matched Schedules</span>
                         <strong><?php echo $total_matched; ?></strong>
-                    </div>
-
-                    <div>
-                        <span>Pending Matches</span>
-                        <strong><?php echo $total_pending_matches; ?></strong>
                     </div>
                 </div>
 
